@@ -37,6 +37,8 @@ build/
 ### Mac OS ###
 .DS_Store
 
+.idea/
+lib/
+bin/
 out/
 matsd-javaframework-webmvc.jar
-.idea/
