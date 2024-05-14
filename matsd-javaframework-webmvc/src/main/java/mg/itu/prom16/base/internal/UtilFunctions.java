@@ -13,8 +13,8 @@ import java.util.List;
 public final class UtilFunctions {
     private UtilFunctions() { }
 
-    public static List<Class<?>> findControllers(String packageName) {
-        Assert.notBlank(packageName, false, "Le nom de package ne peut pas être vide ou \"null\"");
+    public static List<Class<?>> findControllers(@Nullable String packageName) {
+        if (packageName == null) packageName = "";
 
         URL url = Thread.currentThread()
             .getContextClassLoader()
