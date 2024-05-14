@@ -6,13 +6,13 @@ The webmvc project is a lightweight MVC framework based on servlets in Java, des
 
 This framework provides an organized structure for web application development following the MVC (Model-View-Controller) pattern. It facilitates separation of concerns by dividing the application into three main parts : models for business logic, views for user interface, and controllers for handling HTTP requests.
 
-## Getting Started
+# Getting Started
 
-### 1. Integration
+## 1. Integration
 
 Begin by importing the `matsd-javaframework-webmvc` and the `matsd-javaframework-core` as dependencies into your Java web project. This can be achieved by including the framework JAR file in your project's build path.
 
-### 2. Configuration
+## 2. Configuration
 
 Configure the servlet mapping in your web.xml file to ensure proper routing of HTTP requests :
 
@@ -28,7 +28,7 @@ Configure the servlet mapping in your web.xml file to ensure proper routing of H
 </servlet-mapping>
 ```
 
-### 3. Define your controllers
+## 3. Define your controllers
 
 First in your web.xml file, specify the package to scan for controllers using context-param :
 
