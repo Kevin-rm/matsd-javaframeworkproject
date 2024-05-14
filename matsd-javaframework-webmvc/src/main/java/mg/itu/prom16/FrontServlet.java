@@ -1,6 +1,7 @@
 package mg.itu.prom16;
 
 import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,9 +19,9 @@ public class FrontServlet extends HttpServlet {
 
     @Override
     public void init() {
-        ServletConfig servletConfig = getServletConfig();
+        ServletContext servletContext = getServletContext();
 
-        this.setControllerPackage(servletConfig.getInitParameter("controller-package"))
+        this.setControllerPackage(servletContext.getInitParameter("controller-package"))
             .setControllersClasses();
     }
 
@@ -33,7 +34,7 @@ public class FrontServlet extends HttpServlet {
     }
 
     private FrontServlet setControllersClasses() {
-        this.controllersClasses = UtilFunctions.findControllers(controllerPackage);
+        controllersClasses = UtilFunctions.findControllers(controllerPackage);
         return this;
     }
 
