@@ -3,7 +3,6 @@ package mg.itu.prom16.base.internal;
 import mg.itu.prom16.annotations.Controller;
 import mg.itu.prom16.exceptions.InvalidPackageException;
 import mg.matsd.javaframework.core.annotations.Nullable;
-import mg.matsd.javaframework.core.utils.Assert;
 
 import java.io.File;
 import java.net.URL;
