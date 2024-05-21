@@ -19,7 +19,7 @@ Configure the servlet mapping in your web.xml file to ensure proper routing of H
 ```xml
 <servlet>
     <servlet-name>frontServlet</servlet-name>
-    <servlet-class>mg.itu.prom16.FrontServlet</servlet-class>
+    <servlet-class>mg.itu.prom16.base.FrontServlet</servlet-class>
 </servlet>
 
 <servlet-mapping>
