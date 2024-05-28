@@ -1,10 +1,16 @@
 package mg.itu.prom16.base.internal;
 
 import mg.itu.prom16.annotations.Controller;
+import mg.itu.prom16.annotations.Get;
+import mg.itu.prom16.annotations.Post;
+import mg.itu.prom16.annotations.RequestMapping;
+import mg.itu.prom16.base.RequestMethod;
 import mg.itu.prom16.exceptions.InvalidPackageException;
 import mg.matsd.javaframework.core.annotations.Nullable;
 
 import java.io.File;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,5 +56,66 @@ public final class UtilFunctions {
         if (clazz == null) return false;
 
         return clazz.isAnnotationPresent(Controller.class);
+    }
+
+    public static boolean isAnnotatedWithRequestMappingAndItsShortcuts(
+        @Nullable Method method
+    ) {
+        return method != null &&
+               (
+                   method.isAnnotationPresent(RequestMapping.class) ||
+                   method.isAnnotationPresent(Get.class)
+               );
+    }
+
+    @Nullable
+    public static RequestMapping requestMapping(Method method) {
+        if (method == null) return null;
+
+        boolean breakLoop = false;
+
+        RequestMapping requestMapping = null;
+        for (Annotation annotation : method.getAnnotations()) {
+            if (annotation instanceof RequestMapping) {
+                requestMapping = (RequestMapping) annotation;
+
+                breakLoop = true;
+            } else if (UtilFunctions.instanceofRequestMappingShortcuts(annotation)) {
+                Class<? extends Annotation> annotationType = annotation.annotationType();
+                requestMapping = new RequestMapping() {
+
+                    @Override
+                    public Class<? extends Annotation> annotationType() {
+                        return RequestMapping.class;
+                    }
+
+                    @Override
+                    public String path() {
+                        try {
+                            return (String) annotationType.getDeclaredMethod("path").invoke(annotation);
+                        } catch (Exception ignored) {
+                            return "";
+                        }
+                    }
+
+                    @Override
+                    public RequestMethod[] methods() {
+                        return annotationType
+                            .getAnnotation(RequestMapping.class)
+                            .methods();
+                    }
+                };
+
+                breakLoop = true;
+            }
+
+            if (breakLoop) break;
+        }
+
+        return requestMapping;
+    }
+
+    private static boolean instanceofRequestMappingShortcuts(Annotation annotation) {
+        return annotation instanceof Get || annotation instanceof Post;
     }
 }
