@@ -43,21 +43,43 @@ public class FrontServlet extends HttpServlet {
 
     private FrontServlet setMappingHandlerMap() {
         mappingHandlerMap = new HashMap<>();
-        for (Class<?> controllerClass : UtilFunctions.findControllers(controllerPackage))
+
+        for (Class<?> controllerClass : UtilFunctions.findControllers(controllerPackage)) {
+            String pathPrefix = "";
+            RequestMethod[] sharedRequestMethods = new RequestMethod[0];
+
+            if (controllerClass.isAnnotationPresent(RequestMapping.class)) {
+                RequestMapping requestMapping = controllerClass.getAnnotation(RequestMapping.class);
+
+                pathPrefix           = requestMapping.value();
+                sharedRequestMethods = requestMapping.methods();
+            }
+
             for (Method method : controllerClass.getDeclaredMethods()) {
-                if (!AnnotationUtils.hasAnnotation(RequestMapping.class, method))
-                    continue;
+                if (!AnnotationUtils.hasAnnotation(RequestMapping.class, method)) continue;
 
                 Map<String, Object> requestMappingInfoAttributes = UtilFunctions.getRequestMappingInfoAttributes(method);
+
+                RequestMethod[] requestMethods = (RequestMethod[]) requestMappingInfoAttributes.get("methods");
+                RequestMethod[] combinedRequestMethods;
+
+                if (requestMethods.length == 0)            combinedRequestMethods = sharedRequestMethods;
+                else if (sharedRequestMethods.length == 0) combinedRequestMethods = requestMethods;
+                else {
+                    combinedRequestMethods = new RequestMethod[sharedRequestMethods.length + requestMethods.length];
+                    System.arraycopy(sharedRequestMethods, 0, combinedRequestMethods, 0, sharedRequestMethods.length);
+                    System.arraycopy(requestMethods, 0, combinedRequestMethods, sharedRequestMethods.length, requestMethods.length);
+                }
+
                 RequestMappingInfo requestMappingInfo = new RequestMappingInfo(
-                    (String)          requestMappingInfoAttributes.get("path"),
-                    (RequestMethod[]) requestMappingInfoAttributes.get("methods")
+                    pathPrefix + (String) requestMappingInfoAttributes.get("path"), combinedRequestMethods
                 );
                 if (mappingHandlerMap.containsKey(requestMappingInfo))
                     throw new DuplicateMappingException(requestMappingInfo);
 
                 mappingHandlerMap.put(requestMappingInfo, new MappingHandler(controllerClass, method));
             }
+        }
 
         return this;
     }

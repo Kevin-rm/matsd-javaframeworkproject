@@ -33,6 +33,9 @@ public class RequestMappingInfo {
         if (!path.startsWith("/"))
             throw new IllegalArgumentException("L'argument path doit commencer par un slash \"/\"");
 
+        if (path.length() > 1 && path.endsWith("/"))
+            path = path.replaceAll("/+$", "");
+
         this.path = path;
         return this;
     }

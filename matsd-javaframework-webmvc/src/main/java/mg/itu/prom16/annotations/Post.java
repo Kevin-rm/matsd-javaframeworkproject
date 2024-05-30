@@ -11,5 +11,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 @RequestMapping(methods = RequestMethod.POST)
 public @interface Post {
-    String value();
+    String value() default "";
 }
