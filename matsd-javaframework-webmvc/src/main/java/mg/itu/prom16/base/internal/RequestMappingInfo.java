@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import mg.itu.prom16.base.RequestMethod;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
+import mg.matsd.javaframework.core.utils.StringUtils;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -12,7 +13,7 @@ public class RequestMappingInfo {
     private String path;
     private RequestMethod[] methods;
 
-    public RequestMappingInfo(String path, @Nullable RequestMethod[] methods) {
+    public RequestMappingInfo(@Nullable String path, @Nullable RequestMethod[] methods) {
         this.setPath(path)
             .setMethods(methods);
     }
@@ -21,11 +22,19 @@ public class RequestMappingInfo {
         return path;
     }
 
-    public RequestMappingInfo setPath(String path) {
-        Assert.notBlank(path, false, "L'argument path ne peut pas être vide ou \"null\"");
+    public RequestMappingInfo setPath(@Nullable String path) {
+        if (path == null || StringUtils.isBlank(path)) {
+            this.path = "/";
+
+            return this;
+        }
+
         path = path.strip();
         if (!path.startsWith("/"))
             throw new IllegalArgumentException("L'argument path doit commencer par un slash \"/\"");
+
+        if (path.length() > 1 && path.endsWith("/"))
+            path = path.replaceAll("/+$", "");
 
         this.path = path;
         return this;

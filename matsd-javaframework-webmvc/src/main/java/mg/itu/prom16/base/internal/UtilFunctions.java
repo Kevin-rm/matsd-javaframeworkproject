@@ -4,16 +4,17 @@ import mg.itu.prom16.annotations.Controller;
 import mg.itu.prom16.annotations.Get;
 import mg.itu.prom16.annotations.Post;
 import mg.itu.prom16.annotations.RequestMapping;
-import mg.itu.prom16.base.RequestMethod;
 import mg.itu.prom16.exceptions.InvalidPackageException;
 import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.utils.AnnotationUtils;
 
 import java.io.File;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public final class UtilFunctions {
     private UtilFunctions() { }
@@ -58,64 +59,21 @@ public final class UtilFunctions {
         return clazz.isAnnotationPresent(Controller.class);
     }
 
-    public static boolean isAnnotatedWithRequestMappingAndItsShortcuts(
-        @Nullable Method method
-    ) {
-        return method != null &&
-               (
-                   method.isAnnotationPresent(RequestMapping.class) ||
-                   method.isAnnotationPresent(Get.class)
-               );
-    }
+    public static Map<String, Object> getRequestMappingInfoAttributes(Method method) {
+        String path = "";
 
-    @Nullable
-    public static RequestMapping requestMapping(Method method) {
-        if (method == null) return null;
+        RequestMapping requestMapping = (RequestMapping) AnnotationUtils.getAnnotation(RequestMapping.class, method);
+        if (method.isAnnotationPresent(RequestMapping.class))
+            path = requestMapping.value();
+        else if (method.isAnnotationPresent(Get.class))
+            path = method.getAnnotation(Get.class).value();
+        else if (method.isAnnotationPresent(Post.class))
+            path = method.getAnnotation(Post.class).value();
 
-        boolean breakLoop = false;
+        Map<String, Object> attributes = new HashMap<>();
+        attributes.put("path", path);
+        attributes.put("methods", requestMapping.methods());
 
-        RequestMapping requestMapping = null;
-        for (Annotation annotation : method.getAnnotations()) {
-            if (annotation instanceof RequestMapping) {
-                requestMapping = (RequestMapping) annotation;
-
-                breakLoop = true;
-            } else if (UtilFunctions.instanceofRequestMappingShortcuts(annotation)) {
-                Class<? extends Annotation> annotationType = annotation.annotationType();
-                requestMapping = new RequestMapping() {
-
-                    @Override
-                    public Class<? extends Annotation> annotationType() {
-                        return RequestMapping.class;
-                    }
-
-                    @Override
-                    public String path() {
-                        try {
-                            return (String) annotationType.getDeclaredMethod("path").invoke(annotation);
-                        } catch (Exception ignored) {
-                            return "";
-                        }
-                    }
-
-                    @Override
-                    public RequestMethod[] methods() {
-                        return annotationType
-                            .getAnnotation(RequestMapping.class)
-                            .methods();
-                    }
-                };
-
-                breakLoop = true;
-            }
-
-            if (breakLoop) break;
-        }
-
-        return requestMapping;
-    }
-
-    private static boolean instanceofRequestMappingShortcuts(Annotation annotation) {
-        return annotation instanceof Get || annotation instanceof Post;
+        return attributes;
     }
 }
