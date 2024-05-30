@@ -10,10 +10,13 @@ import mg.itu.prom16.base.internal.MappingHandler;
 import mg.itu.prom16.base.internal.RequestMappingInfo;
 import mg.itu.prom16.base.internal.UtilFunctions;
 import mg.itu.prom16.exceptions.DuplicateMappingException;
+import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.utils.AnnotationUtils;
 import mg.matsd.javaframework.core.utils.Assert;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,12 +45,14 @@ public class FrontServlet extends HttpServlet {
         mappingHandlerMap = new HashMap<>();
         for (Class<?> controllerClass : UtilFunctions.findControllers(controllerPackage))
             for (Method method : controllerClass.getDeclaredMethods()) {
-                if (!UtilFunctions.isAnnotatedWithRequestMappingAndItsShortcuts(method))
+                if (!AnnotationUtils.hasAnnotation(RequestMapping.class, method))
                     continue;
 
-                RequestMapping requestMapping = UtilFunctions.requestMapping(method);
-
-                RequestMappingInfo requestMappingInfo = new RequestMappingInfo(requestMapping.path(), requestMapping.methods());
+                Map<String, Object> requestMappingInfoAttributes = UtilFunctions.getRequestMappingInfoAttributes(method);
+                RequestMappingInfo requestMappingInfo = new RequestMappingInfo(
+                    (String)          requestMappingInfoAttributes.get("path"),
+                    (RequestMethod[]) requestMappingInfoAttributes.get("methods")
+                );
                 if (mappingHandlerMap.containsKey(requestMappingInfo))
                     throw new DuplicateMappingException(requestMappingInfo);
 
@@ -57,21 +62,33 @@ public class FrontServlet extends HttpServlet {
         return this;
     }
 
+    @Nullable
+    private MappingHandler resolveMappingHandler(HttpServletRequest request) {
+        for (Map.Entry<RequestMappingInfo, MappingHandler> entry : mappingHandlerMap.entrySet())
+            if (entry.getKey().matches(request))
+                return entry.getValue();
+
+        return null;
+    }
+
     protected final void processRequest(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {
         PrintWriter printWriter = response.getWriter();
 
-        for (Map.Entry<RequestMappingInfo, MappingHandler> entry : mappingHandlerMap.entrySet()) {
-            RequestMappingInfo requestMappingInfo = entry.getKey();
-            MappingHandler mappingHandler = entry.getValue();
-
-            if (requestMappingInfo.matches(request)) {
-                printWriter.write("Request mapping : " + requestMappingInfo + "; " + mappingHandler);
-                return;
+        MappingHandler mappingHandler = resolveMappingHandler(request);
+        if (mappingHandler == null)
+            printWriter.write("404 - Not Found");
+        else {
+            try {
+                Object obj = mappingHandler.getControllerClass().getConstructor().newInstance();
+                printWriter.println(
+                    mappingHandler.getMethod().invoke(obj)
+                );
+            } catch (IllegalAccessException | InvocationTargetException |
+                     InstantiationException | NoSuchMethodException e) {
+                throw new RuntimeException(e);
             }
         }
-
-        printWriter.write("404 - Not Found");
     }
 
     @Override
