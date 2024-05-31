@@ -18,8 +18,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class FrontServlet extends HttpServlet {
     private String controllerPackage;
@@ -46,33 +45,26 @@ public class FrontServlet extends HttpServlet {
 
         for (Class<?> controllerClass : UtilFunctions.findControllers(controllerPackage)) {
             String pathPrefix = "";
-            RequestMethod[] sharedRequestMethods = new RequestMethod[0];
+            List<RequestMethod> sharedRequestMethods = new ArrayList<>();
 
             if (controllerClass.isAnnotationPresent(RequestMapping.class)) {
                 RequestMapping requestMapping = controllerClass.getAnnotation(RequestMapping.class);
 
                 pathPrefix           = requestMapping.value();
-                sharedRequestMethods = requestMapping.methods();
+                sharedRequestMethods = Arrays.asList(requestMapping.methods());
             }
 
             for (Method method : controllerClass.getDeclaredMethods()) {
                 if (!AnnotationUtils.hasAnnotation(RequestMapping.class, method)) continue;
 
                 Map<String, Object> requestMappingInfoAttributes = UtilFunctions.getRequestMappingInfoAttributes(method);
-
-                RequestMethod[] requestMethods = (RequestMethod[]) requestMappingInfoAttributes.get("methods");
-                RequestMethod[] combinedRequestMethods;
-
-                if (requestMethods.length == 0)            combinedRequestMethods = sharedRequestMethods;
-                else if (sharedRequestMethods.length == 0) combinedRequestMethods = requestMethods;
-                else {
-                    combinedRequestMethods = new RequestMethod[sharedRequestMethods.length + requestMethods.length];
-                    System.arraycopy(sharedRequestMethods, 0, combinedRequestMethods, 0, sharedRequestMethods.length);
-                    System.arraycopy(requestMethods, 0, combinedRequestMethods, sharedRequestMethods.length, requestMethods.length);
-                }
+                List<RequestMethod> requestMethods = Arrays.asList(
+                    (RequestMethod[]) requestMappingInfoAttributes.get("methods")
+                );
+                requestMethods.addAll(sharedRequestMethods);
 
                 RequestMappingInfo requestMappingInfo = new RequestMappingInfo(
-                    pathPrefix + (String) requestMappingInfoAttributes.get("path"), combinedRequestMethods
+                    pathPrefix + requestMappingInfoAttributes.get("path"), requestMethods
                 );
                 if (mappingHandlerMap.containsKey(requestMappingInfo))
                     throw new DuplicateMappingException(requestMappingInfo);

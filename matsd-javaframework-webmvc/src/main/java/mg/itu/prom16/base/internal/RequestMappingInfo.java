@@ -6,14 +6,13 @@ import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.core.utils.StringUtils;
 
-import java.util.Arrays;
-import java.util.Objects;
+import java.util.*;
 
 public class RequestMappingInfo {
     private String path;
-    private RequestMethod[] methods;
+    private List<RequestMethod> methods;
 
-    public RequestMappingInfo(@Nullable String path, @Nullable RequestMethod[] methods) {
+    public RequestMappingInfo(@Nullable String path, @Nullable List<RequestMethod> methods) {
         this.setPath(path)
             .setMethods(methods);
     }
@@ -40,13 +39,15 @@ public class RequestMappingInfo {
         return this;
     }
 
-    public RequestMethod[] getMethods() {
+    public List<RequestMethod> getMethods() {
         return methods;
     }
 
-    public RequestMappingInfo setMethods(@Nullable RequestMethod[] methods) {
-        if (methods == null || methods.length == 0)
-            methods = new RequestMethod[]{RequestMethod.GET};
+    public RequestMappingInfo setMethods(@Nullable List<RequestMethod> methods) {
+        if (methods == null || methods.isEmpty()) {
+            methods = new ArrayList<>();
+            methods.add(RequestMethod.GET);
+        }
 
         this.methods = methods;
         return this;
@@ -56,15 +57,9 @@ public class RequestMappingInfo {
         Assert.notNull(httpServletRequest, "L'argument httpServletRequest ne peut pas être \"null\"");
 
         return path.equals(httpServletRequest.getServletPath()) &&
-               Arrays.asList(methods).contains(RequestMethod.valueOf(httpServletRequest.getMethod()));
-    }
-
-    @Override
-    public String toString() {
-        return "RequestMappingInfo{" +
-            "path='" + path + '\'' +
-            ", methods=" + Arrays.toString(methods) +
-            '}';
+               methods.contains(
+                   RequestMethod.valueOf(httpServletRequest.getMethod())
+               );
     }
 
     @Override
@@ -75,14 +70,21 @@ public class RequestMappingInfo {
         RequestMappingInfo that = (RequestMappingInfo) o;
 
         if (!Objects.equals(path, that.path)) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        return Arrays.equals(methods, that.methods);
+        return Objects.equals(methods, that.methods);
     }
 
     @Override
     public int hashCode() {
         int result = path != null ? path.hashCode() : 0;
-        result = 31 * result + Arrays.hashCode(methods);
+        result = 31 * result + (methods != null ? methods.hashCode() : 0);
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "RequestMappingInfo{" +
+            "path='" + path + '\'' +
+            ", methods=" + methods +
+            '}';
     }
 }

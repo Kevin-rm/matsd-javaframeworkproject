@@ -39,27 +39,32 @@ First in your web.xml file, specify the package to scan for controllers using co
     <param-value>com.example.controllers</param-value>
 </context-param>
 ```
-Then, your Java class has to be annotated with the `@Controller` annotation for it to be recognized as a controller.
-Now, let's create a controller and add some examples of mappings :
+Then, annotate your Java class with the `@Controller` annotation to recognize it as a controller. Here's an example:
 
 ```java
 @Controller
 @RequestMapping("/hello")
 public class Welcome {
+    
     @Get("/test")
     public String home() {
-        return "Ceci est un test";
+        return "This is a test";
     }
 
     @Get("/")
     public String hello() {
         return "Hello World";
     }
-    
+
+    // This is a utility method, not exposed as a route
     private void anUtilMethod() {
         System.out.println("I am very useful");
     }
 }
 ```
 
-In this example, accessing "/hello/test" will return "Ceci est un test", and accessing "/hello" will return "Hello World".e 
+In this example :
+* Accessing `/hello/test` will return "This is a test".
+* Accessing `/hello` will return "Hello World".
+
+Warning: It's crucial to ensure that the paths specified in `@RequestMapping` and its overridden variants start with a leading `/`. Omitting the `/` at the beginning will result in an error.
