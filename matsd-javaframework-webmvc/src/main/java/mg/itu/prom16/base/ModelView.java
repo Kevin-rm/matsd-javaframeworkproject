@@ -10,9 +10,13 @@ public class ModelView {
     private String view;
     private Map<String, Object> data;
 
-    public ModelView(String view) {
-        setView(view);
+    public ModelView() {
         data = new HashMap<>();
+    }
+
+    public ModelView(String view) {
+        this();
+        setView(view);
     }
 
     public String getView() {

@@ -102,11 +102,17 @@ public class FrontServlet extends HttpServlet {
 
                 Object controllerMethodResult = mappingHandler.invokeMethod(controllerInstance);
                 if (controllerMethodResult instanceof ModelView modelView) {
+                    String view = modelView.getView();
+
+                    Assert.state(view != null, String.format(
+                        "Vous n'avez pas précisé la vue du \"ModelView\" dans la méthode \"%s\" du contrôleur \"%s\"",
+                        mappingHandler.getMethod().getName(), mappingHandler.getControllerClass().getName())
+                    );
+
                     for (Map.Entry<String, Object> entry : modelView.getData().entrySet())
                         request.setAttribute(entry.getKey(), entry.getValue());
 
-                    RequestDispatcher requestDispatcher = request.getRequestDispatcher(modelView.getView());
-                    requestDispatcher.include(request, response);
+                    request.getRequestDispatcher(view).forward(request, response);
                 } else {
                     response.setContentType("text/html");
                     printWriter.print(controllerMethodResult);
