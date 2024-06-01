@@ -15,7 +15,7 @@ public class ModelView {
         data = new HashMap<>();
     }
 
-    String getView() {
+    public String getView() {
         return view;
     }
 
@@ -30,7 +30,7 @@ public class ModelView {
         return this;
     }
 
-    Map<String, Object> getData() {
+    public Map<String, Object> getData() {
         return data;
     }
 
