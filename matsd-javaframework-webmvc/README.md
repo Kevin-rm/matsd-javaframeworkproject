@@ -63,8 +63,7 @@ public class Welcome {
 }
 ```
 
-In this example :
-* Accessing `/hello/test` will return "This is a test".
-* Accessing `/hello` will return "Hello World".
+Note:
 
-Warning: It's crucial to ensure that the paths specified in `@RequestMapping` and its overridden variants start with a leading `/`. Omitting the `/` at the beginning will result in an error.
+* Ensure that the path specified in `@RequestMapping` and its variants starts with a leading `/`. Omitting the `/` at the beginning will result in an error.
+* Controller methods that handle HTTP requests should not be private. They need to be public to be accessible by the framework.

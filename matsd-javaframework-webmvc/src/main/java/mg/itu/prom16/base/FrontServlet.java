@@ -1,5 +1,6 @@
 package mg.itu.prom16.base;
 
+import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -18,6 +19,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.*;
 
 public class FrontServlet extends HttpServlet {
@@ -55,7 +57,10 @@ public class FrontServlet extends HttpServlet {
             }
 
             for (Method method : controllerClass.getDeclaredMethods()) {
-                if (!AnnotationUtils.hasAnnotation(RequestMapping.class, method)) continue;
+                if (
+                    !AnnotationUtils.hasAnnotation(RequestMapping.class, method) ||
+                    method.getModifiers() == Modifier.PRIVATE
+                ) continue;
 
                 Map<String, Object> requestMappingInfoAttributes = UtilFunctions.getRequestMappingInfoAttributes(method);
                 List<RequestMethod> requestMethods = Arrays.asList(
@@ -79,8 +84,7 @@ public class FrontServlet extends HttpServlet {
     @Nullable
     private MappingHandler resolveMappingHandler(HttpServletRequest request) {
         for (Map.Entry<RequestMappingInfo, MappingHandler> entry : mappingHandlerMap.entrySet())
-            if (entry.getKey().matches(request))
-                return entry.getValue();
+            if (entry.getKey().matches(request)) return entry.getValue();
 
         return null;
     }
@@ -94,10 +98,19 @@ public class FrontServlet extends HttpServlet {
             printWriter.write("404 - Not Found");
         else {
             try {
-                Object obj = mappingHandler.getControllerClass().getConstructor().newInstance();
-                printWriter.println(
-                    mappingHandler.getMethod().invoke(obj)
-                );
+                Object controllerInstance = mappingHandler.getControllerClass().getConstructor().newInstance();
+
+                Object controllerMethodResult = mappingHandler.invokeMethod(controllerInstance);
+                if (controllerMethodResult instanceof ModelView modelView) {
+                    for (Map.Entry<String, Object> entry : modelView.getData().entrySet())
+                        request.setAttribute(entry.getKey(), entry.getValue());
+
+                    RequestDispatcher requestDispatcher = request.getRequestDispatcher(modelView.getView());
+                    requestDispatcher.include(request, response);
+                } else {
+                    response.setContentType("text/html");
+                    printWriter.print(controllerMethodResult);
+                }
             } catch (IllegalAccessException | InvocationTargetException |
                      InstantiationException | NoSuchMethodException e) {
                 throw new RuntimeException(e);
