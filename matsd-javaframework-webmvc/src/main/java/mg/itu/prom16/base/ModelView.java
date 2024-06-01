@@ -19,7 +19,7 @@ public class ModelView {
         return view;
     }
 
-    private ModelView setView(String view) {
+    public ModelView setView(String view) {
         Assert.notBlank(view, false, "La vue ne peut pas être vide ou \"null\"");
 
         view = view.strip().replaceAll("^/+", "/");
