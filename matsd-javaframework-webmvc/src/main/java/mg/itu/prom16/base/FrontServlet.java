@@ -1,6 +1,5 @@
 package mg.itu.prom16.base;
 
-import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -52,7 +51,7 @@ public class FrontServlet extends HttpServlet {
             if (controllerClass.isAnnotationPresent(RequestMapping.class)) {
                 RequestMapping requestMapping = controllerClass.getAnnotation(RequestMapping.class);
 
-                pathPrefix           = requestMapping.value();
+                pathPrefix = requestMapping.value();
                 sharedRequestMethods = Arrays.asList(requestMapping.methods());
             }
 
