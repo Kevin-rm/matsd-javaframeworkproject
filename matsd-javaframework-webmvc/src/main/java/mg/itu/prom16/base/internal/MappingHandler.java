@@ -1,7 +1,10 @@
 package mg.itu.prom16.base.internal;
 
+import com.sun.jdi.InternalException;
+import mg.itu.prom16.base.ModelView;
 import mg.matsd.javaframework.core.utils.Assert;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public class MappingHandler {
@@ -17,7 +20,7 @@ public class MappingHandler {
         return controllerClass;
     }
 
-    public MappingHandler setControllerClass(Class<?> controllerClass) {
+    private MappingHandler setControllerClass(Class<?> controllerClass) {
         Assert.notNull(controllerClass, "La classe du contrôleur ne peut pas être \"null\"");
         Assert.state(UtilFunctions.isController(controllerClass),
             () -> new IllegalArgumentException("La classe passée en argument n'est pas un contrôleur")
@@ -31,7 +34,7 @@ public class MappingHandler {
         return method;
     }
 
-    public MappingHandler setMethod(Method method) {
+    private MappingHandler setMethod(Method method) {
         Assert.notNull(method, "La méthode associée au path ne peut pas être \"null\"");
         Assert.state(method.getDeclaringClass() == controllerClass,
             () -> new IllegalArgumentException(
@@ -40,6 +43,24 @@ public class MappingHandler {
 
         this.method = method;
         return this;
+    }
+
+    public Object invokeMethod(Object controllerInstance) {
+        Assert.notNull(controllerInstance);
+
+        if (controllerInstance.getClass() != controllerClass)
+            throw new InternalException();
+
+        try {
+            if (method.getReturnType() == ModelView.class)
+                return method.invoke(controllerInstance);
+
+            return method.invoke(controllerInstance).toString();
+        } catch (IllegalAccessException e) {
+            throw new InternalException();
+        } catch (InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
