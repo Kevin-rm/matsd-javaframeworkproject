@@ -2,6 +2,7 @@ package mg.itu.prom16.base.internal;
 
 import com.sun.jdi.InternalException;
 import mg.itu.prom16.base.ModelView;
+import mg.itu.prom16.exceptions.IncorrectReturnTypeException;
 import mg.matsd.javaframework.core.utils.Assert;
 
 import java.lang.reflect.InvocationTargetException;
@@ -52,10 +53,14 @@ public class MappingHandler {
             throw new InternalException();
 
         try {
-            if (method.getReturnType() == ModelView.class)
-                return method.invoke(controllerInstance);
+            Class<?> returnType = method.getReturnType();
+            if (
+                returnType != ModelView.class &&
+                returnType != String.class
+            )
+                throw new IncorrectReturnTypeException(method);
 
-            return method.invoke(controllerInstance).toString();
+            return method.invoke(controllerInstance);
         } catch (IllegalAccessException e) {
             throw new InternalException();
         } catch (InvocationTargetException e) {
