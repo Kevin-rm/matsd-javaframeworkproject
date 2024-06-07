@@ -9,7 +9,7 @@ public class IncorrectReturnTypeException extends BaseException {
 
     public IncorrectReturnTypeException(Method controllerMethod) {
         super(String.format(
-            "La méthode \"%s\" dans le contrôleur \"%s\" doit avoir un type de retour \"ModelView\" ou \"String\"",
+            "La méthode \"%s\" dans le contrôleur \"%s\" doit avoir comme type de retour \"ModelView\" ou \"String\"",
             controllerMethod.getName(),
             controllerMethod.getReturnType()
         ), PREFIX);
