@@ -1,6 +1,5 @@
 package mg.itu.prom16.base;
 
-import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,6 +8,7 @@ import mg.itu.prom16.annotations.RequestMapping;
 import mg.itu.prom16.base.internal.MappingHandler;
 import mg.itu.prom16.base.internal.RequestMappingInfo;
 import mg.itu.prom16.base.internal.UtilFunctions;
+import mg.itu.prom16.support.WebApplicationContainer;
 import mg.itu.prom16.exceptions.DuplicateMappingException;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.AnnotationUtils;
@@ -22,29 +22,27 @@ import java.lang.reflect.Modifier;
 import java.util.*;
 
 public class FrontServlet extends HttpServlet {
-    private String controllerPackage;
+    private WebApplicationContainer webApplicationContainer;
     private Map<RequestMappingInfo, MappingHandler> mappingHandlerMap;
 
     @Override
     public void init() {
-        ServletContext servletContext = getServletContext();
-
-        this.setControllerPackage(servletContext.getInitParameter("controller-package"))
-            .setMappingHandlerMap();
+        webApplicationContainer = new WebApplicationContainer(
+            getServletContext(),
+            getServletConfig().getInitParameter("containerConfigLocation")
+        );
+        setMappingHandlerMap();
     }
 
-    private FrontServlet setControllerPackage(String controllerPackage) {
-        Assert.notBlank(controllerPackage, false,
-            "Le nom de package des contrôleurs à scanner ne peut pas être vide ou \"null\"");
+    private void setMappingHandlerMap() {
+        Assert.state(webApplicationContainer.hasPerformedComponentScan(),
+            String.format("Le scan des \"components\" n'a pas été effectué car la balise <container:component-scan> n'a pas été trouvée " +
+                "dans le fichier de configuration \"%s\"", webApplicationContainer.getXmlResourceName())
+        );
 
-        this.controllerPackage = controllerPackage.strip();
-        return this;
-    }
-
-    private FrontServlet setMappingHandlerMap() {
         mappingHandlerMap = new HashMap<>();
 
-        for (Class<?> controllerClass : UtilFunctions.findControllers(controllerPackage)) {
+        for (Class<?> controllerClass : webApplicationContainer.retrieveControllerClasses()) {
             String pathPrefix = "";
             List<RequestMethod> sharedRequestMethods = new ArrayList<>();
 
@@ -77,7 +75,6 @@ public class FrontServlet extends HttpServlet {
             }
         }
 
-        return this;
     }
 
     @Nullable
