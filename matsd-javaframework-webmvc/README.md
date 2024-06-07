@@ -10,7 +10,7 @@ This framework provides an organized structure for web application development f
 
 ### 1. Integration
 
-Begin by importing the `matsd-javaframework-webmvc` and the `matsd-javaframework-core` as dependencies into your Java web project. This can be achieved by including the framework JAR file in your project's build path.
+Begin by importing the [matsd-javaframework-core](https://github.com/Kevin-rm/matsd-javaframeworkproject/tree/main/matsd-javaframework-core) and the [jakarta.servlet-api](https://jakarta.ee/specifications/servlet/5.0) as dependencies into your Java web project. This can be achieved by including the framework JAR file in your project's build path.
 
 ### 2. Configuration
 
