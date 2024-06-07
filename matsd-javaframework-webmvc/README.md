@@ -2,17 +2,17 @@
 
 The webmvc project is a lightweight MVC framework based on servlets in Java, designed to simplify web application development.
 
-# Description
+## Description
 
 This framework provides an organized structure for web application development following the MVC (Model-View-Controller) pattern. It facilitates separation of concerns by dividing the application into three main parts : models for business logic, views for user interface, and controllers for handling HTTP requests.
 
-# Getting Started
+## Getting Started
 
-## 1. Integration
+### 1. Integration
 
 Begin by importing the `matsd-javaframework-webmvc` and the `matsd-javaframework-core` as dependencies into your Java web project. This can be achieved by including the framework JAR file in your project's build path.
 
-## 2. Configuration
+### 2. Configuration
 
 Configure the servlet mapping in your web.xml file to ensure proper routing of HTTP requests :
 
@@ -34,7 +34,7 @@ Configure the servlet mapping in your web.xml file to ensure proper routing of H
 </servlet-mapping>
 ```
 
-## 3. Define your controllers
+### 3. Define your controllers
 
 Specify the package to scan for controllers in the configuration file located at the path defined by `containerConfigLocation` (i.e., /WEB-INF/container.xml). Below is an example demonstrating how to configure component scanning :
 
@@ -45,7 +45,7 @@ Specify the package to scan for controllers in the configuration file located at
     <!-- You can declare managedinstances here -->
 
     <!-- Define component scanning to automatically detect and register controllers -->
-    <container:component-scan base-package="controllers"/>
+    <container:component-scan base-package="com.example.controllers"/>
 </managed-instances>
 ```
 Then, annotate your Java class with the `@Controller` annotation to recognize it as a controller. Here's an example:
