@@ -60,7 +60,7 @@ public class MappingHandler {
             )
                 throw new IncorrectReturnTypeException(method);
 
-            return method.invoke(controllerInstance).toString();
+            return method.invoke(controllerInstance);
         } catch (IllegalAccessException e) {
             throw new InternalException();
         } catch (InvocationTargetException e) {
