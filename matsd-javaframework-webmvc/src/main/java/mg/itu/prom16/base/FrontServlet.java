@@ -105,8 +105,7 @@ public class FrontServlet extends HttpServlet {
                         mappingHandler.getMethod().getName(), mappingHandler.getControllerClass().getName())
                     );
 
-                    for (Map.Entry<String, Object> entry : modelView.getData().entrySet())
-                        request.setAttribute(entry.getKey(), entry.getValue());
+                    modelView.getData().forEach(request::setAttribute);
 
                     request.getRequestDispatcher(view).forward(request, response);
                 } else {

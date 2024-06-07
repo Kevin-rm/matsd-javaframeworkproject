@@ -31,9 +31,8 @@ public class ServletContextResource extends Resource {
         InputStream inputStream = servletContext.getResourceAsStream(name);
         if (inputStream == null)
             throw new ResourceNotFoundException(
-                String.format(String.format(
-                    "Le fichier \"%s\" est introuvable dans le \"servletContext\". Assurez-vous que le chemin d'accès est correct et que la ressource existe", name)
-                )
+                String.format("Le fichier \"%s\" est introuvable dans le \"servletContext\". " +
+                    "Assurez-vous que le chemin d'accès est correct et que la ressource existe", name)
             );
 
         this.inputStream = inputStream;
