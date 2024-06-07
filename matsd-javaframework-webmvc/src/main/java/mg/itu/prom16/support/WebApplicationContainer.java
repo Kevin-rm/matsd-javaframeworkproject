@@ -2,7 +2,7 @@ package mg.itu.prom16.support;
 
 import jakarta.servlet.ServletContext;
 import mg.itu.prom16.base.internal.UtilFunctions;
-import mg.matsd.javaframework.core.container.AbstractContainer;
+import mg.matsd.javaframework.core.container.AbstractXmlResourceContainer;
 import mg.matsd.javaframework.core.io.Resource;
 import mg.matsd.javaframework.core.managedinstances.ManagedInstance;
 import mg.matsd.javaframework.core.utils.Assert;
@@ -10,7 +10,7 @@ import mg.matsd.javaframework.core.utils.Assert;
 import java.util.ArrayList;
 import java.util.List;
 
-public class WebApplicationContainer extends AbstractContainer {
+public class WebApplicationContainer extends AbstractXmlResourceContainer {
     private ServletContext servletContext;
 
     public WebApplicationContainer(ServletContext servletContext, String xmlResourceName) {
