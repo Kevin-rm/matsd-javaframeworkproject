@@ -4,10 +4,10 @@ import mg.matsd.javaframework.core.exceptions.BaseException;
 
 import java.lang.reflect.Method;
 
-public class IllegalReturnTypeException extends BaseException {
-    private static final String PREFIX = "Type de retour illégal";
+public class InvalidReturnTypeException extends BaseException {
+    private static final String PREFIX = "Type de retour invalide";
 
-    public IllegalReturnTypeException(Method controllerMethod) {
+    public InvalidReturnTypeException(Method controllerMethod) {
         super(String.format(
             "La méthode \"%s\" dans le contrôleur \"%s\" doit avoir comme type de retour \"ModelView\" ou \"String\", " +
                 "mais vous avez donné : \"%s\"",

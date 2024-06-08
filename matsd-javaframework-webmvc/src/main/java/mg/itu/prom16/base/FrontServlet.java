@@ -9,7 +9,7 @@ import mg.itu.prom16.base.internal.MappingHandler;
 import mg.itu.prom16.base.internal.RequestMappingInfo;
 import mg.itu.prom16.base.internal.UtilFunctions;
 import mg.itu.prom16.exceptions.DuplicateMappingException;
-import mg.itu.prom16.exceptions.IllegalReturnTypeException;
+import mg.itu.prom16.exceptions.InvalidReturnTypeException;
 import mg.itu.prom16.support.WebApplicationContainer;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.AnnotationUtils;
@@ -109,7 +109,7 @@ public class FrontServlet extends HttpServlet {
                 response.setContentType("text/html");
                 printWriter.print(controllerMethodResult);
             } else
-                throw new IllegalReturnTypeException(mappingHandler.getMethod());
+                throw new InvalidReturnTypeException(mappingHandler.getMethod());
         }
     }
 
