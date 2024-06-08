@@ -1,12 +1,12 @@
 package mg.itu.prom16.base.internal;
 
 import com.sun.jdi.InternalException;
-import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
-import mg.itu.prom16.base.ModelView;
-import mg.itu.prom16.exceptions.IncorrectReturnTypeException;
+import mg.itu.prom16.annotations.RequestParameter;
+import mg.itu.prom16.exceptions.MissingServletRequestParameterException;
 import mg.itu.prom16.support.WebApplicationContainer;
 import mg.matsd.javaframework.core.utils.Assert;
+import mg.matsd.javaframework.core.utils.StringUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -57,12 +57,27 @@ public class MappingHandler {
         try {
             Object[] args = new Object[method.getParameterCount()];
 
-            Class<?>[] parameterTypes = method.getParameterTypes();
-            for (int i = 0; i < parameterTypes.length; i++) {
-                Class<?> parameterType = parameterTypes[i];
+            Parameter[] parameters = method.getParameters();
+            for (int i = 0; i < parameters.length; i++) {
+                Parameter parameter     = parameters[i];
+                Class<?>  parameterType = parameter.getType();
 
                 if (parameterType == HttpServletRequest.class)
                     args[i] = httpServletRequest;
+                else if (parameter.isAnnotationPresent(RequestParameter.class)) {
+                    RequestParameter requestParameter = parameter.getAnnotation(RequestParameter.class);
+                    String parameterName  = StringUtils.hasText(requestParameter.name()) ? requestParameter.name() : parameter.getName();
+
+                    String parameterValue = httpServletRequest.getParameter(parameterName);
+                    if (parameterValue == null || StringUtils.isBlank(parameterValue)) {
+                        if (StringUtils.hasText(requestParameter.defaultValue()))
+                            parameterValue = requestParameter.defaultValue();
+                        else if (requestParameter.required())
+                            throw new MissingServletRequestParameterException(parameterName);
+                    }
+
+                    args[i] = parameterValue;
+                }
             }
 
             return method.invoke(
