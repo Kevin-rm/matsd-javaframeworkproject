@@ -3,10 +3,8 @@ package mg.itu.prom16.base.internal;
 import com.sun.jdi.InternalException;
 import jakarta.servlet.http.HttpServletRequest;
 import mg.itu.prom16.annotations.RequestParameter;
-import mg.itu.prom16.exceptions.MissingServletRequestParameterException;
 import mg.itu.prom16.support.WebApplicationContainer;
 import mg.matsd.javaframework.core.utils.Assert;
-import mg.matsd.javaframework.core.utils.StringUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -64,20 +62,8 @@ public class MappingHandler {
 
                 if (parameterType == HttpServletRequest.class)
                     args[i] = httpServletRequest;
-                else if (parameter.isAnnotationPresent(RequestParameter.class)) {
-                    RequestParameter requestParameter = parameter.getAnnotation(RequestParameter.class);
-                    String parameterName  = StringUtils.hasText(requestParameter.name()) ? requestParameter.name() : parameter.getName();
-
-                    String parameterValue = httpServletRequest.getParameter(parameterName);
-                    if (parameterValue == null || StringUtils.isBlank(parameterValue)) {
-                        if (StringUtils.hasText(requestParameter.defaultValue()))
-                            parameterValue = requestParameter.defaultValue();
-                        else if (requestParameter.required())
-                            throw new MissingServletRequestParameterException(parameterName);
-                    }
-
-                    args[i] = parameterValue;
-                }
+                else if (parameter.isAnnotationPresent(RequestParameter.class))
+                    args[i] = UtilFunctions.getRequestParameterValue(parameterType, parameter, httpServletRequest);
             }
 
             return method.invoke(

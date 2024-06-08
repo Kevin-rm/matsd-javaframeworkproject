@@ -114,4 +114,21 @@ public final class ClassUtils {
             );
         }
     }
+
+    public static Object getPrimitiveDefaultValue(Class<?> primitiveType) {
+        Assert.notNull(primitiveType, "L'argument primitiveType ne peut pas être \"null\"");
+
+        if (primitiveType == int.class)          return 0;
+        else if (primitiveType == boolean.class) return false;
+        else if (primitiveType == long.class)    return 0L;
+        else if (primitiveType == double.class)  return 0.0;
+        else if (primitiveType == float.class)   return 0.0f;
+        else if (primitiveType == char.class)    return '\u0000';
+        else if (primitiveType == byte.class)    return (byte) 0;
+        else if (primitiveType == short.class)   return (short) 0;
+
+        throw new IllegalArgumentException(String.format(
+            "La classe \"%s\" n'est pas une classe primitive", primitiveType.getName()
+        ));
+    }
 }
