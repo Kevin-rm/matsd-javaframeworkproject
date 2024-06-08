@@ -4,6 +4,8 @@ import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.exceptions.TypeMismatchException;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.core.utils.ClassUtils;
+import mg.matsd.javaframework.core.utils.StringUtils;
+import mg.matsd.javaframework.core.utils.converter.StringConverter;
 
 import java.lang.reflect.Field;
 
@@ -13,7 +15,7 @@ public class Property {
     private Object value;
     @Nullable
     private String ref;
-    private ManagedInstance managedInstance;
+    private final ManagedInstance managedInstance;
 
     public Property(String field, String value, String ref, ManagedInstance managedInstance) {
         if (value == null && ref == null)
@@ -70,18 +72,10 @@ public class Property {
 
     private Property setValue(@Nullable String value) {
         Object obj = null;
-        if (value != null) {
-            value = value.strip();
-
+        if (value != null && StringUtils.hasText(value)) {
             try {
-                if (value.isEmpty()) obj = null;
-                else if (field.getType() == int.class || field.getType() == Integer.class)
-                    obj = Integer.valueOf(value);
-                else if (field.getType() == double.class || field.getType() == Double.class)
-                    obj = Double.valueOf(value);
-                else if (field.getType() == float.class || field.getType() == Float.class)
-                    obj = Float.valueOf(value);
-                else obj = value;            } catch (NumberFormatException e) {
+               obj = StringConverter.convert(value, field.getType());
+            } catch (TypeMismatchException e) {
                 throw new TypeMismatchException(
                     String.format(
                         "La valeur \"%s\" fournie pour la propriété \"%s\" ne correspond pas au type \"%s\" attendu",

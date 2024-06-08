@@ -20,7 +20,7 @@ public class ManagedInstanceUtils {
                 field.set(instance, property.getValue());
             }
         } catch (NoSuchMethodException | IllegalAccessException e) {
-            throw new ManagedInstanceException("La classe d'une \"ManagedInstance\" doit avoir un constructeur vide et accessible (non privé)");
+            throw new ManagedInstanceException("La classe d'une \"ManagedInstance\" doit avoir un constructeur sans arguments et accessible (non privé)");
         } catch (InvocationTargetException | InstantiationException e) {
             throw new ManagedInstanceException(e);
         }
