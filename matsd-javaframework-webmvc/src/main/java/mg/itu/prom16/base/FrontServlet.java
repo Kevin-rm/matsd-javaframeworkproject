@@ -8,15 +8,15 @@ import mg.itu.prom16.annotations.RequestMapping;
 import mg.itu.prom16.base.internal.MappingHandler;
 import mg.itu.prom16.base.internal.RequestMappingInfo;
 import mg.itu.prom16.base.internal.UtilFunctions;
-import mg.itu.prom16.support.WebApplicationContainer;
 import mg.itu.prom16.exceptions.DuplicateMappingException;
+import mg.itu.prom16.exceptions.IncorrectReturnTypeException;
+import mg.itu.prom16.support.WebApplicationContainer;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.AnnotationUtils;
 import mg.matsd.javaframework.core.utils.Assert;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
@@ -93,29 +93,23 @@ public class FrontServlet extends HttpServlet {
         if (mappingHandler == null)
             printWriter.write("404 - Not Found");
         else {
-            try {
-                Object controllerInstance = mappingHandler.getControllerClass().getConstructor().newInstance();
+            Object controllerMethodResult = mappingHandler.invokeMethod(webApplicationContainer, request);
+            if (controllerMethodResult instanceof ModelView modelView) {
+                String view = modelView.getView();
 
-                Object controllerMethodResult = mappingHandler.invokeMethod(controllerInstance);
-                if (controllerMethodResult instanceof ModelView modelView) {
-                    String view = modelView.getView();
+                Assert.state(view != null, String.format(
+                    "Vous n'avez pas précisé la vue du \"ModelView\" dans la méthode \"%s\" du contrôleur \"%s\"",
+                    mappingHandler.getMethod().getName(), mappingHandler.getControllerClass().getName())
+                );
 
-                    Assert.state(view != null, String.format(
-                        "Vous n'avez pas précisé la vue du \"ModelView\" dans la méthode \"%s\" du contrôleur \"%s\"",
-                        mappingHandler.getMethod().getName(), mappingHandler.getControllerClass().getName())
-                    );
+                modelView.getData().forEach(request::setAttribute);
 
-                    modelView.getData().forEach(request::setAttribute);
-
-                    request.getRequestDispatcher(view).forward(request, response);
-                } else {
-                    response.setContentType("text/html");
-                    printWriter.print(controllerMethodResult);
-                }
-            } catch (IllegalAccessException | InvocationTargetException |
-                     InstantiationException | NoSuchMethodException e) {
-                throw new RuntimeException(e);
-            }
+                request.getRequestDispatcher(view).forward(request, response);
+            } else if (controllerMethodResult instanceof String) {
+                response.setContentType("text/html");
+                printWriter.print(controllerMethodResult);
+            } else
+                throw new IncorrectReturnTypeException(mappingHandler.getMethod());
         }
     }
 

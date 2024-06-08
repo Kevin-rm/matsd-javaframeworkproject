@@ -4,6 +4,7 @@ import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.exceptions.InvalidPackageException;
 import mg.matsd.javaframework.core.managedinstances.ManagedInstance;
 import mg.matsd.javaframework.core.managedinstances.ManagedInstanceUtils;
+import mg.matsd.javaframework.core.managedinstances.NoSuchManagedInstanceException;
 import mg.matsd.javaframework.core.utils.Assert;
 
 import java.util.HashMap;
@@ -47,7 +48,7 @@ public abstract class ManagedInstanceFactory {
         return names;
     }
 
-    public Object getManagedInstance(String id) {
+    public Object getManagedInstance(String id) throws NoSuchManagedInstanceException {
         validateId(id);
 
         return getManagedInstance(
@@ -55,7 +56,7 @@ public abstract class ManagedInstanceFactory {
         );
     }
 
-    public Object getManagedInstance(Class<?> managedInstanceClass) {
+    public Object getManagedInstance(Class<?> managedInstanceClass) throws NoSuchManagedInstanceException {
         Assert.notNull(managedInstanceClass, "La classe de la \"ManagedInstance\" ne peut pas être \"null\"");
 
         return getManagedInstance(
@@ -77,19 +78,19 @@ public abstract class ManagedInstanceFactory {
         managedInstanceDefinitionRegistry.registerManagedInstance(id, clazz, scope);
     }
 
-    public Boolean isSingleton(String id) {
+    public Boolean isSingleton(String id) throws NoSuchManagedInstanceException {
         validateId(id);
 
         return managedInstanceDefinitionRegistry.getManagedInstanceById(id).getScope() == ManagedInstance.Scope.SINGLETON;
     }
 
-    public Boolean isPrototype(String id) {
+    public Boolean isPrototype(String id) throws NoSuchManagedInstanceException {
         validateId(id);
 
         return managedInstanceDefinitionRegistry.getManagedInstanceById(id).getScope() == ManagedInstance.Scope.PROTOTYPE;
     }
 
-    public Class<?> getManagedInstanceClass(String id) {
+    public Class<?> getManagedInstanceClass(String id) throws NoSuchManagedInstanceException {
         validateId(id);
 
         return managedInstanceDefinitionRegistry.getManagedInstanceById(id).getClazz();

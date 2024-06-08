@@ -28,29 +28,28 @@ public class ManagedInstanceDefinitionRegistry {
     }
 
     Boolean containsManagedInstance(String id) {
-        for (ManagedInstance managedInstance : managedInstances)
-            if (managedInstance.getId().equals(id)) return true;
-
-        return false;
+        try {
+            getManagedInstanceById(id);
+            return true;
+        } catch (NoSuchManagedInstanceException e) {
+            return false;
+        }
     }
 
-    @Nullable
-    ManagedInstance getManagedInstanceById(String id) {
-        if (!containsManagedInstance(id))
-            throw new NoSuchManagedInstanceException(String.format("Aucune \"ManagedInstance\" trouvée avec l'identifiant : %s", id));
-
+    ManagedInstance getManagedInstanceById(String id) throws NoSuchManagedInstanceException {
         for (ManagedInstance managedInstance : managedInstances)
             if (managedInstance.getId().equals(id)) return managedInstance;
 
-        return null;
+        throw new NoSuchManagedInstanceException(String.format("Aucune \"ManagedInstance\" trouvée avec l'identifiant : %s", id));
     }
 
-    @Nullable
-    ManagedInstance getManagedInstanceByClass(Class<?> clazz) {
+    ManagedInstance getManagedInstanceByClass(Class<?> clazz) throws NoSuchManagedInstanceException {
         for (ManagedInstance managedInstance : managedInstances)
             if (managedInstance.getClazz() == clazz) return managedInstance;
 
-        return null;
+        throw new NoSuchManagedInstanceException(String.format(
+            "Aucune \"ManagedInstance\" trouvée ayant comme nom de classe : %s", clazz.getName())
+        );
     }
 
     void doScanComponents(String packageName) {
