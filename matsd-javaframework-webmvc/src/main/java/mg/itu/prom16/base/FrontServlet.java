@@ -74,26 +74,29 @@ public class FrontServlet extends HttpServlet {
                 mappingHandlerMap.put(requestMappingInfo, new MappingHandler(controllerClass, method));
             }
         }
-
     }
 
     @Nullable
-    private MappingHandler resolveMappingHandler(HttpServletRequest request) {
-        for (Map.Entry<RequestMappingInfo, MappingHandler> entry : mappingHandlerMap.entrySet())
-            if (entry.getKey().matches(request)) return entry.getValue();
-
-        return null;
+    private Map.Entry<RequestMappingInfo, MappingHandler> resolveMappingHandler(HttpServletRequest request) {
+        return mappingHandlerMap.entrySet().stream()
+            .filter(entry -> entry.getKey().matches(request))
+            .findFirst()
+            .orElse(null);
     }
 
     protected final void processRequest(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {
         PrintWriter printWriter = response.getWriter();
 
-        MappingHandler mappingHandler = resolveMappingHandler(request);
-        if (mappingHandler == null)
+        Map.Entry<RequestMappingInfo, MappingHandler> mappingHandlerEntry = resolveMappingHandler(request);
+        if (mappingHandlerEntry == null)
             printWriter.write("404 - Not Found");
         else {
-            Object controllerMethodResult = mappingHandler.invokeMethod(webApplicationContainer, request);
+            MappingHandler mappingHandler = mappingHandlerEntry.getValue();
+
+            Object controllerMethodResult = mappingHandler.invokeMethod(
+                webApplicationContainer, request, mappingHandlerEntry.getKey()
+            );
             if (controllerMethodResult instanceof ModelView modelView) {
                 String view = modelView.getView();
 
@@ -108,8 +111,7 @@ public class FrontServlet extends HttpServlet {
             } else if (controllerMethodResult instanceof String) {
                 response.setContentType("text/html");
                 printWriter.print(controllerMethodResult);
-            } else
-                throw new InvalidReturnTypeException(mappingHandler.getMethod());
+            } else throw new InvalidReturnTypeException(mappingHandler.getMethod());
         }
     }
 

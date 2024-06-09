@@ -3,6 +3,7 @@ package mg.itu.prom16.base.internal;
 import jakarta.servlet.http.HttpServletRequest;
 import mg.itu.prom16.annotations.*;
 import mg.itu.prom16.exceptions.MissingServletRequestParameterException;
+import mg.itu.prom16.exceptions.UndefinedPathVariableException;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.AnnotationUtils;
 import mg.matsd.javaframework.core.utils.ClassUtils;
@@ -43,7 +44,7 @@ public final class UtilFunctions {
 
     @Nullable
     public static Object getRequestParameterValue(
-        Class<?> parameterType,
+        Class<?>  parameterType,
         Parameter parameter,
         HttpServletRequest httpServletRequest
     ) {
@@ -63,5 +64,21 @@ public final class UtilFunctions {
         }
 
         return StringConverter.convert(parameterValue, parameterType);
+    }
+
+    public static Object getPathVariableValue(
+        Class<?>  parameterType,
+        Parameter parameter,
+        RequestMappingInfo requestMappingInfo,
+        HttpServletRequest httpServletRequest
+    ) {
+        PathVariable pathVariable = parameter.getAnnotation(PathVariable.class);
+        String pathVariableName = StringUtils.hasText(pathVariable.value()) ? pathVariable.value() : parameter.getName();
+
+        Map<String, String> pathVariables = requestMappingInfo.extractPathVariables(httpServletRequest);
+        if (!pathVariables.containsKey(pathVariableName))
+            throw new UndefinedPathVariableException(pathVariableName, requestMappingInfo);
+
+        return StringConverter.convert(pathVariables.get(pathVariableName), parameterType);
     }
 }

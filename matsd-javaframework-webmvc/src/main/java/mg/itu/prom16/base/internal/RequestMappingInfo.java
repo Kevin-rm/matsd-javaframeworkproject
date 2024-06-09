@@ -2,19 +2,26 @@ package mg.itu.prom16.base.internal;
 
 import jakarta.servlet.http.HttpServletRequest;
 import mg.itu.prom16.base.RequestMethod;
+import mg.itu.prom16.exceptions.DuplicatePathVariableNameException;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.core.utils.StringUtils;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class RequestMappingInfo {
     private String path;
     private List<RequestMethod> methods;
+    private List<String> pathVariableNames;
+    private Pattern pathPattern;
 
     public RequestMappingInfo(@Nullable String path, @Nullable List<RequestMethod> methods) {
         this.setPath(path)
-            .setMethods(methods);
+            .setMethods(methods)
+            .setPathVariableNames()
+            .setPathPattern();
     }
 
     public String getPath() {
@@ -53,13 +60,53 @@ public class RequestMappingInfo {
         return this;
     }
 
+    public List<String> getPathVariableNames() {
+        return pathVariableNames;
+    }
+
+    private RequestMappingInfo setPathVariableNames() {
+        pathVariableNames = new ArrayList<>();
+
+        Matcher matcher = Pattern.compile("\\{([^/]+?)\\}").matcher(path);
+        while (matcher.find()) {
+            String pathVariableName = matcher.group(1);
+            if (pathVariableNames.contains(pathVariableName))
+                throw new DuplicatePathVariableNameException(this, pathVariableName);
+
+            pathVariableNames.add(pathVariableName);
+        }
+
+        return this;
+    }
+
+    private RequestMappingInfo setPathPattern() {
+        pathPattern = Pattern.compile(
+            "^" + path.replaceAll("\\{[^/]+?\\}", "([^/]+)") + "$"
+        );
+
+        return this;
+    }
+
     public boolean matches(HttpServletRequest httpServletRequest) {
         Assert.notNull(httpServletRequest, "L'argument httpServletRequest ne peut pas être \"null\"");
 
-        return path.equals(httpServletRequest.getServletPath()) &&
+        return pathPattern.matcher(httpServletRequest.getServletPath()).matches() &&
                methods.contains(
                    RequestMethod.valueOf(httpServletRequest.getMethod())
                );
+    }
+
+    public Map<String, String> extractPathVariables(HttpServletRequest httpServletRequest) {
+        Assert.notNull(httpServletRequest, "L'argument httpServletRequest ne peut pas être \"null\"");
+
+        Matcher matcher = pathPattern.matcher(httpServletRequest.getServletPath());
+        if (!matcher.matches()) return Collections.emptyMap();
+
+        Map<String, String> pathVariables = new HashMap<>();
+        for (int i = 0; i < pathVariableNames.size(); i++)
+            pathVariables.put(pathVariableNames.get(i), matcher.group(i + 1));
+
+        return pathVariables;
     }
 
     @Override

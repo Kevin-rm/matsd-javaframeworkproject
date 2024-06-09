@@ -2,6 +2,7 @@ package mg.itu.prom16.base.internal;
 
 import com.sun.jdi.InternalException;
 import jakarta.servlet.http.HttpServletRequest;
+import mg.itu.prom16.annotations.PathVariable;
 import mg.itu.prom16.annotations.RequestParameter;
 import mg.itu.prom16.support.WebApplicationContainer;
 import mg.matsd.javaframework.core.utils.Assert;
@@ -50,7 +51,8 @@ public class MappingHandler {
 
     public Object invokeMethod(
         WebApplicationContainer webApplicationContainer,
-        HttpServletRequest httpServletRequest
+        HttpServletRequest httpServletRequest,
+        RequestMappingInfo requestMappingInfo
     ) {
         try {
             Object[] args = new Object[method.getParameterCount()];
@@ -64,6 +66,8 @@ public class MappingHandler {
                     args[i] = httpServletRequest;
                 else if (parameter.isAnnotationPresent(RequestParameter.class))
                     args[i] = UtilFunctions.getRequestParameterValue(parameterType, parameter, httpServletRequest);
+                else if (parameter.isAnnotationPresent(PathVariable.class))
+                    args[i] = UtilFunctions.getPathVariableValue(parameterType, parameter, requestMappingInfo, httpServletRequest);
             }
 
             return method.invoke(
