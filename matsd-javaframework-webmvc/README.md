@@ -2,17 +2,17 @@
 
 The webmvc project is a lightweight MVC framework based on servlets in Java, designed to simplify web application development.
 
-# Description
+## Description
 
 This framework provides an organized structure for web application development following the MVC (Model-View-Controller) pattern. It facilitates separation of concerns by dividing the application into three main parts : models for business logic, views for user interface, and controllers for handling HTTP requests.
 
-# Getting Started
+## Getting Started
 
-## 1. Integration
+### 1. Integration
 
-Begin by importing the `matsd-javaframework-webmvc` and the `matsd-javaframework-core` as dependencies into your Java web project. This can be achieved by including the framework JAR file in your project's build path.
+Begin by importing the [matsd-javaframework-core](https://github.com/Kevin-rm/matsd-javaframeworkproject/tree/main/matsd-javaframework-core) and the [jakarta.servlet-api](https://jakarta.ee/specifications/servlet/5.0) as dependencies into your Java web project. This can be achieved by including the framework JAR file in your project's build path.
 
-## 2. Configuration
+### 2. Configuration
 
 Configure the servlet mapping in your web.xml file to ensure proper routing of HTTP requests :
 
@@ -20,6 +20,12 @@ Configure the servlet mapping in your web.xml file to ensure proper routing of H
 <servlet>
     <servlet-name>frontServlet</servlet-name>
     <servlet-class>mg.itu.prom16.base.FrontServlet</servlet-class>
+
+    <!-- The location of the container configuration file (required) -->
+    <init-param>
+        <param-name>containerConfigLocation</param-name>
+        <param-value>/WEB-INF/container.xml</param-value>
+    </init-param>
 </servlet>
 
 <servlet-mapping>
@@ -28,16 +34,19 @@ Configure the servlet mapping in your web.xml file to ensure proper routing of H
 </servlet-mapping>
 ```
 
-## 3. Define your controllers
+### 3. Define your controllers
 
-First in your web.xml file, specify the package to scan for controllers using context-param :
+Specify the package to scan for controllers in the configuration file located at the path defined by `containerConfigLocation` (i.e., /WEB-INF/container.xml). Below is an example demonstrating how to configure component scanning :
 
 ```xml
-<context-param>
-    <param-name>controller-package</param-name>
-    <!-- Replace the value below with the package name of your controllers -->
-    <param-value>com.example.controllers</param-value>
-</context-param>
+<managed-instances xmlns="http://www.matsd.mg/javaframework/schema/managedinstances"
+                   xmlns:container="http://www.matsd.mg/javaframework/schema/container">
+
+    <!-- You can declare managedinstances here -->
+
+    <!-- Define component scanning to automatically detect and register controllers -->
+    <container:component-scan base-package="com.example.controllers"/>
+</managed-instances>
 ```
 Then, annotate your Java class with the `@Controller` annotation to recognize it as a controller. Here's an example:
 

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:container="http://www.matsd.mg/javaframework/schema/container"
+           targetNamespace="http://www.matsd.mg/javaframework/schema/managedinstances"
+           elementFormDefault="qualified">
+
+    <xs:import namespace="http://www.matsd.mg/javaframework/schema/container"
+               schemaLocation="container.xsd"/>
+
+    <xs:element name="managed-instances">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="managed-instance" minOccurs="0" maxOccurs="unbounded">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="property" minOccurs="0" maxOccurs="unbounded">
+                                <xs:complexType>
+                                    <xs:simpleContent>
+                                        <xs:extension base="xs:string">
+                                            <xs:attribute name="name" type="xs:string" use="required"/>
+                                            <xs:attribute name="ref" type="xs:string"/>
+                                            <xs:attribute name="value" type="xs:string"/>
+                                        </xs:extension>
+                                    </xs:simpleContent>
+                                </xs:complexType>
+                            </xs:element>
+                        </xs:sequence>
+                        <xs:attribute name="id" type="xs:string"/>
+                        <xs:attribute name="class" type="xs:string" use="required"/>
+                        <xs:attribute name="scope" type="xs:string"/>
+                    </xs:complexType>
+                </xs:element>
+
+                <xs:element ref="container:component-scan" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>

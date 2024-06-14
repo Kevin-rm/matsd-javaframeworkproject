@@ -8,7 +8,7 @@ import java.util.Map;
 
 public class ModelView {
     private String view;
-    private Map<String, Object> data;
+    private final Map<String, Object> data;
 
     public ModelView() {
         data = new HashMap<>();
@@ -29,6 +29,9 @@ public class ModelView {
         view = view.strip().replaceAll("^/+", "/");
         if (!view.startsWith("/"))
             view = "/" + view;
+
+        if (!view.endsWith(".jsp"))
+            view += ".jsp";
 
         this.view = view;
         return this;

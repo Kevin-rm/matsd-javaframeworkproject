@@ -1,12 +1,15 @@
 package mg.itu.prom16.base.internal;
 
 import com.sun.jdi.InternalException;
-import mg.itu.prom16.base.ModelView;
-import mg.itu.prom16.exceptions.IncorrectReturnTypeException;
+import jakarta.servlet.http.HttpServletRequest;
+import mg.itu.prom16.annotations.PathVariable;
+import mg.itu.prom16.annotations.RequestParameter;
+import mg.itu.prom16.support.WebApplicationContainer;
 import mg.matsd.javaframework.core.utils.Assert;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 
 public class MappingHandler {
     private Class<?> controllerClass;
@@ -46,21 +49,30 @@ public class MappingHandler {
         return this;
     }
 
-    public Object invokeMethod(Object controllerInstance) {
-        Assert.notNull(controllerInstance);
-
-        if (controllerInstance.getClass() != controllerClass)
-            throw new InternalException();
-
+    public Object invokeMethod(
+        WebApplicationContainer webApplicationContainer,
+        HttpServletRequest httpServletRequest,
+        RequestMappingInfo requestMappingInfo
+    ) {
         try {
-            Class<?> returnType = method.getReturnType();
-            if (
-                returnType != ModelView.class &&
-                returnType != String.class
-            )
-                throw new IncorrectReturnTypeException(method);
+            Object[] args = new Object[method.getParameterCount()];
 
-            return method.invoke(controllerInstance);
+            Parameter[] parameters = method.getParameters();
+            for (int i = 0; i < parameters.length; i++) {
+                Parameter parameter     = parameters[i];
+                Class<?>  parameterType = parameter.getType();
+
+                if (parameterType == HttpServletRequest.class)
+                    args[i] = httpServletRequest;
+                else if (parameter.isAnnotationPresent(RequestParameter.class))
+                    args[i] = UtilFunctions.getRequestParameterValue(parameterType, parameter, httpServletRequest);
+                else if (parameter.isAnnotationPresent(PathVariable.class))
+                    args[i] = UtilFunctions.getPathVariableValue(parameterType, parameter, requestMappingInfo, httpServletRequest);
+            }
+
+            return method.invoke(
+                webApplicationContainer.getManagedInstance(controllerClass), args
+            );
         } catch (IllegalAccessException e) {
             throw new InternalException();
         } catch (InvocationTargetException e) {
