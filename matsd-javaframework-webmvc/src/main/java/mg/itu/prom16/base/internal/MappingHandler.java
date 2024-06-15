@@ -70,9 +70,7 @@ public class MappingHandler {
                     args[i] = UtilFunctions.getPathVariableValue(parameterType, parameter, requestMappingInfo, httpServletRequest);
             }
 
-            return method.invoke(
-                webApplicationContainer.getManagedInstance(controllerClass), args
-            );
+            return method.invoke(webApplicationContainer.getManagedInstance(controllerClass), args);
         } catch (IllegalAccessException e) {
             throw new InternalException();
         } catch (InvocationTargetException e) {
