@@ -2,10 +2,13 @@ package mg.itu.prom16.base.internal;
 
 import com.sun.jdi.InternalException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.annotations.PathVariable;
 import mg.itu.prom16.annotations.RequestParameter;
+import mg.itu.prom16.exceptions.UnsupportedParameterTypeException;
 import mg.itu.prom16.support.WebApplicationContainer;
 import mg.matsd.javaframework.core.utils.Assert;
+import mg.matsd.javaframework.core.utils.ClassUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -51,8 +54,9 @@ public class MappingHandler {
 
     public Object invokeMethod(
         WebApplicationContainer webApplicationContainer,
-        HttpServletRequest httpServletRequest,
-        RequestMappingInfo requestMappingInfo
+        HttpServletRequest  httpServletRequest,
+        HttpServletResponse httpServletResponse,
+        RequestMappingInfo  requestMappingInfo
     ) {
         try {
             Object[] args = new Object[method.getParameterCount()];
@@ -64,10 +68,15 @@ public class MappingHandler {
 
                 if (parameterType == HttpServletRequest.class)
                     args[i] = httpServletRequest;
+                else if (parameterType == HttpServletResponse.class)
+                    args[i] = httpServletResponse;
                 else if (parameter.isAnnotationPresent(RequestParameter.class))
                     args[i] = UtilFunctions.getRequestParameterValue(parameterType, parameter, httpServletRequest);
                 else if (parameter.isAnnotationPresent(PathVariable.class))
                     args[i] = UtilFunctions.getPathVariableValue(parameterType, parameter, requestMappingInfo, httpServletRequest);
+                else if (ClassUtils.isStandardClass(parameterType))
+                    throw new UnsupportedParameterTypeException(parameter);
+                else args[i] = UtilFunctions.bindRequestParameters(parameterType, httpServletRequest);
             }
 
             return method.invoke(webApplicationContainer.getManagedInstance(controllerClass), args);

@@ -95,7 +95,7 @@ public class FrontServlet extends HttpServlet {
             MappingHandler mappingHandler = mappingHandlerEntry.getValue();
 
             Object controllerMethodResult = mappingHandler.invokeMethod(
-                webApplicationContainer, request, mappingHandlerEntry.getKey()
+                webApplicationContainer, request, response, mappingHandlerEntry.getKey()
             );
             if (controllerMethodResult instanceof ModelView modelView) {
                 String view = modelView.getView();
@@ -108,9 +108,16 @@ public class FrontServlet extends HttpServlet {
                 modelView.getData().forEach(request::setAttribute);
 
                 request.getRequestDispatcher(view).forward(request, response);
-            } else if (controllerMethodResult instanceof String) {
-                response.setContentType("text/html");
-                printWriter.print(controllerMethodResult);
+            } else if (controllerMethodResult instanceof String string) {
+                string = String.format("/%s", string).strip();
+                if (!string.endsWith(".jsp")) string += ".jsp";
+
+                if (getServletContext().getResource(string) != null)
+                    request.getRequestDispatcher(string).forward(request, response);
+                else {
+                    response.setContentType("text/html");
+                    printWriter.print(controllerMethodResult);
+                }
             } else throw new InvalidReturnTypeException(mappingHandler.getMethod());
         }
     }

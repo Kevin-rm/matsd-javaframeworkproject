@@ -11,10 +11,8 @@ import mg.matsd.javaframework.core.utils.ClassUtils;
 import mg.matsd.javaframework.core.utils.StringUtils;
 import mg.matsd.javaframework.core.utils.converter.StringConverter;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -55,7 +53,7 @@ public final class UtilFunctions {
             return getRequestParameterMap(parameter, httpServletRequest);
 
         RequestParameter requestParameter = parameter.getAnnotation(RequestParameter.class);
-        String parameterName  = StringUtils.hasText(requestParameter.name()) ? requestParameter.name() : parameter.getName();
+        String parameterName = StringUtils.hasText(requestParameter.name()) ? requestParameter.name() : parameter.getName();
 
         String parameterValue = httpServletRequest.getParameter(parameterName);
         if (parameterValue == null || StringUtils.isBlank(parameterValue)) {
@@ -66,7 +64,7 @@ public final class UtilFunctions {
             else if (parameterType.isPrimitive())
                 return ClassUtils.getPrimitiveDefaultValue(parameterType);
             else if (!ClassUtils.isPrimitiveWrapper(parameterType) && parameterType != String.class)
-                throw new UnsupportedParameterTypeException(parameterType, parameterName);
+                throw new UnsupportedParameterTypeException(parameter);
 
             return null;
         }
@@ -88,6 +86,31 @@ public final class UtilFunctions {
             throw new UndefinedPathVariableException(pathVariableName, requestMappingInfo);
 
         return StringConverter.convert(pathVariables.get(pathVariableName), parameterType);
+    }
+
+    public static Object bindRequestParameters(Class<?> parameterType, HttpServletRequest request) {
+        try {
+            Object result = parameterType.getConstructor().newInstance();
+
+            for (Field field : parameterType.getDeclaredFields()) {
+                field.setAccessible(true);
+                Class<?> fieldType = field.getType();
+
+                String requestParameterValue = request.getParameter(field.getName());
+                if (requestParameterValue == null || StringUtils.isBlank(requestParameterValue)) {
+                    field.set(result,
+                        fieldType.isPrimitive() ? ClassUtils.getPrimitiveDefaultValue(fieldType) : null
+                    );
+                    continue;
+                }
+
+                field.set(result, StringConverter.convert(requestParameterValue, fieldType));
+            }
+
+            return result;
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static Map<String, String[]> getRequestParameterMap(
