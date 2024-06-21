@@ -3,6 +3,7 @@ package mg.itu.prom16.base.internal;
 import com.sun.jdi.InternalException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import mg.itu.prom16.annotations.FromRequestParameters;
 import mg.itu.prom16.annotations.PathVariable;
 import mg.itu.prom16.annotations.RequestParameter;
 import mg.itu.prom16.exceptions.UnsupportedParameterTypeException;
@@ -74,9 +75,9 @@ public class MappingHandler {
                     args[i] = UtilFunctions.getRequestParameterValue(parameterType, parameter, httpServletRequest);
                 else if (parameter.isAnnotationPresent(PathVariable.class))
                     args[i] = UtilFunctions.getPathVariableValue(parameterType, parameter, requestMappingInfo, httpServletRequest);
-                else if (ClassUtils.isStandardClass(parameterType))
-                    throw new UnsupportedParameterTypeException(parameter);
-                else args[i] = UtilFunctions.bindRequestParameters(parameterType, httpServletRequest);
+                else if (parameter.isAnnotationPresent(FromRequestParameters.class))
+                    args[i] = UtilFunctions.bindRequestParameters(parameterType, parameter, httpServletRequest);
+                else throw new UnsupportedParameterTypeException(parameter);
             }
 
             return method.invoke(webApplicationContainer.getManagedInstance(controllerClass), args);

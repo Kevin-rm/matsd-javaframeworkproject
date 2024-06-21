@@ -13,6 +13,7 @@ import mg.matsd.javaframework.core.utils.converter.StringConverter;
 
 import java.lang.reflect.*;
 import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -88,15 +89,21 @@ public final class UtilFunctions {
         return StringConverter.convert(pathVariables.get(pathVariableName), parameterType);
     }
 
-    public static Object bindRequestParameters(Class<?> parameterType, HttpServletRequest request) {
+    public static Object bindRequestParameters(Class<?> parameterType, Parameter parameter, HttpServletRequest httpServletRequest) {
         try {
             Object result = parameterType.getConstructor().newInstance();
+
+            String modelName = null;
+            if (parameter.isAnnotationPresent(FromRequestParameters.class))
+                modelName = parameter.getAnnotation(FromRequestParameters.class).value();
+            if (modelName == null || StringUtils.isBlank(modelName))
+                modelName = parameter.getName();
 
             for (Field field : parameterType.getDeclaredFields()) {
                 field.setAccessible(true);
                 Class<?> fieldType = field.getType();
 
-                String requestParameterValue = request.getParameter(field.getName());
+                String requestParameterValue = httpServletRequest.getParameter(modelName + "." + field.getName());
                 if (requestParameterValue == null || StringUtils.isBlank(requestParameterValue)) {
                     field.set(result,
                         fieldType.isPrimitive() ? ClassUtils.getPrimitiveDefaultValue(fieldType) : null
