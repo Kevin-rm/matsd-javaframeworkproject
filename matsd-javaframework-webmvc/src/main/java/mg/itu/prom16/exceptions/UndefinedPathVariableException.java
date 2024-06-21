@@ -8,7 +8,7 @@ public class UndefinedPathVariableException extends BaseException {
 
     public UndefinedPathVariableException(String undefinedPathVariable, RequestMappingInfo requestMappingInfo) {
         super(String.format(
-            "Le paramètre \"%s\" ne figure pas parmi la liste des paramètres %s du %s",
+            "Le paramètre de chemin \"%s\" ne figure pas parmi la liste des paramètres disponibles %s du %s",
             undefinedPathVariable, requestMappingInfo.getPathVariableNames(), requestMappingInfo
         ), PREFIX);
     }

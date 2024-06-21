@@ -5,6 +5,8 @@ import java.io.InputStream;
 public class ClassPathResource extends Resource {
     public ClassPathResource(String name) {
         super(name);
+
+        initializeInputStream();
     }
 
     @Override
