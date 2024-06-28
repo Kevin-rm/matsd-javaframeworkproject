@@ -12,8 +12,6 @@ import mg.matsd.javaframework.core.utils.StringUtils;
 import mg.matsd.javaframework.core.utils.converter.StringConverter;
 
 import java.lang.reflect.*;
-import java.util.Arrays;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -82,7 +80,7 @@ public final class UtilFunctions {
         PathVariable pathVariable = parameter.getAnnotation(PathVariable.class);
         String pathVariableName = StringUtils.hasText(pathVariable.value()) ? pathVariable.value() : parameter.getName();
 
-        Map<String, String> pathVariables = requestMappingInfo.extractPathVariables(httpServletRequest);
+        Map<String, String> pathVariables = requestMappingInfo.extractPathVariablesValues(httpServletRequest);
         if (!pathVariables.containsKey(pathVariableName))
             throw new UndefinedPathVariableException(pathVariableName, requestMappingInfo);
 

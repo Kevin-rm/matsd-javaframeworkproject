@@ -9,7 +9,6 @@ import mg.itu.prom16.annotations.RequestParameter;
 import mg.itu.prom16.exceptions.UnsupportedParameterTypeException;
 import mg.itu.prom16.support.WebApplicationContainer;
 import mg.matsd.javaframework.core.utils.Assert;
-import mg.matsd.javaframework.core.utils.ClassUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

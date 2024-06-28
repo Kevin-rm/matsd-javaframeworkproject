@@ -41,7 +41,6 @@ public class FrontServlet extends HttpServlet {
         );
 
         mappingHandlerMap = new HashMap<>();
-
         for (Class<?> controllerClass : webApplicationContainer.retrieveControllerClasses()) {
             String pathPrefix = "";
             List<RequestMethod> sharedRequestMethods = new ArrayList<>();
