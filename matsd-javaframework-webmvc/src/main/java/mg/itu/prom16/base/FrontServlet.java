@@ -10,6 +10,7 @@ import mg.itu.prom16.base.internal.RequestMappingInfo;
 import mg.itu.prom16.base.internal.UtilFunctions;
 import mg.itu.prom16.exceptions.DuplicateMappingException;
 import mg.itu.prom16.exceptions.InvalidReturnTypeException;
+import mg.itu.prom16.http.RequestMethod;
 import mg.itu.prom16.support.WebApplicationContainer;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.AnnotationUtils;

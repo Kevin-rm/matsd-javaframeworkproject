@@ -6,7 +6,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.annotations.FromRequestParameters;
 import mg.itu.prom16.annotations.PathVariable;
 import mg.itu.prom16.annotations.RequestParameter;
-import mg.itu.prom16.exceptions.UnsupportedParameterTypeException;
+import mg.itu.prom16.exceptions.UnexpectedParameterException;
+import mg.itu.prom16.http.Session;
+import mg.itu.prom16.http.SessionImpl;
 import mg.itu.prom16.support.WebApplicationContainer;
 import mg.matsd.javaframework.core.utils.Assert;
 
@@ -70,13 +72,15 @@ public class MappingHandler {
                     args[i] = httpServletRequest;
                 else if (parameterType == HttpServletResponse.class)
                     args[i] = httpServletResponse;
+                else if (Session.class.isAssignableFrom(parameterType))
+                    args[i] = new SessionImpl(httpServletRequest.getSession());
                 else if (parameter.isAnnotationPresent(RequestParameter.class))
                     args[i] = UtilFunctions.getRequestParameterValue(parameterType, parameter, httpServletRequest);
                 else if (parameter.isAnnotationPresent(PathVariable.class))
                     args[i] = UtilFunctions.getPathVariableValue(parameterType, parameter, requestMappingInfo, httpServletRequest);
                 else if (parameter.isAnnotationPresent(FromRequestParameters.class))
                     args[i] = UtilFunctions.bindRequestParameters(parameterType, parameter, httpServletRequest);
-                else throw new UnsupportedParameterTypeException(parameter);
+                else throw new UnexpectedParameterException(parameter);
             }
 
             return method.invoke(webApplicationContainer.getManagedInstance(controllerClass), args);

@@ -4,7 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import mg.itu.prom16.annotations.*;
 import mg.itu.prom16.exceptions.MissingServletRequestParameterException;
 import mg.itu.prom16.exceptions.UndefinedPathVariableException;
-import mg.itu.prom16.exceptions.UnsupportedParameterTypeException;
+import mg.itu.prom16.exceptions.UnexpectedParameterException;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.AnnotationUtils;
 import mg.matsd.javaframework.core.utils.ClassUtils;
@@ -63,7 +63,7 @@ public final class UtilFunctions {
             else if (parameterType.isPrimitive())
                 return ClassUtils.getPrimitiveDefaultValue(parameterType);
             else if (!ClassUtils.isPrimitiveWrapper(parameterType) && parameterType != String.class)
-                throw new UnsupportedParameterTypeException(parameter);
+                throw new UnexpectedParameterException(parameter);
 
             return null;
         }
