@@ -85,7 +85,7 @@ public class FrontServlet extends HttpServlet {
     }
 
     private void handleStringResult(
-        HttpServletRequest httpServletRequest,
+        HttpServletRequest  httpServletRequest,
         HttpServletResponse httpServletResponse,
         PrintWriter printWriter,
         String originalString
@@ -102,7 +102,7 @@ public class FrontServlet extends HttpServlet {
         String[] originalStringParts = originalString.split(":", 2);
         if (!originalStringParts[0].stripTrailing().equalsIgnoreCase("redirect")) {
             httpServletResponse.setContentType("text/html");
-            printWriter.print(string);
+            printWriter.print(originalString);
         }
 
         originalStringParts[1] = originalStringParts[1].stripLeading();
