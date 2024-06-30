@@ -23,7 +23,7 @@ public class ModelView {
         return view;
     }
 
-    public ModelView setView(String view) {
+    public void setView(String view) {
         Assert.notBlank(view, false, "La vue ne peut pas être vide ou \"null\"");
 
         view = view.strip().replaceAll("^/+", "/");
@@ -34,7 +34,6 @@ public class ModelView {
             view += ".jsp";
 
         this.view = view;
-        return this;
     }
 
     public Map<String, Object> getData() {

@@ -53,6 +53,6 @@ public class SessionImpl implements Session {
     }
 
     private static void validateSessionKey(String key) {
-        Assert.notBlank("La clé de session ne peut pas être vide ou \"null\"", false);
+        Assert.notBlank(key, false, "La clé de session ne peut pas être vide ou \"null\"");
     }
 }

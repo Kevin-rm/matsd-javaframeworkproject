@@ -89,37 +89,41 @@ public class FrontServlet extends HttpServlet {
         PrintWriter printWriter = response.getWriter();
 
         Map.Entry<RequestMappingInfo, MappingHandler> mappingHandlerEntry = resolveMappingHandler(request);
-        if (mappingHandlerEntry == null)
+        if (mappingHandlerEntry == null) {
             printWriter.write("404 - Not Found");
-        else {
-            MappingHandler mappingHandler = mappingHandlerEntry.getValue();
-
-            Object controllerMethodResult = mappingHandler.invokeMethod(
-                webApplicationContainer, request, response, mappingHandlerEntry.getKey()
-            );
-            if (controllerMethodResult instanceof ModelView modelView) {
-                String view = modelView.getView();
-
-                Assert.state(view != null, String.format(
-                    "Vous n'avez pas précisé la vue du \"ModelView\" dans la méthode \"%s\" du contrôleur \"%s\"",
-                    mappingHandler.getMethod().getName(), mappingHandler.getControllerClass().getName())
-                );
-
-                modelView.getData().forEach(request::setAttribute);
-
-                request.getRequestDispatcher(view).forward(request, response);
-            } else if (controllerMethodResult instanceof String string) {
-                string = String.format("/%s", string).strip();
-                if (!string.endsWith(".jsp")) string += ".jsp";
-
-                if (getServletContext().getResource(string) != null)
-                    request.getRequestDispatcher(string).forward(request, response);
-                else {
-                    response.setContentType("text/html");
-                    printWriter.print(controllerMethodResult);
-                }
-            } else throw new InvalidReturnTypeException(mappingHandler.getMethod());
+            return;
         }
+
+        MappingHandler mappingHandler = mappingHandlerEntry.getValue();
+
+        Object controllerMethodResult = mappingHandler.invokeMethod(
+            webApplicationContainer, request, response, mappingHandlerEntry.getKey()
+        );
+        if (controllerMethodResult instanceof ModelView modelView) {
+            String view = modelView.getView();
+
+            Assert.state(view != null, String.format(
+                "Vous n'avez pas précisé la vue du \"ModelView\" dans la méthode \"%s\" du contrôleur \"%s\"",
+                mappingHandler.getMethod().getName(), mappingHandler.getControllerClass().getName())
+            );
+
+            modelView.getData().forEach(request::setAttribute);
+
+            request.getRequestDispatcher(view).forward(request, response);
+        } else if (controllerMethodResult instanceof RedirectView redirectView) {
+            System.out.println(redirectView.buildCompleteUrl(request.getContextPath()));
+            response.sendRedirect(redirectView.buildCompleteUrl(request.getContextPath()));
+        } else if (controllerMethodResult instanceof String string) {
+            string = String.format("/%s", string).strip();
+            if (!string.endsWith(".jsp")) string += ".jsp";
+
+            if (getServletContext().getResource(string) != null)
+                request.getRequestDispatcher(string).forward(request, response);
+            else {
+                response.setContentType("text/html");
+                printWriter.print(controllerMethodResult);
+            }
+        } else throw new InvalidReturnTypeException(mappingHandler.getMethod());
     }
 
     @Override
