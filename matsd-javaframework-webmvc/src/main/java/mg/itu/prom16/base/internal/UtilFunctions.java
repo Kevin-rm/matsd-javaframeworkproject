@@ -88,28 +88,37 @@ public final class UtilFunctions {
     }
 
     public static Object bindRequestParameters(Class<?> parameterType, Parameter parameter, HttpServletRequest httpServletRequest) {
+        String modelName = null;
+        if (parameter.isAnnotationPresent(FromRequestParameters.class))
+            modelName = parameter.getAnnotation(FromRequestParameters.class).value();
+        if (modelName == null || StringUtils.isBlank(modelName))
+            modelName = parameter.getName();
+
+        return instantiateModelFromRequest(parameterType, modelName, httpServletRequest);
+    }
+
+    private static Object instantiateModelFromRequest(Class<?> clazz, String modelName, HttpServletRequest httpServletRequest) {
         try {
-            Object result = parameterType.getConstructor().newInstance();
+            Object result = clazz.getConstructor().newInstance();
 
-            String modelName = null;
-            if (parameter.isAnnotationPresent(FromRequestParameters.class))
-                modelName = parameter.getAnnotation(FromRequestParameters.class).value();
-            if (modelName == null || StringUtils.isBlank(modelName))
-                modelName = parameter.getName();
-
-            for (Field field : parameterType.getDeclaredFields()) {
+            for (Field field : clazz.getDeclaredFields()) {
                 field.setAccessible(true);
                 Class<?> fieldType = field.getType();
 
-                String requestParameterValue = httpServletRequest.getParameter(modelName + "." + field.getName());
-                if (requestParameterValue == null || StringUtils.isBlank(requestParameterValue)) {
-                    field.set(result,
-                        fieldType.isPrimitive() ? ClassUtils.getPrimitiveDefaultValue(fieldType) : null
-                    );
-                    continue;
-                }
+                String requestParameterName = modelName + ".";
+                BindRequestParameter bindRequestParameter = field.getAnnotation(BindRequestParameter.class);
+                requestParameterName += bindRequestParameter != null && StringUtils.hasText(bindRequestParameter.value()) ?
+                    bindRequestParameter.value() : field.getName();
 
-                field.set(result, StringConverter.convert(requestParameterValue, fieldType));
+                String requestParameterValue = httpServletRequest.getParameter(requestParameterName);
+                if (requestParameterValue == null || StringUtils.isBlank(requestParameterValue)) continue;
+
+                if (
+                    ClassUtils.isPrimitiveOrWrapper(fieldType) ||
+                    ClassUtils.isStandardClass(fieldType)      ||
+                    fieldType == String.class
+                )    field.set(result, StringConverter.convert(requestParameterValue, fieldType));
+                else field.set(result, instantiateModelFromRequest(fieldType, field.getName(), httpServletRequest));
             }
 
             return result;
@@ -133,8 +142,7 @@ public final class UtilFunctions {
                 typeArguments.length != 2        ||
                 typeArguments[0] != String.class ||
                 typeArguments[1] != String[].class
-            )
-                throw illegalArgumentException;
+            ) throw illegalArgumentException;
 
             return httpServletRequest.getParameterMap();
         }

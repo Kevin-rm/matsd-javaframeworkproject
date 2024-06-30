@@ -6,11 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.PARAMETER)
-public @interface RequestParameter {
-    String  name()         default "";
-
-    String  defaultValue() default "";
-
-    boolean required()     default false;
+@Target(ElementType.FIELD)
+public @interface BindRequestParameter {
+    String value();
 }

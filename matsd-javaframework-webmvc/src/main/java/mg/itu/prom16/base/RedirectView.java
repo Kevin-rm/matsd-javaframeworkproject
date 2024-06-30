@@ -57,11 +57,13 @@ public class RedirectView {
         return this;
     }
 
-    public void appendCurrentQueryString(HttpServletRequest request) {
+    public RedirectView appendCurrentQueryString(HttpServletRequest request) {
          Assert.notNull(request, "L'argument request ne peut pas être \"null\"");
 
          Map<String, String[]> parameterMap = request.getParameterMap();
          parameterMap.forEach(this::withParameter);
+
+         return this;
     }
 
     String buildCompleteUrl(String contextPath) {
