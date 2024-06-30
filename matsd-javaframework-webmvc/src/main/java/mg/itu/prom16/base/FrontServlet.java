@@ -84,6 +84,40 @@ public class FrontServlet extends HttpServlet {
             .orElse(null);
     }
 
+    private void handleStringResult(
+        HttpServletRequest httpServletRequest,
+        HttpServletResponse httpServletResponse,
+        PrintWriter printWriter,
+        String originalString
+    ) throws ServletException, IOException {
+        originalString = originalString.strip();
+        String string = "/" + originalString;
+        if (!string.endsWith(".jsp")) string += ".jsp";
+
+        if (getServletContext().getResource(string) != null) {
+            httpServletRequest.getRequestDispatcher(string).forward(httpServletRequest, httpServletResponse);
+            return;
+        }
+
+        String[] originalStringParts = originalString.split(":", 2);
+        if (!originalStringParts[0].stripTrailing().equalsIgnoreCase("redirect")) {
+            httpServletResponse.setContentType("text/html");
+            printWriter.print(string);
+        }
+
+        originalStringParts[1] = originalStringParts[1].stripLeading();
+        if (originalStringParts[1].startsWith("http://") || originalStringParts[1].startsWith("https://")) {
+            httpServletResponse.sendRedirect(originalStringParts[1]);
+            return;
+        }
+
+        String contextPath = httpServletRequest.getContextPath();
+        if (!contextPath.endsWith("/") && !originalStringParts[1].startsWith("/"))
+            contextPath += "/";
+
+        httpServletResponse.sendRedirect(contextPath + originalStringParts[1]);
+    }
+
     protected final void processRequest(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {
         PrintWriter printWriter = response.getWriter();
@@ -100,30 +134,14 @@ public class FrontServlet extends HttpServlet {
             webApplicationContainer, request, response, mappingHandlerEntry.getKey()
         );
         if (controllerMethodResult instanceof ModelView modelView) {
-            String view = modelView.getView();
-
-            Assert.state(view != null, String.format(
-                "Vous n'avez pas précisé la vue du \"ModelView\" dans la méthode \"%s\" du contrôleur \"%s\"",
-                mappingHandler.getMethod().getName(), mappingHandler.getControllerClass().getName())
-            );
-
             modelView.getData().forEach(request::setAttribute);
 
-            request.getRequestDispatcher(view).forward(request, response);
-        } else if (controllerMethodResult instanceof RedirectView redirectView) {
-            System.out.println(redirectView.buildCompleteUrl(request.getContextPath()));
+            request.getRequestDispatcher(modelView.getView()).forward(request, response);
+        } else if (controllerMethodResult instanceof RedirectView redirectView)
             response.sendRedirect(redirectView.buildCompleteUrl(request.getContextPath()));
-        } else if (controllerMethodResult instanceof String string) {
-            string = String.format("/%s", string).strip();
-            if (!string.endsWith(".jsp")) string += ".jsp";
-
-            if (getServletContext().getResource(string) != null)
-                request.getRequestDispatcher(string).forward(request, response);
-            else {
-                response.setContentType("text/html");
-                printWriter.print(controllerMethodResult);
-            }
-        } else throw new InvalidReturnTypeException(mappingHandler.getMethod());
+        else if (controllerMethodResult instanceof String string)
+            handleStringResult(request, response, printWriter, string);
+        else throw new InvalidReturnTypeException(mappingHandler.getMethod());
     }
 
     @Override
