@@ -12,7 +12,7 @@ import mg.itu.prom16.exceptions.DuplicateMappingException;
 import mg.itu.prom16.exceptions.InvalidReturnTypeException;
 import mg.itu.prom16.http.RequestMethod;
 import mg.itu.prom16.support.WebApplicationContainer;
-import mg.itu.prom16.utils.JspUtils;
+import mg.itu.prom16.utils.WebUtils;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.AnnotationUtils;
 import mg.matsd.javaframework.core.utils.Assert;
@@ -110,7 +110,7 @@ public class FrontServlet extends HttpServlet {
             return;
         }
 
-        httpServletResponse.sendRedirect(JspUtils.absolutePath(httpServletRequest, originalStringParts[1]));
+        httpServletResponse.sendRedirect(WebUtils.absolutePath(httpServletRequest, originalStringParts[1]));
     }
 
     protected final void processRequest(HttpServletRequest request, HttpServletResponse response)

@@ -2,7 +2,7 @@ package mg.itu.prom16.base;
 
 import jakarta.servlet.http.HttpServletRequest;
 import mg.itu.prom16.base.internal.UtilFunctions;
-import mg.itu.prom16.utils.JspUtils;
+import mg.itu.prom16.utils.WebUtils;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 
@@ -72,7 +72,7 @@ public class RedirectView {
     String buildCompleteUrl(HttpServletRequest httpServletRequest) {
         if (UtilFunctions.isAbsoluteUrl(url)) return url;
 
-        StringBuilder stringBuilder = new StringBuilder(JspUtils.absolutePath(httpServletRequest, url));
+        StringBuilder stringBuilder = new StringBuilder(WebUtils.absolutePath(httpServletRequest, url));
         if (redirectRequestParameters.isEmpty()) return stringBuilder.toString();
 
         stringBuilder.append("?");
