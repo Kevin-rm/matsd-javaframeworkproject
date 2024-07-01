@@ -24,6 +24,10 @@ public final class UtilFunctions {
         return clazz.isAnnotationPresent(Controller.class);
     }
 
+    public static boolean isAbsoluteUrl(@Nullable String url) {
+        return url != null && url.startsWith("http://") || url.startsWith("https://");
+    }
+
     public static Map<String, Object> getRequestMappingInfoAttributes(Method method) {
         String path = "";
 

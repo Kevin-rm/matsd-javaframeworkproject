@@ -12,12 +12,12 @@ import mg.itu.prom16.exceptions.DuplicateMappingException;
 import mg.itu.prom16.exceptions.InvalidReturnTypeException;
 import mg.itu.prom16.http.RequestMethod;
 import mg.itu.prom16.support.WebApplicationContainer;
+import mg.itu.prom16.utils.JspUtils;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.AnnotationUtils;
 import mg.matsd.javaframework.core.utils.Assert;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
@@ -87,7 +87,6 @@ public class FrontServlet extends HttpServlet {
     private void handleStringResult(
         HttpServletRequest  httpServletRequest,
         HttpServletResponse httpServletResponse,
-        PrintWriter printWriter,
         String originalString
     ) throws ServletException, IOException {
         originalString = originalString.strip();
@@ -102,29 +101,23 @@ public class FrontServlet extends HttpServlet {
         String[] originalStringParts = originalString.split(":", 2);
         if (!originalStringParts[0].stripTrailing().equalsIgnoreCase("redirect")) {
             httpServletResponse.setContentType("text/html");
-            printWriter.print(originalString);
+            httpServletResponse.getWriter().print(originalString);
         }
 
         originalStringParts[1] = originalStringParts[1].stripLeading();
-        if (originalStringParts[1].startsWith("http://") || originalStringParts[1].startsWith("https://")) {
+        if (UtilFunctions.isAbsoluteUrl(originalStringParts[1])) {
             httpServletResponse.sendRedirect(originalStringParts[1]);
             return;
         }
 
-        String contextPath = httpServletRequest.getContextPath();
-        if (!contextPath.endsWith("/") && !originalStringParts[1].startsWith("/"))
-            contextPath += "/";
-
-        httpServletResponse.sendRedirect(contextPath + originalStringParts[1]);
+        httpServletResponse.sendRedirect(JspUtils.absolutePath(httpServletRequest, originalStringParts[1]));
     }
 
     protected final void processRequest(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {
-        PrintWriter printWriter = response.getWriter();
-
         Map.Entry<RequestMappingInfo, MappingHandler> mappingHandlerEntry = resolveMappingHandler(request);
         if (mappingHandlerEntry == null) {
-            printWriter.write("404 - Not Found");
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, String.format("Aucun mapping trouvé pour le path : \"%s\"", request.getServletPath()));
             return;
         }
 
@@ -138,9 +131,9 @@ public class FrontServlet extends HttpServlet {
 
             request.getRequestDispatcher(modelView.getView()).forward(request, response);
         } else if (controllerMethodResult instanceof RedirectView redirectView)
-            response.sendRedirect(redirectView.buildCompleteUrl(request.getContextPath()));
+            response.sendRedirect(redirectView.buildCompleteUrl(request));
         else if (controllerMethodResult instanceof String string)
-            handleStringResult(request, response, printWriter, string);
+            handleStringResult(request, response, string);
         else throw new InvalidReturnTypeException(mappingHandler.getMethod());
     }
 

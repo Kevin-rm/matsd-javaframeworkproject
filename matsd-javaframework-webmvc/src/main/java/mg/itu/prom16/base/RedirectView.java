@@ -1,6 +1,8 @@
 package mg.itu.prom16.base;
 
 import jakarta.servlet.http.HttpServletRequest;
+import mg.itu.prom16.base.internal.UtilFunctions;
+import mg.itu.prom16.utils.JspUtils;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 
@@ -66,27 +68,23 @@ public class RedirectView {
          return this;
     }
 
-    String buildCompleteUrl(String contextPath) {
-        if (url.startsWith("http://") || url.startsWith("https://"))
-            return url;
 
-        StringBuilder completeUrl = new StringBuilder(contextPath);
-        if (!contextPath.endsWith("/") && !url.startsWith("/"))
-            completeUrl.append("/");
+    String buildCompleteUrl(HttpServletRequest httpServletRequest) {
+        if (UtilFunctions.isAbsoluteUrl(url)) return url;
 
-        completeUrl.append(url);
-        if (redirectRequestParameters.isEmpty()) return completeUrl.toString();
+        StringBuilder stringBuilder = new StringBuilder(JspUtils.absolutePath(httpServletRequest, url));
+        if (redirectRequestParameters.isEmpty()) return stringBuilder.toString();
 
-        completeUrl.append("?");
+        stringBuilder.append("?");
         redirectRequestParameters.forEach((key, values) ->
-            values.forEach(value -> completeUrl.append(key)
+            values.forEach(value -> stringBuilder.append(key)
                 .append("=")
                 .append(value)
                 .append("&")
             )
         );
-        completeUrl.setLength(completeUrl.length() - 1);
+        stringBuilder.setLength(stringBuilder.length() - 1);
 
-        return completeUrl.toString();
+        return stringBuilder.toString();
     }
 }
