@@ -108,20 +108,20 @@ public final class UtilFunctions {
         HttpSession httpSession
     ) {
         SessionAttribute sessionAttribute = parameter.getAnnotation(SessionAttribute.class);
-        String sessionAttributeName = StringUtils.hasText(sessionAttribute.name()) ? sessionAttribute.name() : parameter.getName();
+        String sessionAttributeName = StringUtils.hasText(sessionAttribute.value()) ? sessionAttribute.value() : parameter.getName();
 
         Object sessionAttributeValue = httpSession.getAttribute(sessionAttributeName);
-        if (sessionAttributeValue == null && sessionAttribute.instantiateIfNull())
-            try {
-                return parameterType.getConstructor().newInstance();
-            } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
-                     NoSuchMethodException e) {
-                Executable executable = parameter.getDeclaringExecutable();
-                throw new RuntimeException(String.format(
-                    "Erreur lors de la création d'instance du paramètre nommé \"%s\" annoté avec \"@SessionAttribute\" " +
-                        "dans la méthode \"%s\" du contrôleur \"%s\"", parameter.getName(), executable.getName(), executable.getDeclaringClass().getName()
-                ), e);
-            }
+        if (sessionAttributeValue != null && !ClassUtils.isAssignable(parameterType, sessionAttributeValue.getClass())) {
+            Executable executable = parameter.getDeclaringExecutable();
+
+            throw new ClassCastException(String.format(
+                "L'attribut de session \"%s\" est de type \"%s\" mais le paramètre \"%s\" annoté de la méthode \"%s\" " +
+                    "du contrôleur \"%s\" est de type \"%s\"",
+                sessionAttributeName, sessionAttributeValue.getClass(), parameter.getName(),
+                executable.getName(), executable.getDeclaringClass().getName(),
+                parameterType
+            ));
+        }
 
         return sessionAttributeValue;
     }

@@ -8,6 +8,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
 public @interface SessionAttribute {
-    String name()               default "";
-    boolean instantiateIfNull() default false;
+    String value() default "";
 }
