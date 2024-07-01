@@ -84,7 +84,7 @@ public class FrontServlet extends HttpServlet {
             .orElse(null);
     }
 
-    private void handleStringResult(
+    private void stringToHttpResponse(
         HttpServletRequest  httpServletRequest,
         HttpServletResponse httpServletResponse,
         String originalString
@@ -133,7 +133,7 @@ public class FrontServlet extends HttpServlet {
         } else if (controllerMethodResult instanceof RedirectView redirectView)
             response.sendRedirect(redirectView.buildCompleteUrl(request));
         else if (controllerMethodResult instanceof String string)
-            handleStringResult(request, response, string);
+            stringToHttpResponse(request, response, string);
         else throw new InvalidReturnTypeException(mappingHandler.getMethod());
     }
 
