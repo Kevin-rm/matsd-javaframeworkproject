@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.annotations.FromRequestParameters;
 import mg.itu.prom16.annotations.PathVariable;
 import mg.itu.prom16.annotations.RequestParameter;
+import mg.itu.prom16.annotations.SessionAttribute;
 import mg.itu.prom16.exceptions.UnexpectedParameterException;
 import mg.itu.prom16.http.Session;
 import mg.itu.prom16.http.SessionImpl;
@@ -80,6 +81,8 @@ public class MappingHandler {
                     args[i] = UtilFunctions.getPathVariableValue(parameterType, parameter, requestMappingInfo, httpServletRequest);
                 else if (parameter.isAnnotationPresent(FromRequestParameters.class))
                     args[i] = UtilFunctions.bindRequestParameters(parameterType, parameter, httpServletRequest);
+                else if (parameter.isAnnotationPresent(SessionAttribute.class))
+                    args[i] = UtilFunctions.getSessionAttributeValue(parameterType, parameter, httpServletRequest.getSession());
                 else throw new UnexpectedParameterException(parameter);
             }
 

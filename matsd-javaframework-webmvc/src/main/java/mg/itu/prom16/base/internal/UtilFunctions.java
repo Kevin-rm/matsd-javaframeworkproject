@@ -1,6 +1,7 @@
 package mg.itu.prom16.base.internal;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import mg.itu.prom16.annotations.*;
 import mg.itu.prom16.exceptions.MissingServletRequestParameterException;
 import mg.itu.prom16.exceptions.UndefinedPathVariableException;
@@ -99,6 +100,30 @@ public final class UtilFunctions {
             modelName = parameter.getName();
 
         return instantiateModelFromRequest(parameterType, modelName, httpServletRequest);
+    }
+
+    public static Object getSessionAttributeValue(
+        Class<?>    parameterType,
+        Parameter   parameter,
+        HttpSession httpSession
+    ) {
+        SessionAttribute sessionAttribute = parameter.getAnnotation(SessionAttribute.class);
+        String sessionAttributeName = StringUtils.hasText(sessionAttribute.name()) ? sessionAttribute.name() : parameter.getName();
+
+        Object sessionAttributeValue = httpSession.getAttribute(sessionAttributeName);
+        if (sessionAttributeValue == null && sessionAttribute.instantiateIfNull())
+            try {
+                return parameterType.getConstructor().newInstance();
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
+                     NoSuchMethodException e) {
+                Executable executable = parameter.getDeclaringExecutable();
+                throw new RuntimeException(String.format(
+                    "Erreur lors de la création d'instance du paramètre nommé \"%s\" annoté avec \"@SessionAttribute\" " +
+                        "dans la méthode \"%s\" du contrôleur \"%s\"", parameter.getName(), executable.getName(), executable.getDeclaringClass().getName()
+                ), e);
+            }
+
+        return sessionAttributeValue;
     }
 
     private static Object instantiateModelFromRequest(Class<?> clazz, String modelName, HttpServletRequest httpServletRequest) {
