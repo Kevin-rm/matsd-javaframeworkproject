@@ -22,7 +22,6 @@ public final class JspUtils {
             .toString();
     }
 
-
     public static String absolutePath(HttpServletRequest request, String path) {
         Assert.notNull(request, "L'argument request ne peut pas être \"null\"");
         Assert.notBlank(path, false, "L'argument path ne peut pas être vide ou \"null\"");

@@ -134,12 +134,11 @@ public final class UtilFunctions {
                 field.setAccessible(true);
                 Class<?> fieldType = field.getType();
 
-                String requestParameterName = modelName + ".";
                 BindRequestParameter bindRequestParameter = field.getAnnotation(BindRequestParameter.class);
-                requestParameterName += bindRequestParameter != null && StringUtils.hasText(bindRequestParameter.value()) ?
+                String fieldAlias = bindRequestParameter != null && StringUtils.hasText(bindRequestParameter.value()) ?
                     bindRequestParameter.value() : field.getName();
 
-                String requestParameterValue = httpServletRequest.getParameter(requestParameterName);
+                String requestParameterValue = httpServletRequest.getParameter(modelName + "." + fieldAlias);
                 if (requestParameterValue == null || StringUtils.isBlank(requestParameterValue)) continue;
 
                 if (
@@ -147,7 +146,7 @@ public final class UtilFunctions {
                     ClassUtils.isStandardClass(fieldType)      ||
                     fieldType == String.class
                 )    field.set(result, StringConverter.convert(requestParameterValue, fieldType));
-                else field.set(result, instantiateModelFromRequest(fieldType, field.getName(), httpServletRequest));
+                else field.set(result, instantiateModelFromRequest(fieldType, fieldAlias, httpServletRequest));
             }
 
             return result;
