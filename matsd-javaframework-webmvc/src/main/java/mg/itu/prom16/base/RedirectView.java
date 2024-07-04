@@ -69,10 +69,10 @@ public class RedirectView {
     }
 
 
-    String buildCompleteUrl(HttpServletRequest httpServletRequest) {
+    String buildCompleteUrl() {
         if (UtilFunctions.isAbsoluteUrl(url)) return url;
 
-        StringBuilder stringBuilder = new StringBuilder(WebUtils.absolutePath(httpServletRequest, url));
+        StringBuilder stringBuilder = new StringBuilder(WebUtils.absolutePath(url));
         if (redirectRequestParameters.isEmpty()) return stringBuilder.toString();
 
         stringBuilder.append("?");

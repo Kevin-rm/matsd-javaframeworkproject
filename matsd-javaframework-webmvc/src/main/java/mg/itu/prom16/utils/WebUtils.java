@@ -1,23 +1,27 @@
 package mg.itu.prom16.utils;
 
 import jakarta.servlet.http.HttpServletRequest;
-import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.itu.prom16.base.internal.request.RequestContextHolder;
 import mg.matsd.javaframework.core.utils.Assert;
 
 public final class WebUtils {
 
     private WebUtils() { }
 
-    public static boolean isGet(@Nullable HttpServletRequest request) {
-        return request != null && "GET".equals(request.getMethod());
+    public static HttpServletRequest getCurrentRequest() {
+        return RequestContextHolder.getServletRequestAttributes().getRequest();
     }
 
-    public static boolean isPost(@Nullable HttpServletRequest request) {
-        return request != null && "POST".equals(request.getMethod());
+    public static boolean isGetRequest() {
+        return "GET".equals(getCurrentRequest().getMethod());
     }
 
-    public static String baseUrl(HttpServletRequest request) {
-        Assert.notNull(request, "L'argument request ne peut pas être \"null\"");
+    public static boolean isPostRequest() {
+        return "POST".equals(getCurrentRequest().getMethod());
+    }
+
+    public static String baseUrl() {
+        HttpServletRequest request = getCurrentRequest();
 
         StringBuilder stringBuilder = new StringBuilder(request.getScheme())
             .append("://")
@@ -32,13 +36,12 @@ public final class WebUtils {
             .toString();
     }
 
-    public static String absolutePath(HttpServletRequest request, String path) {
-        Assert.notNull(request, "L'argument request ne peut pas être \"null\"");
+    public static String absolutePath(String path) {
         Assert.notBlank(path, false, "L'argument path ne peut pas être vide ou \"null\"");
 
-        if (!request.getContextPath().endsWith("/") && !path.startsWith("/"))
+        if (!getCurrentRequest().getContextPath().endsWith("/") && !path.startsWith("/"))
             path = "/" + path;
 
-        return baseUrl(request) + path;
+        return baseUrl() + path;
     }
 }

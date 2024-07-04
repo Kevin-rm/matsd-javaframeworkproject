@@ -6,8 +6,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.annotations.RequestMapping;
 import mg.itu.prom16.base.internal.MappingHandler;
+import mg.itu.prom16.base.internal.request.RequestContextHolder;
 import mg.itu.prom16.base.internal.RequestMappingInfo;
 import mg.itu.prom16.base.internal.UtilFunctions;
+import mg.itu.prom16.base.internal.request.ServletRequestAttributes;
 import mg.itu.prom16.exceptions.DuplicateMappingException;
 import mg.itu.prom16.exceptions.InvalidReturnTypeException;
 import mg.itu.prom16.http.RequestMethod;
@@ -110,31 +112,37 @@ public class FrontServlet extends HttpServlet {
             return;
         }
 
-        httpServletResponse.sendRedirect(WebUtils.absolutePath(httpServletRequest, originalStringParts[1]));
+        httpServletResponse.sendRedirect(WebUtils.absolutePath(originalStringParts[1]));
     }
 
     protected final void processRequest(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {
-        Map.Entry<RequestMappingInfo, MappingHandler> mappingHandlerEntry = resolveMappingHandler(request);
-        if (mappingHandlerEntry == null) {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND, String.format("Aucun mapping trouvé pour le path : \"%s\"", request.getServletPath()));
-            return;
+        RequestContextHolder.setServletRequestAttributes(new ServletRequestAttributes(request, response));
+
+        try {
+            Map.Entry<RequestMappingInfo, MappingHandler> mappingHandlerEntry = resolveMappingHandler(request);
+            if (mappingHandlerEntry == null) {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, String.format("Aucun mapping trouvé pour le path : \"%s\"", request.getServletPath()));
+                return;
+            }
+
+            MappingHandler mappingHandler = mappingHandlerEntry.getValue();
+
+            Object controllerMethodResult = mappingHandler.invokeMethod(
+                webApplicationContainer, request, response, mappingHandlerEntry.getKey()
+            );
+            if (controllerMethodResult instanceof ModelView modelView) {
+                modelView.getData().forEach(request::setAttribute);
+
+                request.getRequestDispatcher(modelView.getView()).forward(request, response);
+            } else if (controllerMethodResult instanceof RedirectView redirectView)
+                response.sendRedirect(redirectView.buildCompleteUrl());
+            else if (controllerMethodResult instanceof String string)
+                stringToHttpResponse(request, response, string);
+            else throw new InvalidReturnTypeException(mappingHandler.getMethod());
+        } finally {
+            RequestContextHolder.clear();
         }
-
-        MappingHandler mappingHandler = mappingHandlerEntry.getValue();
-
-        Object controllerMethodResult = mappingHandler.invokeMethod(
-            webApplicationContainer, request, response, mappingHandlerEntry.getKey()
-        );
-        if (controllerMethodResult instanceof ModelView modelView) {
-            modelView.getData().forEach(request::setAttribute);
-
-            request.getRequestDispatcher(modelView.getView()).forward(request, response);
-        } else if (controllerMethodResult instanceof RedirectView redirectView)
-            response.sendRedirect(redirectView.buildCompleteUrl(request));
-        else if (controllerMethodResult instanceof String string)
-            stringToHttpResponse(request, response, string);
-        else throw new InvalidReturnTypeException(mappingHandler.getMethod());
     }
 
     @Override
