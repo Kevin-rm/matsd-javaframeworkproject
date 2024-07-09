@@ -1,7 +1,7 @@
 package mg.itu.prom16.base.internal;
 
 import jakarta.servlet.http.HttpServletRequest;
-import mg.itu.prom16.base.RequestMethod;
+import mg.itu.prom16.http.RequestMethod;
 import mg.itu.prom16.exceptions.DuplicatePathVariableNameException;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
@@ -12,15 +12,17 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class RequestMappingInfo {
+    static final String PATH_VARIABLE_DEFAULT_REQUIREMENT = "[^/]+";
+
     private String path;
     private List<RequestMethod> methods;
-    private List<String> pathVariableNames;
+    private Map<String, String> pathVariablesAttributes;
     private Pattern pathPattern;
 
     public RequestMappingInfo(@Nullable String path, @Nullable List<RequestMethod> methods) {
         this.setPath(path)
             .setMethods(methods)
-            .setPathVariableNames()
+            .setPathVariablesAttributes()
             .setPathPattern();
     }
 
@@ -60,29 +62,34 @@ public class RequestMappingInfo {
         return this;
     }
 
-    public List<String> getPathVariableNames() {
-        return pathVariableNames;
-    }
-
-    private RequestMappingInfo setPathVariableNames() {
-        pathVariableNames = new ArrayList<>();
+    private RequestMappingInfo setPathVariablesAttributes() {
+        pathVariablesAttributes = new HashMap<>();
 
         Matcher matcher = Pattern.compile("\\{([^/]+?)\\}").matcher(path);
         while (matcher.find()) {
-            String pathVariableName = matcher.group(1);
-            if (pathVariableNames.contains(pathVariableName))
-                throw new DuplicatePathVariableNameException(this, pathVariableName);
+            String[] pathVariableParts = matcher.group(1).split(":", 2);
+            if (pathVariablesAttributes.containsKey(pathVariableParts[0]))
+                throw new DuplicatePathVariableNameException(this, pathVariableParts[0]);
 
-            pathVariableNames.add(pathVariableName);
+            String requirement;
+            if (pathVariableParts.length == 2 && StringUtils.hasText(pathVariableParts[1]))
+                requirement  = pathVariableParts[1];
+            else requirement = PATH_VARIABLE_DEFAULT_REQUIREMENT;
+
+            pathVariablesAttributes.put(pathVariableParts[0], requirement);
         }
 
         return this;
     }
 
+    public Map<String, String> getPathVariablesAttributes() {
+        return pathVariablesAttributes;
+    }
+
     private RequestMappingInfo setPathPattern() {
-        pathPattern = Pattern.compile(
-            "^" + path.replaceAll("\\{[^/]+?\\}", "([^/]+)") + "$"
-        );
+        pathPattern = Pattern.compile(createRegexFromPath(
+            path, pathVariablesAttributes
+        ));
 
         return this;
     }
@@ -96,17 +103,36 @@ public class RequestMappingInfo {
                );
     }
 
-    public Map<String, String> extractPathVariables(HttpServletRequest httpServletRequest) {
+    public Map<String, String> extractPathVariablesValues(HttpServletRequest httpServletRequest) {
         Assert.notNull(httpServletRequest, "L'argument httpServletRequest ne peut pas être \"null\"");
 
         Matcher matcher = pathPattern.matcher(httpServletRequest.getServletPath());
         if (!matcher.matches()) return Collections.emptyMap();
 
-        Map<String, String> pathVariables = new HashMap<>();
-        for (int i = 0; i < pathVariableNames.size(); i++)
-            pathVariables.put(pathVariableNames.get(i), matcher.group(i + 1));
+        Map<String, String> pathVariablesValues = new HashMap<>();
+        int i = 0;
+        for (String key : pathVariablesAttributes.keySet()) {
+            pathVariablesValues.put(key, matcher.group(i + 1));
+            i++;
+        }
 
-        return pathVariables;
+        return pathVariablesValues;
+    }
+
+    private static String createRegexFromPath(String path, Map<String, String> pathVariablesAttributes) {
+        String regex = "^" + path;
+        for (Map.Entry<String, String> entry : pathVariablesAttributes.entrySet())
+            regex = regex.replace(
+                String.format(
+                    "{%s%s}",
+                    entry.getKey(),
+                    entry.getValue().equals(PATH_VARIABLE_DEFAULT_REQUIREMENT) ? "" : ":" + entry.getValue()
+                ),
+                "(" + entry.getValue() + ")"
+            );
+        regex += "$";
+
+        return regex;
     }
 
     @Override

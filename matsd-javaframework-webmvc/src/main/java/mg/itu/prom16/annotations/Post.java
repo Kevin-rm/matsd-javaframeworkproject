@@ -1,6 +1,6 @@
 package mg.itu.prom16.annotations;
 
-import mg.itu.prom16.base.RequestMethod;
+import mg.itu.prom16.http.RequestMethod;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

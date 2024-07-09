@@ -1,10 +1,11 @@
 package mg.itu.prom16.base.internal;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import mg.itu.prom16.annotations.*;
 import mg.itu.prom16.exceptions.MissingServletRequestParameterException;
 import mg.itu.prom16.exceptions.UndefinedPathVariableException;
-import mg.itu.prom16.exceptions.UnsupportedParameterTypeException;
+import mg.itu.prom16.exceptions.UnexpectedParameterException;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.AnnotationUtils;
 import mg.matsd.javaframework.core.utils.ClassUtils;
@@ -12,8 +13,6 @@ import mg.matsd.javaframework.core.utils.StringUtils;
 import mg.matsd.javaframework.core.utils.converter.StringConverter;
 
 import java.lang.reflect.*;
-import java.util.Arrays;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,6 +23,10 @@ public final class UtilFunctions {
         if (clazz == null) return false;
 
         return clazz.isAnnotationPresent(Controller.class);
+    }
+
+    public static boolean isAbsoluteUrl(@Nullable String url) {
+        return url != null && url.startsWith("http://") || url.startsWith("https://");
     }
 
     public static Map<String, Object> getRequestMappingInfoAttributes(Method method) {
@@ -65,7 +68,7 @@ public final class UtilFunctions {
             else if (parameterType.isPrimitive())
                 return ClassUtils.getPrimitiveDefaultValue(parameterType);
             else if (!ClassUtils.isPrimitiveWrapper(parameterType) && parameterType != String.class)
-                throw new UnsupportedParameterTypeException(parameter);
+                throw new UnexpectedParameterException(parameter);
 
             return null;
         }
@@ -82,7 +85,7 @@ public final class UtilFunctions {
         PathVariable pathVariable = parameter.getAnnotation(PathVariable.class);
         String pathVariableName = StringUtils.hasText(pathVariable.value()) ? pathVariable.value() : parameter.getName();
 
-        Map<String, String> pathVariables = requestMappingInfo.extractPathVariables(httpServletRequest);
+        Map<String, String> pathVariables = requestMappingInfo.extractPathVariablesValues(httpServletRequest);
         if (!pathVariables.containsKey(pathVariableName))
             throw new UndefinedPathVariableException(pathVariableName, requestMappingInfo);
 
@@ -90,28 +93,60 @@ public final class UtilFunctions {
     }
 
     public static Object bindRequestParameters(Class<?> parameterType, Parameter parameter, HttpServletRequest httpServletRequest) {
+        String modelName = null;
+        if (parameter.isAnnotationPresent(FromRequestParameters.class))
+            modelName = parameter.getAnnotation(FromRequestParameters.class).value();
+        if (modelName == null || StringUtils.isBlank(modelName))
+            modelName = parameter.getName();
+
+        return instantiateModelFromRequest(parameterType, modelName, httpServletRequest);
+    }
+
+    public static Object getSessionAttributeValue(
+        Class<?>    parameterType,
+        Parameter   parameter,
+        HttpSession httpSession
+    ) {
+        SessionAttribute sessionAttribute = parameter.getAnnotation(SessionAttribute.class);
+        String sessionAttributeName = StringUtils.hasText(sessionAttribute.value()) ? sessionAttribute.value() : parameter.getName();
+
+        Object sessionAttributeValue = httpSession.getAttribute(sessionAttributeName);
+        if (sessionAttributeValue != null && !ClassUtils.isAssignable(parameterType, sessionAttributeValue.getClass())) {
+            Executable executable = parameter.getDeclaringExecutable();
+
+            throw new ClassCastException(String.format(
+                "L'attribut de session \"%s\" est de type \"%s\" mais le paramètre \"%s\" annoté de la méthode \"%s\" " +
+                    "du contrôleur \"%s\" est de type \"%s\"",
+                sessionAttributeName, sessionAttributeValue.getClass(), parameter.getName(),
+                executable.getName(), executable.getDeclaringClass().getName(),
+                parameterType
+            ));
+        }
+
+        return sessionAttributeValue;
+    }
+
+    private static Object instantiateModelFromRequest(Class<?> clazz, String modelName, HttpServletRequest httpServletRequest) {
         try {
-            Object result = parameterType.getConstructor().newInstance();
+            Object result = clazz.getConstructor().newInstance();
 
-            String modelName = null;
-            if (parameter.isAnnotationPresent(FromRequestParameters.class))
-                modelName = parameter.getAnnotation(FromRequestParameters.class).value();
-            if (modelName == null || StringUtils.isBlank(modelName))
-                modelName = parameter.getName();
-
-            for (Field field : parameterType.getDeclaredFields()) {
+            for (Field field : clazz.getDeclaredFields()) {
                 field.setAccessible(true);
                 Class<?> fieldType = field.getType();
 
-                String requestParameterValue = httpServletRequest.getParameter(modelName + "." + field.getName());
-                if (requestParameterValue == null || StringUtils.isBlank(requestParameterValue)) {
-                    field.set(result,
-                        fieldType.isPrimitive() ? ClassUtils.getPrimitiveDefaultValue(fieldType) : null
-                    );
-                    continue;
-                }
+                BindRequestParameter bindRequestParameter = field.getAnnotation(BindRequestParameter.class);
+                String fieldAlias = bindRequestParameter != null && StringUtils.hasText(bindRequestParameter.value()) ?
+                    bindRequestParameter.value() : field.getName();
 
-                field.set(result, StringConverter.convert(requestParameterValue, fieldType));
+                String requestParameterValue = httpServletRequest.getParameter(modelName + "." + fieldAlias);
+                if (requestParameterValue == null || StringUtils.isBlank(requestParameterValue)) continue;
+
+                if (
+                    ClassUtils.isPrimitiveOrWrapper(fieldType) ||
+                    ClassUtils.isStandardClass(fieldType)      ||
+                    fieldType == String.class
+                )    field.set(result, StringConverter.convert(requestParameterValue, fieldType));
+                else field.set(result, instantiateModelFromRequest(fieldType, fieldAlias, httpServletRequest));
             }
 
             return result;
@@ -135,8 +170,7 @@ public final class UtilFunctions {
                 typeArguments.length != 2        ||
                 typeArguments[0] != String.class ||
                 typeArguments[1] != String[].class
-            )
-                throw illegalArgumentException;
+            ) throw illegalArgumentException;
 
             return httpServletRequest.getParameterMap();
         }

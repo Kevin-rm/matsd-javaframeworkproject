@@ -9,6 +9,8 @@ import java.lang.annotation.Target;
 @Target(ElementType.PARAMETER)
 public @interface RequestParameter {
     String  name()         default "";
+
     String  defaultValue() default "";
+
     boolean required()     default false;
 }
