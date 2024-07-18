@@ -122,12 +122,14 @@ public class FrontServlet extends HttpServlet {
         try {
             Map.Entry<RequestMappingInfo, MappingHandler> mappingHandlerEntry = resolveMappingHandler(request);
             if (mappingHandlerEntry == null) {
-                response.sendError(HttpServletResponse.SC_NOT_FOUND, String.format("Aucun mapping trouvé pour le path : \"%s\"", request.getServletPath()));
+                response.sendError(HttpServletResponse.SC_NOT_FOUND,
+                    String.format("Aucun mapping trouvé pour le path : \"%s\" et method : \"%s\"",
+                        request.getServletPath(), request.getMethod())
+                );
                 return;
             }
 
             MappingHandler mappingHandler = mappingHandlerEntry.getValue();
-
             Object controllerMethodResult = mappingHandler.invokeMethod(
                 webApplicationContainer, request, response, mappingHandlerEntry.getKey()
             );

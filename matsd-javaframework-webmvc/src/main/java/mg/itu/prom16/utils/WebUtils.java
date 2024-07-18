@@ -8,10 +8,6 @@ public final class WebUtils {
 
     private WebUtils() { }
 
-    public static HttpServletRequest getCurrentRequest() {
-        return RequestContextHolder.getServletRequestAttributes().getRequest();
-    }
-
     public static boolean isGetRequest() {
         return "GET".equals(getCurrentRequest().getMethod());
     }
@@ -43,5 +39,9 @@ public final class WebUtils {
             path = "/" + path;
 
         return baseUrl() + path;
+    }
+
+    private static HttpServletRequest getCurrentRequest() {
+        return RequestContextHolder.getServletRequestAttributes().getRequest();
     }
 }
