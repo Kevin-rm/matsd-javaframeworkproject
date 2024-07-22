@@ -99,7 +99,7 @@ public abstract class ManagedInstanceFactory {
     public void scanComponents() {
         if (componentScanBasePackage == null || componentScanPerformed) return;
 
-        managedInstanceDefinitionRegistry.doScanComponents(componentScanBasePackage);
+        ManagedInstanceDefinitionScanner.doScanComponents(managedInstanceDefinitionRegistry, componentScanBasePackage);
         componentScanPerformed = true;
     }
 
@@ -117,7 +117,7 @@ public abstract class ManagedInstanceFactory {
             singletonsMap.containsKey(managedInstance.getId())
         ) return singletonsMap.get(managedInstance.getId());
 
-        Object instance = ManagedInstanceUtils.instantiate(managedInstance);
+        Object instance = ManagedInstanceUtils.instantiate(managedInstance, this);
         if (isSingleton(managedInstance.getId()))
             singletonsMap.put(managedInstance.getId(), instance);
 

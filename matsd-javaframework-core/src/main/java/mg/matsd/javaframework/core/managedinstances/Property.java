@@ -11,7 +11,6 @@ import java.lang.reflect.Field;
 
 public class Property {
     private Field field;
-    @Nullable
     private Object value;
     @Nullable
     private String ref;
@@ -94,7 +93,7 @@ public class Property {
 
     private Property setRef(@Nullable String ref) {
         if (ref != null) {
-            Assert.notBlank("La référence d'une propriété ne peut pas être vide", true);
+            Assert.notBlank(ref, true, "La référence d'une propriété ne peut pas être vide");
             ref = ref.strip();
         }
 

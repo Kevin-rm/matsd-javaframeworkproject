@@ -109,8 +109,12 @@ public final class ClassUtils {
         try {
             return clazz.getDeclaredMethod(methodName, parameterTypes);
         } catch (NoSuchMethodException e) {
-            throw new NoSuchMethodException(String.format("La classe \"%s\" ne possède aucune méthode nommée \"%s\" avec le(s) type(s) de paramètre suivant(s) : %s",
-                clazz.getName(), methodName, Arrays.toString(parameterTypes))
+            String parameterTypesMessage = (parameterTypes == null || parameterTypes.length == 0)
+                ? ""
+                : String.format("avec le(s) type(s) de paramètre suivant(s) : %s", Arrays.toString(parameterTypes));
+
+            throw new NoSuchMethodException(String.format("La classe \"%s\" ne possède aucune méthode nommée \"%s\" %s",
+                clazz.getName(), methodName, parameterTypesMessage)
             );
         }
     }

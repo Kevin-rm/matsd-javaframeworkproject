@@ -33,8 +33,7 @@ public abstract class AbstractXmlResourceContainer extends ManagedInstanceFactor
             Assert.state(resource != null, "La ressource à utiliser pour charger les \"ManagedInstances\" " +
                 "est \"null\"");
 
-            new XMLConfigurationLoader(this)
-                .doLoadManagedInstances(resource);
+            XMLConfigurationLoader.doLoadManagedInstances(this, resource);
         }
 
         refresh();

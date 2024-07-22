@@ -5,7 +5,6 @@ import mg.matsd.javaframework.core.exceptions.XmlParseException;
 import mg.matsd.javaframework.core.io.Resource;
 import mg.matsd.javaframework.core.managedinstances.ManagedInstance;
 import mg.matsd.javaframework.core.managedinstances.factory.ManagedInstanceFactory;
-import mg.matsd.javaframework.core.utils.Assert;
 import org.w3c.dom.*;
 import org.xml.sax.SAXException;
 
@@ -18,29 +17,23 @@ import javax.xml.validation.SchemaFactory;
 import java.io.IOException;
 
 class XMLConfigurationLoader {
-    private final ManagedInstanceFactory managedInstanceFactory;
+    private XMLConfigurationLoader() { }
 
-    XMLConfigurationLoader(ManagedInstanceFactory managedInstanceFactory) {
-        Assert.notNull(managedInstanceFactory, "\"ManagedInstanceFactory\" ne doit pas être \"null\"");
-
-        this.managedInstanceFactory = managedInstanceFactory;
-    }
-
-    void doLoadManagedInstances(Resource resource) {
+    static void doLoadManagedInstances(ManagedInstanceFactory managedInstanceFactory, Resource resource) {
         Document document;
-        ClassLoader classLoader = getClass().getClassLoader();
+        ClassLoader classLoader = XMLConfigurationLoader.class.getClassLoader();
 
         try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setNamespaceAware(true);
-            factory.setSchema(
+            DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+            documentBuilderFactory.setNamespaceAware(true);
+            documentBuilderFactory.setSchema(
                 SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(new Source[] {
                     new StreamSource(classLoader.getResourceAsStream("container.xsd")),
                     new StreamSource(classLoader.getResourceAsStream("managedinstances.xsd"))
                 })
             );
 
-            document = factory
+            document = documentBuilderFactory
                 .newDocumentBuilder()
                 .parse(resource.getInputStream());
         } catch (ParserConfigurationException | SAXException | IOException e) {
@@ -48,7 +41,7 @@ class XMLConfigurationLoader {
         }
         document.getDocumentElement().normalize();
 
-        scanComponents(document);
+        scanComponents(managedInstanceFactory, document);
 
         NodeList managedInstanceNodeList = document.getElementsByTagName("managed-instance");
         if (managedInstanceNodeList.getLength() == 0) return;
@@ -87,7 +80,7 @@ class XMLConfigurationLoader {
         }
     }
 
-    private void scanComponents(Document document) {
+     private static void scanComponents(ManagedInstanceFactory managedInstanceFactory, Document document) {
         NodeList nodeList = document.getElementsByTagName("container:component-scan");
         if (nodeList.getLength() == 0) return;
 

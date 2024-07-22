@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE, ElementType.METHOD})
-public @interface Scope {
-    String value() default "singleton";
+@Target(ElementType.METHOD)
+public @interface ManagedInstance {
+    String value() default "";
 }
