@@ -13,38 +13,49 @@ import java.util.List;
 public class ManagedInstance {
     public enum Scope { SINGLETON, PROTOTYPE }
 
-    private String         id;
-    private Class<?>       clazz;
-    private Scope          scope;
+    private String   id;
+    private Class<?> clazz;
+    private Scope    scope;
     @Nullable
-    private Method         factoryMethod;
-    private final List<Property> properties;
-    private final List<ConstructorArgument> constructorArguments;
-
-    public ManagedInstance(@Nullable String id, String clazz, @Nullable String scope) {
-        this.setClazz(clazz)
-            .setId(id)
-            .setScope(scope);
-
-        properties = new ArrayList<>();
-        constructorArguments = new ArrayList<>();
-    }
+    private ManagedInstance parent;
+    @Nullable
+    private Method factoryMethod;
+    private List<Property> properties;
+    private List<ConstructorArgument> constructorArguments;
 
     public ManagedInstance(@Nullable String id, Class<?> clazz, @Nullable Scope scope) {
         this.setClazz(clazz)
             .setId(id)
             .setScope(scope);
 
-        properties = new ArrayList<>();
-        constructorArguments = new ArrayList<>();
+        initPropertiesAndConstructorArguments();
     }
 
-    public ManagedInstance(@Nullable String id, Class<?> clazz, @Nullable String scope, @Nullable Method factoryMethod) {
+    public ManagedInstance(
+        @Nullable String id,
+        Class<?> clazz,
+        @Nullable String scope,
+        @Nullable ManagedInstance parent,
+        @Nullable Method factoryMethod
+    ) {
+        this.setClazz(clazz)
+            .setParent(parent)
+            .setFactoryMethod(factoryMethod)
+            .setId(id)
+            .setScope(scope);
+
+        initPropertiesAndConstructorArguments();
+    }
+
+    public ManagedInstance(@Nullable String id, String clazz, @Nullable String scope) {
         this.setClazz(clazz)
             .setId(id)
-            .setScope(scope)
-            .setFactoryMethod(factoryMethod);
+            .setScope(scope);
 
+        initPropertiesAndConstructorArguments();
+    }
+
+    private void initPropertiesAndConstructorArguments() {
         properties = new ArrayList<>();
         constructorArguments = new ArrayList<>();
     }
@@ -57,7 +68,10 @@ public class ManagedInstance {
         Assert.notBlank(id, true, "L'identifiant d'une \"ManagedInstance\" ne peut pas être vide");
 
         if (id == null) {
-            this.id = clazz.getName();
+            if (factoryMethod != null)
+                 this.id = parent.getId() + "." + factoryMethod.getName();
+            else this.id = clazz.getName();
+
             return this;
         }
 
@@ -116,6 +130,16 @@ public class ManagedInstance {
     }
 
     @Nullable
+    public ManagedInstance getParent() {
+        return parent;
+    }
+
+    private ManagedInstance setParent(@Nullable ManagedInstance parent) {
+        this.parent = parent;
+        return this;
+    }
+
+    @Nullable
     public Method getFactoryMethod() {
         return factoryMethod;
     }
@@ -123,9 +147,17 @@ public class ManagedInstance {
     private ManagedInstance setFactoryMethod(@Nullable Method factoryMethod) {
         if (factoryMethod == null) return this;
 
-        Assert.state(ClassUtils.isAssignable(clazz, factoryMethod.getReturnType()),
-            "Le type de retour de la méthode \"%s\" doit être assignable à la classe associée à la \"ManagedInstance\""
-        );
+        Assert.state(parent != null, "Tentative de définition d'une \"factoryMethod\" à une \"ManagedInstance\" " +
+            "alors que celle-ci n'a pas de parent");
+        Assert.state(parent.getClazz() == factoryMethod.getDeclaringClass(), String.format(
+            "Le parent de la \"ManagedInstance\" avec l'identifiant \"%s\" (\"%s\") ne dispose pas d'une méthode nommée \"%s\"",
+            id, parent.getId(), factoryMethod
+        ));
+        Assert.state(ClassUtils.isAssignable(clazz, factoryMethod.getReturnType()), String.format(
+            "Le type de retour de la \"factoryMethod\" \"%s\" doit être assignable " +
+            "à la classe associée à la \"ManagedInstance\"", factoryMethod
+        ));
+
         this.factoryMethod = factoryMethod;
         return this;
     }
@@ -161,16 +193,14 @@ public class ManagedInstance {
         return constructorArguments;
     }
 
-    public void addConstructorArgument(String index, String value, String ref) {
-        ConstructorArgument constructorArgument;
-        if (index == null || StringUtils.isBlank(index))
-             constructorArgument = new ConstructorArgument(maximumConstructorArgumentIndex() + 1, value, ref);
-        else constructorArgument = new ConstructorArgument(index, value, ref);
+    public void addConstructorArgument(int index, Class<?> type) {
+        ConstructorArgument constructorArgument = new ConstructorArgument(index, type);
 
-        constructorArguments.stream().filter(c -> constructorArgument.getIndex() == c.getIndex()).forEachOrdered(c -> {
+        final int i = constructorArgument.getIndex();
+        constructorArguments.stream().filter(c -> i == c.getIndex()).forEachOrdered(c -> {
             throw new ManagedInstanceCreationException(
                 String.format("L'argument de constructeur avec l'indice %d " +
-                    "est redondant pour la \"ManagedInstance\" avec l'ID \"%s\"", constructorArgument.getIndex(), id)
+                    "est redondant pour la \"ManagedInstance\" avec l'ID \"%s\"", i, id)
             );
         });
         constructorArguments.add(constructorArgument);

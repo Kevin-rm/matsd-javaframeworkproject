@@ -1,5 +1,6 @@
 package mg.matsd.javaframework.core.managedinstances.factory;
 
+import mg.matsd.javaframework.core.managedinstances.ConstructorArgument;
 import mg.matsd.javaframework.core.managedinstances.ManagedInstance;
 import mg.matsd.javaframework.core.managedinstances.NoSuchManagedInstanceException;
 
@@ -59,31 +60,45 @@ class ManagedInstanceDefinitionRegistry {
     }
 
     void configureDependencies() {
-        managedInstances.forEach(managedInstance -> {
+        for (ManagedInstance managedInstance : managedInstances) {
             managedInstance.getProperties().stream()
                 .filter(property -> property.getRef() != null)
                 .forEachOrdered(property -> {
                     String ref = property.getRef();
-                    validateManagedInstanceReference(ref);
+                    if (!containsManagedInstance(ref))
+                        throw new ManagedInstanceDefinitionException(new NoSuchManagedInstanceException(
+                            String.format("Aucune \"ManagedInstance\" trouvée avec la référence : \"%s\"", ref)
+                        ));
 
                     property.setValue(managedInstanceFactory.getManagedInstance(ref));
                 });
 
-            managedInstance.getConstructorArguments().stream()
-                .filter(constructorArgument -> constructorArgument.getRef() != null)
-                .forEachOrdered(constructorArgument -> {
-                    String ref = constructorArgument.getRef();
-                    validateManagedInstanceReference(ref);
+            for (ConstructorArgument constructorArgument : managedInstance.getConstructorArguments()) {
+                String ref = constructorArgument.getRef();
 
-                    constructorArgument.setValue(managedInstanceFactory.getManagedInstance(ref));
-                });
-        });
-    }
+                Object value;
+                if (ref == null)
+                    try {
+                        value = managedInstanceFactory.getManagedInstance(constructorArgument.getType());
+                    } catch (NoSuchManagedInstanceException e) {
+                        throw new ManagedInstanceDefinitionException(new NoSuchManagedInstanceException(
+                            String.format(
+                                "Erreur de résolution de dépendance pour la \"ManagedInstance\" avec l'identifiant \"%s\" car " +
+                                "aucune \"ManagedInstance\" n'a été trouvée pour le type \"%s\"",
+                                managedInstance.getId(), constructorArgument.getType())
+                        ));
+                    }
+                else
+                    try {
+                        value = managedInstanceFactory.getManagedInstance(ref);
+                    } catch (NoSuchManagedInstanceException e) {
+                        throw new ManagedInstanceDefinitionException(new NoSuchManagedInstanceException(
+                            String.format("Aucune \"ManagedInstance\" trouvée avec la référence : \"%s\"", ref)
+                        ));
+                    }
 
-    private void validateManagedInstanceReference(String ref) {
-        if (!containsManagedInstance(ref))
-            throw new ManagedInstanceDefinitionException(new NoSuchManagedInstanceException(
-                String.format("Aucune \"ManagedInstance\" trouvée avec la référence : \"%s\"", ref)
-            ));
+                constructorArgument.setValue(value);
+            }
+        }
     }
 }

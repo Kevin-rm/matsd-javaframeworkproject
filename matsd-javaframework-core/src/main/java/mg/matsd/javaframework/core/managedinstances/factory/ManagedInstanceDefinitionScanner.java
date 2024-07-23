@@ -12,6 +12,7 @@ import mg.matsd.javaframework.core.utils.StringUtils;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.util.stream.IntStream;
 
 class ManagedInstanceDefinitionScanner {
     private ManagedInstanceDefinitionScanner() { }
@@ -43,21 +44,22 @@ class ManagedInstanceDefinitionScanner {
                 if (clazz.isAnnotationPresent(Scope.class))
                     scope = clazz.getAnnotation(Scope.class).value();
 
-                if (clazz.isAnnotationPresent(Configuration.class))
-                    getManagedInstancesFromConfiguration(managedInstanceDefinitionRegistry, clazz);
-
-                managedInstanceDefinitionRegistry.registerManagedInstance(new ManagedInstance(
+                ManagedInstance managedInstance = new ManagedInstance(
                     StringUtils.isBlank(component.value()) ? null : component.value(),
-                    clazz, scope, null
-                ));
+                    clazz, scope, null, null
+                );
+                managedInstanceDefinitionRegistry.registerManagedInstance(managedInstance);
+                if (clazz.isAnnotationPresent(Configuration.class))
+                    loadManagedInstancesFromConfiguration(managedInstanceDefinitionRegistry, managedInstance);
             } catch (ClassNotFoundException ignored) { }
         }
     }
 
-    private static void getManagedInstancesFromConfiguration(
-        ManagedInstanceDefinitionRegistry managedInstanceDefinitionRegistry, Class<?> configurationClass
+    private static void loadManagedInstancesFromConfiguration(
+        ManagedInstanceDefinitionRegistry managedInstanceDefinitionRegistry, ManagedInstance configuration
     ) {
-        for (Method method : configurationClass.getDeclaredMethods()) {
+        Class<?> clazz = configuration.getClazz();
+        for (Method method : clazz.getDeclaredMethods()) {
             if (!method.isAnnotationPresent(mg.matsd.javaframework.core.annotations.ManagedInstance.class))
                 continue;
 
@@ -68,10 +70,11 @@ class ManagedInstanceDefinitionScanner {
 
             ManagedInstance managedInstance = new ManagedInstance(
                 StringUtils.isBlank(m.value()) ? null : m.value(),
-                method.getReturnType(), scope, method
+                method.getReturnType(), scope, configuration, method
             );
-            for (Class<?> parameterType : method.getParameterTypes())
-                managedInstance.addConstructorArgument(null, null, parameterType.getName());
+            Class<?>[] parameterTypes = method.getParameterTypes();
+            IntStream.range(0, parameterTypes.length)
+                .forEachOrdered(i -> managedInstance.addConstructorArgument(i, parameterTypes[i]));
 
             managedInstanceDefinitionRegistry.registerManagedInstance(managedInstance);
         }
