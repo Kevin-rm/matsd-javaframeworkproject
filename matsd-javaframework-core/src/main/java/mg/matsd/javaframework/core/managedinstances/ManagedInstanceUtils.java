@@ -1,27 +1,33 @@
 package mg.matsd.javaframework.core.managedinstances;
 
 import mg.matsd.javaframework.core.managedinstances.factory.ManagedInstanceFactory;
+import mg.matsd.javaframework.core.utils.Assert;
 
 import java.lang.reflect.*;
+import java.util.Arrays;
 
 public class ManagedInstanceUtils {
     private ManagedInstanceUtils() { }
 
+    public static Constructor<?> constructorToUse(ManagedInstance managedInstance) {
+        Assert.notNull(managedInstance);
+
+        Constructor<?>[] constructors = managedInstance.getClazz().getDeclaredConstructors();
+        if (constructors.length == 1) return constructors[0];
+        Arrays.sort(constructors, (c1, c2) -> Integer.compare(c2.getParameterCount(), c1.getParameterCount()));
+
+        return constructors[0];
+    }
+
     public static Object instantiate(ManagedInstance managedInstance, ManagedInstanceFactory managedInstanceFactory) {
         Method factoryMethod = managedInstance.getFactoryMethod();
         if (factoryMethod != null)
-            return createInstanceFromFactoryMethod(factoryMethod, managedInstance, managedInstanceFactory);
+            return instanceFromFactoryMethod(factoryMethod, managedInstance, managedInstanceFactory);
 
         Object instance;
         try {
-            Constructor<?> constructor = managedInstance.findSuitableConstructor();
-            if (constructor == null) throw new NoSuchMethodException();
-
-            Object[] initArgs = new Object[constructor.getParameterCount()];
-            for (ConstructorArgument constructorArgument : managedInstance.getConstructorArguments())
-                initArgs[constructorArgument.getIndex()] = constructorArgument.getValue();
-
-            instance = constructor.newInstance(initArgs);
+            Constructor<?> constructor = constructorToUse(managedInstance);
+            instance = constructor.newInstance(getConstructorArguments(constructor, managedInstance));
 
             for (Property property : managedInstance.getProperties()) {
                 Field field = property.getField();
@@ -29,9 +35,9 @@ public class ManagedInstanceUtils {
 
                 field.set(instance, property.getValue());
             }
-        } catch (NoSuchMethodException | IllegalAccessException e) {
-            throw new ManagedInstanceException(String.format("Aucun constructeur approprié et accessible trouvé " +
-                "pour la \"ManagedInstance\" avec l'identifiant \"%s\"", managedInstance.getId()));
+        } catch (IllegalAccessException e) {
+            throw new ManagedInstanceException(String.format("Le constructeur de la \"ManagedInstance\" " +
+                "avec l'identifiant \"%s\" n'est pas accessible", managedInstance.getId()));
         } catch (InvocationTargetException | InstantiationException e) {
             throw new ManagedInstanceException(e);
         }
@@ -39,18 +45,15 @@ public class ManagedInstanceUtils {
         return instance;
     }
 
-    private static Object createInstanceFromFactoryMethod(
+    private static Object instanceFromFactoryMethod(
         Method factoryMethod,
         ManagedInstance managedInstance,
         ManagedInstanceFactory managedInstanceFactory
     ) {
         try {
-            Object[] args = new Object[factoryMethod.getParameterCount()];
-            for (ConstructorArgument constructorArgument : managedInstance.getConstructorArguments())
-                args[constructorArgument.getIndex()] = constructorArgument.getValue();
-
             return factoryMethod.invoke(
-                managedInstanceFactory.getManagedInstance(factoryMethod.getDeclaringClass()), args
+                managedInstanceFactory.getManagedInstance(managedInstance.getParent().getClazz()),
+                getConstructorArguments(factoryMethod, managedInstance)
             );
         } catch (IllegalAccessException e) {
             throw new ManagedInstanceException(String.format(
@@ -60,5 +63,13 @@ public class ManagedInstanceUtils {
         } catch (InvocationTargetException e) {
             throw new ManagedInstanceException(e);
         }
+    }
+
+    private static Object[] getConstructorArguments(Executable executable, ManagedInstance managedInstance) {
+        Object[] args = new Object[executable.getParameterCount()];
+        for (ConstructorArgument constructorArgument : managedInstance.getConstructorArguments())
+            args[constructorArgument.getIndex()] = constructorArgument.getValue();
+
+        return args;
     }
 }

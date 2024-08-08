@@ -5,14 +5,11 @@ import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.core.utils.ClassUtils;
 import mg.matsd.javaframework.core.utils.StringUtils;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ManagedInstance {
-    public enum Scope { SINGLETON, PROTOTYPE }
-
     private String   id;
     private Class<?> clazz;
     private Scope    scope;
@@ -22,14 +19,6 @@ public class ManagedInstance {
     private Method factoryMethod;
     private List<Property> properties;
     private List<ConstructorArgument> constructorArguments;
-
-    public ManagedInstance(@Nullable String id, Class<?> clazz, @Nullable Scope scope) {
-        this.setClazz(clazz)
-            .setId(id)
-            .setScope(scope);
-
-        initPropertiesAndConstructorArguments();
-    }
 
     public ManagedInstance(
         @Nullable String id,
@@ -204,49 +193,5 @@ public class ManagedInstance {
             );
         });
         constructorArguments.add(constructorArgument);
-    }
-
-    @Nullable
-    Constructor<?> findSuitableConstructor() throws NoSuchMethodException {
-        if (constructorArguments.isEmpty())
-            return clazz.getConstructor();
-
-        for (Constructor<?> constructor : clazz.getConstructors()) {
-            int parameterCount = constructor.getParameterCount();
-            if (
-                constructorArguments.size()      != parameterCount ||
-                maximumConstructorArgumentIndex() > parameterCount - 1
-            ) continue;
-
-            Class<?>[] parameterTypes = constructor.getParameterTypes();
-            for (int i = 0; i < parameterTypes.length; i++) {
-                ConstructorArgument constructorArgument = getConstructorArgumentByIndex(i);
-                if (constructorArgument == null) continue;
-
-                constructorArgument.setType(parameterTypes[i]);
-            }
-
-            return constructor;
-        }
-
-        return null;
-    }
-
-    private int maximumConstructorArgumentIndex() {
-        if (constructorArguments.isEmpty()) return -1;
-
-        return constructorArguments.stream()
-            .mapToInt(ConstructorArgument::getIndex)
-            .filter(constructorArgument -> constructorArgument >= -1)
-            .max()
-            .orElse(-1);
-    }
-
-    @Nullable
-    private ConstructorArgument getConstructorArgumentByIndex(int index) {
-        return constructorArguments.stream()
-            .filter(constructorArgument -> index == constructorArgument.getIndex())
-            .findFirst()
-            .orElse(null);
     }
 }

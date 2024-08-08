@@ -6,10 +6,12 @@ import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.annotations.Scope;
 import mg.matsd.javaframework.core.exceptions.PackageNotFoundException;
 import mg.matsd.javaframework.core.managedinstances.ManagedInstance;
+import mg.matsd.javaframework.core.managedinstances.ManagedInstanceUtils;
 import mg.matsd.javaframework.core.utils.AnnotationUtils;
 import mg.matsd.javaframework.core.utils.StringUtils;
 
 import java.io.File;
+import java.lang.reflect.Executable;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.stream.IntStream;
@@ -48,7 +50,10 @@ class ManagedInstanceDefinitionScanner {
                     StringUtils.isBlank(component.value()) ? null : component.value(),
                     clazz, scope, null, null
                 );
+                processConstructorArguments(ManagedInstanceUtils.constructorToUse(managedInstance), managedInstance);
+
                 managedInstanceDefinitionRegistry.registerManagedInstance(managedInstance);
+
                 if (clazz.isAnnotationPresent(Configuration.class))
                     loadManagedInstancesFromConfiguration(managedInstanceDefinitionRegistry, managedInstance);
             } catch (ClassNotFoundException ignored) { }
@@ -72,16 +77,20 @@ class ManagedInstanceDefinitionScanner {
                 StringUtils.isBlank(m.value()) ? null : m.value(),
                 method.getReturnType(), scope, configuration, method
             );
-            Class<?>[] parameterTypes = method.getParameterTypes();
-            IntStream.range(0, parameterTypes.length)
-                .forEachOrdered(i -> managedInstance.addConstructorArgument(i, parameterTypes[i]));
+            processConstructorArguments(method, managedInstance);
 
             managedInstanceDefinitionRegistry.registerManagedInstance(managedInstance);
         }
     }
 
+    private static void processConstructorArguments(Executable executable, ManagedInstance managedInstance) {
+        Class<?>[] parameterTypes = executable.getParameterTypes();
+        IntStream.range(0, parameterTypes.length)
+            .forEachOrdered(i -> managedInstance.addConstructorArgument(i, parameterTypes[i]));
+    }
+
     private static boolean isComponent(@Nullable Class<?> clazz) {
-        if (clazz == null) return false;
+        if (clazz == null || clazz.isAnnotation()) return false;
 
         return AnnotationUtils.hasAnnotation(Component.class, clazz);
     }

@@ -80,7 +80,7 @@ class XMLConfigurationLoader {
         }
     }
 
-     private static void scanComponents(ManagedInstanceFactory managedInstanceFactory, Document document) {
+    private static void scanComponents(ManagedInstanceFactory managedInstanceFactory, Document document) {
         NodeList nodeList = document.getElementsByTagName("container:component-scan");
         if (nodeList.getLength() == 0) return;
 

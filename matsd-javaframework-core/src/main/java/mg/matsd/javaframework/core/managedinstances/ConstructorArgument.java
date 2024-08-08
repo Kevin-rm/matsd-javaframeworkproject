@@ -10,36 +10,26 @@ public class ConstructorArgument {
     private Class<?> type;
     private Object   value;
     @Nullable
-    private String   ref;
+    private String   reference;
 
     public ConstructorArgument(int index, Class<?> type) {
         this.setIndex(index)
             .setType(type);
     }
 
-    public ConstructorArgument(String index, String value, String ref) {
-        this.setIndex(index)
-            .initValueAndReference(value, ref);
-    }
-
-    public ConstructorArgument(int index, String value, String ref) {
-        this.setIndex(index)
-            .initValueAndReference(value, ref);
-    }
-
-    private void initValueAndReference(String value, String ref) {
-        if (value == null && ref == null)
+    private void initValueAndReference(String value, String reference) {
+        if (value == null && reference == null)
             throw new ManagedInstanceCreationException(String.format("La valeur et la référence ne peuvent pas être toutes les deux \"null\" " +
                 "pour l'argument du constructeur à l'indice %d", this.index)
             );
 
-        if (value != null && ref != null)
+        if (value != null && reference != null)
             throw new ManagedInstanceCreationException(String.format("Un argument de constructeur doit avoir soit une valeur, " +
                 "soit une référence, mais pas les deux en même temps. Indice : %d", this.index)
             );
 
         this.setValue(value)
-            .setRef(ref);
+            .setReference(reference);
     }
 
     public int getIndex() {
@@ -97,17 +87,17 @@ public class ConstructorArgument {
         return this;
     }
 
-    public String getRef() {
-        return ref;
+    public String getReference() {
+        return reference;
     }
 
-    private ConstructorArgument setRef(@Nullable String ref) {
-        if (ref != null) {
-            Assert.notBlank(ref, true, "La référence d'un argument de constructeur ne peut pas être vide");
-            ref = ref.strip();
+    private ConstructorArgument setReference(@Nullable String reference) {
+        if (reference != null) {
+            Assert.notBlank(reference, true, "La référence d'un argument de constructeur ne peut pas être vide");
+            reference = reference.strip();
         }
 
-        this.ref = ref;
+        this.reference = reference;
         return this;
     }
 }

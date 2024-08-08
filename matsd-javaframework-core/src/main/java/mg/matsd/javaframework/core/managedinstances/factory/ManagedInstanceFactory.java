@@ -5,6 +5,7 @@ import mg.matsd.javaframework.core.exceptions.InvalidPackageException;
 import mg.matsd.javaframework.core.managedinstances.ManagedInstance;
 import mg.matsd.javaframework.core.managedinstances.ManagedInstanceUtils;
 import mg.matsd.javaframework.core.managedinstances.NoSuchManagedInstanceException;
+import mg.matsd.javaframework.core.managedinstances.Scope;
 import mg.matsd.javaframework.core.utils.Assert;
 
 import java.util.HashMap;
@@ -81,13 +82,13 @@ public abstract class ManagedInstanceFactory {
     public Boolean isSingleton(String id) throws NoSuchManagedInstanceException {
         validateId(id);
 
-        return managedInstanceDefinitionRegistry.getManagedInstanceById(id).getScope() == ManagedInstance.Scope.SINGLETON;
+        return managedInstanceDefinitionRegistry.getManagedInstanceById(id).getScope() == Scope.SINGLETON;
     }
 
     public Boolean isPrototype(String id) throws NoSuchManagedInstanceException {
         validateId(id);
 
-        return managedInstanceDefinitionRegistry.getManagedInstanceById(id).getScope() == ManagedInstance.Scope.PROTOTYPE;
+        return managedInstanceDefinitionRegistry.getManagedInstanceById(id).getScope() == Scope.PROTOTYPE;
     }
 
     public Class<?> getManagedInstanceClass(String id) throws NoSuchManagedInstanceException {
@@ -108,7 +109,7 @@ public abstract class ManagedInstanceFactory {
     }
 
     public void refresh() {
-        managedInstanceDefinitionRegistry.configureDependencies();
+        managedInstanceDefinitionRegistry.resolveDependencies();
     }
 
     private Object getManagedInstance(ManagedInstance managedInstance) {
