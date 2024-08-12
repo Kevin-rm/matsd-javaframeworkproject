@@ -2,6 +2,7 @@ package mg.itu.prom16.support;
 
 import jakarta.servlet.ServletContext;
 import mg.itu.prom16.base.internal.UtilFunctions;
+import mg.itu.prom16.http.SessionImpl;
 import mg.matsd.javaframework.core.container.AbstractXmlResourceContainer;
 import mg.matsd.javaframework.core.io.Resource;
 import mg.matsd.javaframework.core.managedinstances.ManagedInstance;
@@ -17,6 +18,8 @@ public class WebApplicationContainer extends AbstractXmlResourceContainer {
         super(xmlResourceName);
         this.setServletContext(servletContext)
             .loadManagedInstances();
+
+        applyConfigurations();
     }
 
     private WebApplicationContainer setServletContext(ServletContext servletContext) {
@@ -24,6 +27,12 @@ public class WebApplicationContainer extends AbstractXmlResourceContainer {
 
         this.servletContext = servletContext;
         return this;
+    }
+
+    private void applyConfigurations() {
+        registerManagedInstance(new ManagedInstance(
+            "_matsd_session", SessionImpl.class, "singleton", null, null)
+        );
     }
 
     public List<Class<?>> retrieveControllerClasses() {

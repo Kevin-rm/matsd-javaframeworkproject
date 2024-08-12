@@ -9,12 +9,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SessionImpl implements Session {
-    private final HttpSession httpSession;
+    private HttpSession httpSession;
 
-    public SessionImpl(final HttpSession httpSession) {
+    public SessionImpl() { }
+
+    @Override
+    public SessionImpl setHttpSession(HttpSession httpSession) {
         Assert.notNull(httpSession, "L'argument httpSession ne peut pas être \"null\"");
 
         this.httpSession = httpSession;
+        return this;
     }
 
     @Override

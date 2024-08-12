@@ -42,7 +42,7 @@ public class ManagedInstanceDefinitionRegistry {
 
     ManagedInstance getManagedInstanceByClass(Class<?> clazz) throws NoSuchManagedInstanceException {
         for (ManagedInstance managedInstance : managedInstances)
-            if (managedInstance.getClazz() == clazz) return managedInstance;
+            if (clazz.isAssignableFrom(managedInstance.getClazz())) return managedInstance;
 
         throw new NoSuchManagedInstanceException(String.format(
             "Aucune \"ManagedInstance\" trouvée ayant comme nom de classe : %s", clazz.getName())
@@ -53,7 +53,7 @@ public class ManagedInstanceDefinitionRegistry {
         for (ManagedInstance m : this.managedInstances)
             if (managedInstance.getId().equals(m.getId()))
                 throw new ManagedInstanceDefinitionException(
-                    String.format("L'indetifiant d'une \"ManagedInstance\" doit être unique, \"%s\" est redondant", managedInstance.getId())
+                    String.format("L'identifiant d'une \"ManagedInstance\" doit être unique, \"%s\" est redondant", managedInstance.getId())
                 );
 
         managedInstances.add(managedInstance);

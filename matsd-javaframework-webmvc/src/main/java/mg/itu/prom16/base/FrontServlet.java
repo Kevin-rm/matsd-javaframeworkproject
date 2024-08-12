@@ -6,13 +6,15 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.annotations.RequestMapping;
 import mg.itu.prom16.base.internal.MappingHandler;
-import mg.itu.prom16.base.internal.request.RequestContextHolder;
 import mg.itu.prom16.base.internal.RequestMappingInfo;
 import mg.itu.prom16.base.internal.UtilFunctions;
+import mg.itu.prom16.base.internal.request.RequestContextHolder;
 import mg.itu.prom16.base.internal.request.ServletRequestAttributes;
 import mg.itu.prom16.exceptions.DuplicateMappingException;
 import mg.itu.prom16.exceptions.InvalidReturnTypeException;
 import mg.itu.prom16.http.RequestMethod;
+import mg.itu.prom16.http.Session;
+import mg.itu.prom16.http.SessionImpl;
 import mg.itu.prom16.support.WebApplicationContainer;
 import mg.itu.prom16.utils.WebUtils;
 import mg.matsd.javaframework.core.annotations.Nullable;
@@ -117,7 +119,9 @@ public class FrontServlet extends HttpServlet {
 
     protected final void processRequest(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {
-        RequestContextHolder.setServletRequestAttributes(new ServletRequestAttributes(request, response));
+        Session session = ((Session) webApplicationContainer.getManagedInstance(Session.class))
+            .setHttpSession(request.getSession());
+        RequestContextHolder.setServletRequestAttributes(new ServletRequestAttributes(request, response, session));
 
         try {
             Map.Entry<RequestMappingInfo, MappingHandler> mappingHandlerEntry = resolveMappingHandler(request);
@@ -131,7 +135,7 @@ public class FrontServlet extends HttpServlet {
 
             MappingHandler mappingHandler = mappingHandlerEntry.getValue();
             Object controllerMethodResult = mappingHandler.invokeMethod(
-                webApplicationContainer, request, response, mappingHandlerEntry.getKey()
+                webApplicationContainer, request, response, session, mappingHandlerEntry.getKey()
             );
             if (controllerMethodResult instanceof ModelView modelView) {
                 modelView.getData().forEach(request::setAttribute);

@@ -59,7 +59,8 @@ public class MappingHandler {
         WebApplicationContainer webApplicationContainer,
         HttpServletRequest  httpServletRequest,
         HttpServletResponse httpServletResponse,
-        RequestMappingInfo  requestMappingInfo
+        Session session,
+        RequestMappingInfo requestMappingInfo
     ) {
         try {
             Object[] args = new Object[method.getParameterCount()];
@@ -74,7 +75,7 @@ public class MappingHandler {
                 else if (parameterType == HttpServletResponse.class)
                     args[i] = httpServletResponse;
                 else if (Session.class.isAssignableFrom(parameterType))
-                    args[i] = new SessionImpl(httpServletRequest.getSession());
+                    args[i] = session;
                 else if (parameter.isAnnotationPresent(RequestParameter.class))
                     args[i] = UtilFunctions.getRequestParameterValue(parameterType, parameter, httpServletRequest);
                 else if (parameter.isAnnotationPresent(PathVariable.class))

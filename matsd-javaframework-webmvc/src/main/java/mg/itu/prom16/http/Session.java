@@ -1,10 +1,13 @@
 package mg.itu.prom16.http;
 
+import jakarta.servlet.http.HttpSession;
 import mg.matsd.javaframework.core.annotations.Nullable;
 
 import java.util.Map;
 
 public interface Session {
+    Session setHttpSession(HttpSession httpSession);
+
     Object get(String key);
 
     Object get(String key, @Nullable Object defaultValue);
