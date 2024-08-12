@@ -35,7 +35,5 @@ public abstract class AbstractXmlResourceContainer extends ManagedInstanceFactor
 
             XMLConfigurationLoader.doLoadManagedInstances(this, resource);
         }
-
-        refresh();
     }
 }

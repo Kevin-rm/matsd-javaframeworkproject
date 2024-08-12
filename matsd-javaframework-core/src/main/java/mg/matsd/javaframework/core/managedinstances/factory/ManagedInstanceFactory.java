@@ -2,10 +2,7 @@ package mg.matsd.javaframework.core.managedinstances.factory;
 
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.exceptions.InvalidPackageException;
-import mg.matsd.javaframework.core.managedinstances.ManagedInstance;
-import mg.matsd.javaframework.core.managedinstances.ManagedInstanceUtils;
-import mg.matsd.javaframework.core.managedinstances.NoSuchManagedInstanceException;
-import mg.matsd.javaframework.core.managedinstances.Scope;
+import mg.matsd.javaframework.core.managedinstances.*;
 import mg.matsd.javaframework.core.utils.Assert;
 
 import java.util.HashMap;
@@ -97,6 +94,12 @@ public abstract class ManagedInstanceFactory {
         return managedInstanceDefinitionRegistry.getManagedInstanceById(id).getClazz();
     }
 
+    public boolean isCurrentlyInCreation(String id) {
+        validateId(id);
+
+        return managedInstanceDefinitionRegistry.isCurrentlyInCreation(id);
+    }
+
     public void scanComponents() {
         if (componentScanBasePackage == null || componentScanPerformed) return;
 
@@ -108,19 +111,21 @@ public abstract class ManagedInstanceFactory {
         return componentScanPerformed;
     }
 
-    public void refresh() {
-        managedInstanceDefinitionRegistry.resolveDependencies();
-    }
-
     private Object getManagedInstance(ManagedInstance managedInstance) {
+        String managedInstanceId = managedInstance.getId();
+
+        if (isCurrentlyInCreation(managedInstanceId))
+            throw new ManagedInstanceCurrentlyInCreationException(managedInstanceId);
+        managedInstanceDefinitionRegistry.resolveDependencies(managedInstance);
+
         if (
-            isSingleton(managedInstance.getId()) &&
-            singletonsMap.containsKey(managedInstance.getId())
-        ) return singletonsMap.get(managedInstance.getId());
+            isSingleton(managedInstanceId) &&
+            singletonsMap.containsKey(managedInstanceId)
+        ) return singletonsMap.get(managedInstanceId);
 
         Object instance = ManagedInstanceUtils.instantiate(managedInstance, this);
-        if (isSingleton(managedInstance.getId()))
-            singletonsMap.put(managedInstance.getId(), instance);
+        if (isSingleton(managedInstanceId))
+            singletonsMap.put(managedInstanceId, instance);
 
         return instance;
     }
