@@ -4,7 +4,9 @@ import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.exceptions.XmlParseException;
 import mg.matsd.javaframework.core.io.Resource;
 import mg.matsd.javaframework.core.managedinstances.ManagedInstance;
+import mg.matsd.javaframework.core.managedinstances.ManagedInstanceUtils;
 import mg.matsd.javaframework.core.managedinstances.factory.ManagedInstanceFactory;
+import mg.matsd.javaframework.core.utils.StringUtils;
 import org.w3c.dom.*;
 import org.xml.sax.SAXException;
 
@@ -15,6 +17,7 @@ import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.SchemaFactory;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 
 class XMLConfigurationLoader {
     private XMLConfigurationLoader() { }
@@ -59,25 +62,17 @@ class XMLConfigurationLoader {
                 );
                 managedInstanceFactory.registerManagedInstance(managedInstance);
 
-                NodeList propertyNodeList = managedInstanceElement.getElementsByTagName("property");
-                if (propertyNodeList.getLength() == 0) return;
-
-                for (int j = 0; j < propertyNodeList.getLength(); j++) {
-                    Node propertyNode = propertyNodeList.item(j);
-
-                    if (propertyNode.getNodeType() == Node.ELEMENT_NODE) {
-                        Element propertyElement = (Element) propertyNode;
-
-                        String propertyValue = getElementAttributeValue(propertyElement, "value");
-                        managedInstance.addProperty(
-                            getElementAttributeValue(propertyElement, "name"),
-                            propertyValue == null ? propertyElement.getTextContent() : propertyValue,
-                            getElementAttributeValue(propertyElement, "ref")
-                        );
-                    }
-                }
+                addConstructorArguments(managedInstance, managedInstanceElement);
+                addProperties(managedInstance, managedInstanceElement);
             }
         }
+    }
+
+    @Nullable
+    private static String getElementAttributeValue(Element element, String name) {
+        Attr attribute = element.getAttributeNode(name);
+
+        return attribute == null ? null : attribute.getValue();
     }
 
     private static void scanComponents(ManagedInstanceFactory managedInstanceFactory, Document document) {
@@ -89,10 +84,54 @@ class XMLConfigurationLoader {
         ).scanComponents();
     }
 
-    @Nullable
-    private static String getElementAttributeValue(Element element, String name) {
-        Attr attribute = element.getAttributeNode(name);
+    private static void addConstructorArguments(ManagedInstance managedInstance, Element managedInstanceElement) {
+        NodeList constructorArgNodeList = managedInstanceElement.getElementsByTagName("constructor-arg");
+        if (constructorArgNodeList.getLength() == 0) return;
 
-        return attribute == null ? null : attribute.getValue();
+        Constructor<?> constructor = ManagedInstanceUtils.constructorToUse(managedInstance);
+        for (int i = 0; i < constructorArgNodeList.getLength(); i++) {
+            Node constructorArgNode = constructorArgNodeList.item(i);
+
+            if (constructorArgNode.getNodeType() == Node.ELEMENT_NODE) {
+                Element constructorArgElement = (Element) constructorArgNode;
+
+                managedInstance.addConstructorArgument(
+                    getElementAttributeValue(constructorArgElement, "index"),
+                    getValue(constructorArgElement),
+                    getElementAttributeValue(constructorArgElement, "ref"),
+                    constructor
+                );
+            }
+        }
+    }
+
+    private static void addProperties(ManagedInstance managedInstance, Element managedInstanceElement) {
+        NodeList propertyNodeList = managedInstanceElement.getElementsByTagName("property");
+        if (propertyNodeList.getLength() == 0) return;
+
+        for (int i = 0; i < propertyNodeList.getLength(); i++) {
+            Node propertyNode = propertyNodeList.item(i);
+
+            if (propertyNode.getNodeType() == Node.ELEMENT_NODE) {
+                Element propertyElement = (Element) propertyNode;
+
+                managedInstance.addProperty(
+                    getElementAttributeValue(propertyElement, "name"),
+                    getValue(propertyElement),
+                    getElementAttributeValue(propertyElement, "ref")
+                );
+            }
+        }
+    }
+
+    @Nullable
+    private static String getValue(Element element) {
+        String value = getElementAttributeValue(element, "value");
+
+        String elementTextContent = element.getTextContent();
+        if (value == null && StringUtils.hasText(elementTextContent))
+            return elementTextContent;
+
+        return value;
     }
 }

@@ -24,6 +24,18 @@
                                     </xs:simpleContent>
                                 </xs:complexType>
                             </xs:element>
+
+                            <xs:element name="constructor-arg" minOccurs="0" maxOccurs="unbounded">
+                                <xs:complexType>
+                                    <xs:simpleContent>
+                                        <xs:extension base="xs:string">
+                                            <xs:attribute name="index" type="xs:nonNegativeInteger" use="required"/>
+                                            <xs:attribute name="ref" type="xs:string"/>
+                                            <xs:attribute name="value" type="xs:string"/>
+                                        </xs:extension>
+                                    </xs:simpleContent>
+                                </xs:complexType>
+                            </xs:element>
                         </xs:sequence>
                         <xs:attribute name="id" type="xs:string"/>
                         <xs:attribute name="class" type="xs:string" use="required"/>

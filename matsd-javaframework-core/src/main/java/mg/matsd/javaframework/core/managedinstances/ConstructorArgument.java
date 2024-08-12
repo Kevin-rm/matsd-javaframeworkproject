@@ -3,7 +3,11 @@ package mg.matsd.javaframework.core.managedinstances;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.exceptions.TypeMismatchException;
 import mg.matsd.javaframework.core.utils.Assert;
+import mg.matsd.javaframework.core.utils.ClassUtils;
+import mg.matsd.javaframework.core.utils.StringUtils;
 import mg.matsd.javaframework.core.utils.converter.StringConverter;
+
+import java.lang.reflect.Constructor;
 
 public class ConstructorArgument {
     private int index;
@@ -13,12 +17,27 @@ public class ConstructorArgument {
     private String   reference;
 
     public ConstructorArgument(int index, Class<?> type, @Nullable String reference) {
-        this.setIndex(index)
+        this.setIndex(index, null)
             .setType(type)
             .setReference(reference);
     }
 
-    private void initValueAndReference(String value, String reference) {
+    public ConstructorArgument(
+        @Nullable String index,
+        @Nullable String value,
+        @Nullable String reference,
+        int generatedIndex,
+        Constructor<?> constructor
+    ) {
+        if (index == null)
+             setIndex(generatedIndex, constructor);
+        else setIndex(index, constructor);
+
+        this.setType(constructor.getParameterTypes()[this.index])
+            .initValueAndReference(value, reference);
+    }
+
+    private void initValueAndReference(@Nullable String value, @Nullable String reference) {
         if (value == null && reference == null)
             throw new ManagedInstanceCreationException(String.format("La valeur et la référence ne peuvent pas être toutes les deux \"null\" " +
                 "pour l'argument du constructeur à l'indice %d", this.index)
@@ -37,16 +56,23 @@ public class ConstructorArgument {
         return index;
     }
 
-    public ConstructorArgument setIndex(int index) {
+    private ConstructorArgument setIndex(int index, @Nullable Constructor<?> constructor) {
         Assert.positiveOrZero(index, "L'indice d'un argument de constructeur ne peut pas être négatif");
+
+        if (constructor != null) {
+            int maximumIndex = constructor.getParameterCount() - 1;
+            if (index > maximumIndex)
+                throw new IllegalArgumentException(String.format("L'indice de l'argument de constructeur donné (=%d) dépasse " +
+                    "la valeur maximum d'indice (=%d) du constructeur \"%s\"", index, maximumIndex, constructor.getName()));
+        }
 
         this.index = index;
         return this;
     }
 
-    private ConstructorArgument setIndex(String index) {
+    private void setIndex(String index, @Nullable Constructor<?> constructor) {
         try {
-            return setIndex(StringConverter.convert(index, Integer.class));
+            setIndex(StringConverter.convert(index, Integer.class), constructor);
         } catch (TypeMismatchException e) {
             throw new TypeMismatchException(String.format(
                 "La valeur de l'indice fournie \"%s\" n'est pas un \"integer\"", index
@@ -58,7 +84,7 @@ public class ConstructorArgument {
         return type;
     }
 
-    ConstructorArgument setType(Class<?> type) {
+    private ConstructorArgument setType(Class<?> type) {
         Assert.notNull(type, "Le type d'un argument de constructeur ne peut pas être \"null\"");
 
         this.type = type;
@@ -70,13 +96,22 @@ public class ConstructorArgument {
     }
 
     public ConstructorArgument setValue(@Nullable Object value) {
-        if (this.value == null || value instanceof String)
-            this.value = value;
-        else {
-            Assert.state(type != null, "Le type de l'argument de constructeur est \"null\"");
+        if (!ClassUtils.isAssignable(type, value)) {
+            throw new TypeMismatchException(String.format(
+                "La valeur spécifiée \"%s\" ne correspond pas au type attendu \"%s\" pour l'argument de constructeur à l'indice %d",
+                value, type.getSimpleName(), index
+            ));
+        }
 
+        this.value = value;
+        return this;
+    }
+
+    private ConstructorArgument setValue(@Nullable String value) {
+        Object obj = null;
+        if (value != null && StringUtils.hasText(value)) {
             try {
-                this.value = StringConverter.convert((String) this.value, type);
+                obj = StringConverter.convert(value, type);
             } catch (TypeMismatchException e) {
                 throw new TypeMismatchException(String.format(
                     "La valeur fournie pour l'argument de constructeur à l'indice %d ne correspond pas au type \"%s\" attendu",
@@ -85,20 +120,19 @@ public class ConstructorArgument {
             }
         }
 
-        return this;
+        return setValue(obj);
     }
 
     public String getReference() {
         return reference;
     }
 
-    private ConstructorArgument setReference(@Nullable String reference) {
+    private void setReference(@Nullable String reference) {
         if (reference != null) {
             Assert.notBlank(reference, true, "La référence d'un argument de constructeur ne peut pas être vide");
             reference = reference.strip();
         }
 
         this.reference = reference;
-        return this;
     }
 }

@@ -83,14 +83,14 @@ class ManagedInstanceDefinitionScanner {
 
     private static void processConstructorArguments(Executable executable, ManagedInstance managedInstance) {
         Parameter[] parameters = executable.getParameters();
-        for (int i = 0; i < parameters.length; i++) {
-            Parameter parameter    = parameters[i];
+        IntStream.range(0, parameters.length).forEachOrdered(i -> {
+            Parameter parameter = parameters[i];
             Class<?> parameterType = parameter.getType();
 
             if (parameter.isAnnotationPresent(Identifier.class))
                  managedInstance.addConstructorArgument(i, parameterType, parameter.getAnnotation(Identifier.class).value());
             else managedInstance.addConstructorArgument(i, parameterType, null);
-        }
+        });
     }
 
     private static boolean isComponent(@Nullable Class<?> clazz) {

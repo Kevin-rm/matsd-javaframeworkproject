@@ -5,6 +5,7 @@ import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.core.utils.ClassUtils;
 import mg.matsd.javaframework.core.utils.StringUtils;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -107,12 +108,12 @@ public class ManagedInstance {
         return this;
     }
 
-    private ManagedInstance setScope(@Nullable String scope) {
+    private void setScope(@Nullable String scope) {
         if (scope == null || StringUtils.isBlank(scope))
             scope = "singleton";
 
         try {
-            return setScope(Scope.valueOf(scope.strip().toUpperCase()));
+            setScope(Scope.valueOf(scope.strip().toUpperCase()));
         } catch (IllegalArgumentException e) {
             throw new ManagedInstanceCreationException(String.format("Scope non valide : %s", scope));
         }
@@ -186,6 +187,17 @@ public class ManagedInstance {
         addConstructorArgument(new ConstructorArgument(index, type, reference));
     }
 
+    public void addConstructorArgument(
+        @Nullable String index,
+        @Nullable String value,
+        @Nullable String reference,
+        Constructor<?> constructor
+    ) {
+        addConstructorArgument(new ConstructorArgument(
+            index, value, reference, generateConstructorArgumentIndex(), constructor
+        ));
+    }
+
     private void addConstructorArgument(ConstructorArgument constructorArgument) {
         final int i = constructorArgument.getIndex();
         constructorArguments.stream().filter(c -> i == c.getIndex()).forEachOrdered(c -> {
@@ -196,5 +208,13 @@ public class ManagedInstance {
         });
 
         constructorArguments.add(constructorArgument);
+    }
+
+    private int generateConstructorArgumentIndex() {
+        return constructorArguments.stream()
+            .mapToInt(ConstructorArgument::getIndex)
+            .filter(constructorArgument -> constructorArgument >= 0)
+            .max()
+            .orElse(0) + 1;
     }
 }
