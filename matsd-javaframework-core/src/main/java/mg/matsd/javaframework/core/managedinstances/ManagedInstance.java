@@ -182,9 +182,11 @@ public class ManagedInstance {
         return constructorArguments;
     }
 
-    public void addConstructorArgument(int index, Class<?> type) {
-        ConstructorArgument constructorArgument = new ConstructorArgument(index, type);
+    public void addConstructorArgument(int index, Class<?> type, @Nullable String reference) {
+        addConstructorArgument(new ConstructorArgument(index, type, reference));
+    }
 
+    private void addConstructorArgument(ConstructorArgument constructorArgument) {
         final int i = constructorArgument.getIndex();
         constructorArguments.stream().filter(c -> i == c.getIndex()).forEachOrdered(c -> {
             throw new ManagedInstanceCreationException(
@@ -192,6 +194,7 @@ public class ManagedInstance {
                     "est redondant pour la \"ManagedInstance\" avec l'ID \"%s\"", i, id)
             );
         });
+
         constructorArguments.add(constructorArgument);
     }
 }

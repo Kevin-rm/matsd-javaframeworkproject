@@ -1,9 +1,6 @@
 package mg.matsd.javaframework.core.managedinstances.factory;
 
-import mg.matsd.javaframework.core.annotations.Component;
-import mg.matsd.javaframework.core.annotations.Configuration;
-import mg.matsd.javaframework.core.annotations.Nullable;
-import mg.matsd.javaframework.core.annotations.Scope;
+import mg.matsd.javaframework.core.annotations.*;
 import mg.matsd.javaframework.core.exceptions.PackageNotFoundException;
 import mg.matsd.javaframework.core.managedinstances.ManagedInstance;
 import mg.matsd.javaframework.core.managedinstances.ManagedInstanceUtils;
@@ -13,6 +10,7 @@ import mg.matsd.javaframework.core.utils.StringUtils;
 import java.io.File;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.net.URL;
 import java.util.stream.IntStream;
 
@@ -84,9 +82,15 @@ class ManagedInstanceDefinitionScanner {
     }
 
     private static void processConstructorArguments(Executable executable, ManagedInstance managedInstance) {
-        Class<?>[] parameterTypes = executable.getParameterTypes();
-        IntStream.range(0, parameterTypes.length)
-            .forEachOrdered(i -> managedInstance.addConstructorArgument(i, parameterTypes[i]));
+        Parameter[] parameters = executable.getParameters();
+        for (int i = 0; i < parameters.length; i++) {
+            Parameter parameter    = parameters[i];
+            Class<?> parameterType = parameter.getType();
+
+            if (parameter.isAnnotationPresent(Identifier.class))
+                 managedInstance.addConstructorArgument(i, parameterType, parameter.getAnnotation(Identifier.class).value());
+            else managedInstance.addConstructorArgument(i, parameterType, null);
+        }
     }
 
     private static boolean isComponent(@Nullable Class<?> clazz) {

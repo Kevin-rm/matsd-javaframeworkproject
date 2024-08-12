@@ -12,9 +12,10 @@ public class ConstructorArgument {
     @Nullable
     private String   reference;
 
-    public ConstructorArgument(int index, Class<?> type) {
+    public ConstructorArgument(int index, Class<?> type, @Nullable String reference) {
         this.setIndex(index)
-            .setType(type);
+            .setType(type)
+            .setReference(reference);
     }
 
     private void initValueAndReference(String value, String reference) {
