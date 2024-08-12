@@ -9,7 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-class ManagedInstanceDefinitionRegistry {
+public class ManagedInstanceDefinitionRegistry {
     private final List<ManagedInstance>  managedInstances;
     private final ManagedInstanceFactory managedInstanceFactory;
     private final Set<String> managedInstancesCurrentlyInCreation;
@@ -20,7 +20,7 @@ class ManagedInstanceDefinitionRegistry {
         managedInstancesCurrentlyInCreation = new HashSet<>();
     }
 
-    List<ManagedInstance> getManagedInstances() {
+    public List<ManagedInstance> getManagedInstances() {
         return managedInstances;
     }
 
