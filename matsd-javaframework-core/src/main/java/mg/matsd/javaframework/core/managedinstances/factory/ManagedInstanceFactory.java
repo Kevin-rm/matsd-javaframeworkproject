@@ -111,12 +111,17 @@ public abstract class ManagedInstanceFactory {
         return componentScanPerformed;
     }
 
+    protected abstract Object getManagedInstanceForWebScope(ManagedInstance managedInstance);
+
     private Object getManagedInstance(ManagedInstance managedInstance) {
         String managedInstanceId = managedInstance.getId();
 
         if (isCurrentlyInCreation(managedInstanceId))
             throw new ManagedInstanceCurrentlyInCreationException(managedInstanceId);
         managedInstanceDefinitionRegistry.resolveDependencies(managedInstance);
+
+        if (managedInstance.getScope() == Scope.REQUEST || managedInstance.getScope() == Scope.SESSION)
+            return getManagedInstanceForWebScope(managedInstance);
 
         if (
             isSingleton(managedInstanceId) &&

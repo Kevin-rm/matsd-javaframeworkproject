@@ -118,9 +118,9 @@ public class FrontServlet extends HttpServlet {
 
     protected final void processRequest(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {
+        RequestContextHolder.setServletRequestAttributes(new ServletRequestAttributes(request, response));
         Session session = ((Session) webApplicationContainer.getManagedInstance(Session.class))
-            .setHttpSession(request.getSession());
-        RequestContextHolder.setServletRequestAttributes(new ServletRequestAttributes(request, response, session));
+            .setHttpSession(RequestContextHolder.getServletRequestAttributes().getSession());
 
         try {
             Map.Entry<RequestMappingInfo, MappingHandler> mappingHandlerEntry = resolveMappingHandler(request);
