@@ -65,17 +65,15 @@ public class WebApplicationContainer extends AbstractXmlResourceContainer {
             }
 
             return instance;
-        } else if (managedInstance.getScope() == Scope.SESSION) {
+        } else {
             instance = session.getAttribute(key);
             if (instance == null) {
                 instance = ManagedInstanceUtils.instantiate(managedInstance, this);
                 session.setAttribute(key, instance);
             }
-
-            return instance;
         }
 
-        throw new InternalException();
+        return instance;
     }
 
     @Override
