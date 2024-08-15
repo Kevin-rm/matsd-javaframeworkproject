@@ -9,8 +9,8 @@ import mg.itu.prom16.annotations.RequestParameter;
 import mg.itu.prom16.annotations.SessionAttribute;
 import mg.itu.prom16.exceptions.UnexpectedParameterException;
 import mg.itu.prom16.http.Session;
-import mg.itu.prom16.http.SessionImpl;
 import mg.itu.prom16.support.WebApplicationContainer;
+import mg.matsd.javaframework.core.managedinstances.NoSuchManagedInstanceException;
 import mg.matsd.javaframework.core.utils.Assert;
 
 import java.lang.reflect.InvocationTargetException;
@@ -84,7 +84,13 @@ public class MappingHandler {
                     args[i] = UtilFunctions.bindRequestParameters(parameterType, parameter, httpServletRequest);
                 else if (parameter.isAnnotationPresent(SessionAttribute.class))
                     args[i] = UtilFunctions.getSessionAttributeValue(parameterType, parameter, httpServletRequest.getSession());
-                else throw new UnexpectedParameterException(parameter);
+                else {
+                    try {
+                        args[i] = webApplicationContainer.getManagedInstance(parameterType);
+                    } catch (NoSuchManagedInstanceException ignored) {
+                        throw new UnexpectedParameterException(parameter);
+                    }
+                }
             }
 
             return method.invoke(webApplicationContainer.getManagedInstance(controllerClass), args);

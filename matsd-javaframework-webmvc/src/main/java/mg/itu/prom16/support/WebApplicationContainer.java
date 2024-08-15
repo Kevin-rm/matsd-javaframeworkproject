@@ -1,6 +1,5 @@
 package mg.itu.prom16.support;
 
-import com.sun.jdi.InternalException;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -52,24 +51,23 @@ public class WebApplicationContainer extends AbstractXmlResourceContainer {
 
     @Override
     protected Object getManagedInstanceForWebScope(ManagedInstance managedInstance) {
-        HttpServletRequest request = RequestContextHolder.getServletRequestAttributes().getRequest();
-        HttpSession session = request.getSession();
+        HttpServletRequest httpServletRequest = RequestContextHolder.getServletRequestAttributes().getRequest();
         String key = WEB_SCOPED_MANAGED_INSTANCES_PREFIX + managedInstance.getId();
 
         Object instance;
         if (managedInstance.getScope() == Scope.REQUEST) {
-            instance = request.getAttribute(key);
+            instance = httpServletRequest.getAttribute(key);
             if (instance == null) {
                 instance = ManagedInstanceUtils.instantiate(managedInstance, this);
-                request.setAttribute(key, instance);
+                httpServletRequest.setAttribute(key, instance);
             }
-
-            return instance;
         } else {
-            instance = session.getAttribute(key);
+            HttpSession httpSession = httpServletRequest.getSession();
+
+            instance = httpSession.getAttribute(key);
             if (instance == null) {
                 instance = ManagedInstanceUtils.instantiate(managedInstance, this);
-                session.setAttribute(key, instance);
+                httpSession.setAttribute(key, instance);
             }
         }
 
