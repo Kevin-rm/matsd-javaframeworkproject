@@ -17,11 +17,6 @@ public class ClassPathContainer extends AbstractXmlResourceContainer {
     }
 
     @Override
-    protected void customConfiguration() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     protected Resource buildResource() {
         return new ClassPathResource(xmlResourceName);
     }

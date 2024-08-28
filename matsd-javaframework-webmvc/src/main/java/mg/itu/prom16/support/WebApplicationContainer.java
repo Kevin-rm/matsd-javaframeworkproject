@@ -1,5 +1,6 @@
 package mg.itu.prom16.support;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -74,8 +75,9 @@ public class WebApplicationContainer extends AbstractXmlResourceContainer {
 
     @Override
     protected void customConfiguration() {
-        registerManagedInstance(new ManagedInstance(
-            "_matsd_session", SessionImpl.class, "session", null, null)
+        registerManagedInstance(
+            new ManagedInstance("_matsd_session", SessionImpl.class, "session", null, null),
+            new ManagedInstance("_jackson_objectmapper", ObjectMapper.class, "singleton", null, null)
         );
     }
 

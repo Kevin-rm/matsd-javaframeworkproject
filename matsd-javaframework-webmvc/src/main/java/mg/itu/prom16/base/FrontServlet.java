@@ -21,6 +21,7 @@ import mg.matsd.javaframework.core.utils.AnnotationUtils;
 import mg.matsd.javaframework.core.utils.Assert;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
@@ -104,7 +105,11 @@ public class FrontServlet extends HttpServlet {
         String[] originalStringParts = originalString.split(":", 2);
         if (!originalStringParts[0].stripTrailing().equalsIgnoreCase("redirect")) {
             httpServletResponse.setContentType("text/html");
-            httpServletResponse.getWriter().print(originalString);
+
+            PrintWriter printWriter = httpServletResponse.getWriter();
+            printWriter.print(originalString);
+            printWriter.flush();
+            return;
         }
 
         originalStringParts[1] = originalStringParts[1].stripLeading();

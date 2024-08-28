@@ -70,8 +70,10 @@ public abstract class ManagedInstanceFactory {
         return managedInstanceDefinitionRegistry.containsManagedInstance(id);
     }
 
-    public void registerManagedInstance(ManagedInstance managedInstance) {
-        managedInstanceDefinitionRegistry.registerManagedInstance(managedInstance);
+    public void registerManagedInstance(@Nullable ManagedInstance... managedInstances) {
+        Assert.noNullElements(managedInstances, "Chaque \"ManagedInstance\" à enregistrer ne peut pas être \"null\"");
+
+        for (ManagedInstance m : managedInstances) managedInstanceDefinitionRegistry.registerManagedInstance(m);
     }
 
     public void registerManagedInstance(String id, String clazz, String scope) {
@@ -113,9 +115,9 @@ public abstract class ManagedInstanceFactory {
         return componentScanPerformed;
     }
 
-    protected abstract Object getManagedInstanceForWebScope(ManagedInstance managedInstance);
+    protected void customConfiguration() { }
 
-    protected abstract void customConfiguration();
+    protected abstract Object getManagedInstanceForWebScope(ManagedInstance managedInstance);
 
     private Object getManagedInstance(ManagedInstance managedInstance) {
         String managedInstanceId = managedInstance.getId();

@@ -16,6 +16,13 @@ public final class Assert {
         notNull(object, null);
     }
 
+    public static void noNullElements(@Nullable Object[] array, @Nullable String exceptionMessage) {
+        if (array == null) return;
+
+        for (Object element : array)
+            if (element == null) throw new IllegalArgumentException(exceptionMessage);
+    }
+
     public static void notBlank(String string, boolean allowNull, @Nullable String exceptionMessage) {
         String message = exceptionMessage == null ? "La chaîne de caratères passée en argument est vide" : exceptionMessage;
 
