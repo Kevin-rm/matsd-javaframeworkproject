@@ -21,6 +21,8 @@ public abstract class ManagedInstanceFactory {
     protected ManagedInstanceFactory() {
         managedInstanceDefinitionRegistry = new ManagedInstanceDefinitionRegistry(this);
         singletonsMap = new HashMap<>();
+
+        customConfiguration();
     }
 
     public ManagedInstanceFactory setComponentScanBasePackage(@Nullable String componentScanBasePackage) {
@@ -112,6 +114,8 @@ public abstract class ManagedInstanceFactory {
     }
 
     protected abstract Object getManagedInstanceForWebScope(ManagedInstance managedInstance);
+
+    protected abstract void customConfiguration();
 
     private Object getManagedInstance(ManagedInstance managedInstance) {
         String managedInstanceId = managedInstance.getId();

@@ -25,8 +25,6 @@ public class WebApplicationContainer extends AbstractXmlResourceContainer {
         super(xmlResourceName);
         this.setServletContext(servletContext)
             .loadManagedInstances();
-
-        applyConfigurations();
     }
 
     private WebApplicationContainer setServletContext(ServletContext servletContext) {
@@ -75,13 +73,14 @@ public class WebApplicationContainer extends AbstractXmlResourceContainer {
     }
 
     @Override
-    protected Resource buildResource() {
-        return new ServletContextResource(servletContext, xmlResourceName);
-    }
-
-    private void applyConfigurations() {
+    protected void customConfiguration() {
         registerManagedInstance(new ManagedInstance(
             "_matsd_session", SessionImpl.class, "session", null, null)
         );
+    }
+
+    @Override
+    protected Resource buildResource() {
+        return new ServletContextResource(servletContext, xmlResourceName);
     }
 }
