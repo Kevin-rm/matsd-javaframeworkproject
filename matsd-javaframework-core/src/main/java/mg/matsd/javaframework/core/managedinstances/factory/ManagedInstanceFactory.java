@@ -118,7 +118,7 @@ public abstract class ManagedInstanceFactory {
 
     protected void defineCustomConfiguration() { }
 
-    protected Object getManagedInstanceForWebScope(ManagedInstance managedInstance) {
+    protected Object getManagedInstanceForWebScope(ManagedInstance ignoredManagedInstance) {
         throw new UnsupportedOperationException("La méthode \"getManagedInstanceForWebScope\" n'est disponible que dans un contexte web");
     }
 

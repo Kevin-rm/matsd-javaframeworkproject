@@ -51,7 +51,7 @@ public class FrontServlet extends HttpServlet {
         for (Class<?> controllerClass : webApplicationContainer.retrieveControllerClasses()) {
             String pathPrefix = "";
             List<RequestMethod> sharedRequestMethods = new ArrayList<>();
-            boolean isJsonResponse = AnnotationUtils.hasAnnotation(JsonResponse.class, controllerClass);
+            boolean jsonResponse = AnnotationUtils.hasAnnotation(JsonResponse.class, controllerClass);
 
             if (controllerClass.isAnnotationPresent(RequestMapping.class)) {
                 RequestMapping requestMapping = controllerClass.getAnnotation(RequestMapping.class);
@@ -79,7 +79,7 @@ public class FrontServlet extends HttpServlet {
                     throw new DuplicateMappingException(requestMappingInfo);
 
                 mappingHandlerMap.put(requestMappingInfo,
-                    new MappingHandler(controllerClass, method, isJsonResponse || method.isAnnotationPresent(JsonResponse.class))
+                    new MappingHandler(controllerClass, method, jsonResponse || method.isAnnotationPresent(JsonResponse.class))
                 );
             }
         }

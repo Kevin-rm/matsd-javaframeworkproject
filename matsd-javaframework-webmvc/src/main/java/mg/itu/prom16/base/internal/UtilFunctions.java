@@ -26,7 +26,7 @@ public final class UtilFunctions {
     }
 
     public static boolean isAbsoluteUrl(@Nullable String url) {
-        return url != null && url.startsWith("http://") || url.startsWith("https://");
+        return url != null && (url.startsWith("http://") || url.startsWith("https://"));
     }
 
     public static Map<String, Object> getRequestMappingInfoAttributes(Method method) {

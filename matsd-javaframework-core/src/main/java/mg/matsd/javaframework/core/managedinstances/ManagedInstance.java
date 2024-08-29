@@ -108,12 +108,12 @@ public class ManagedInstance {
         return this;
     }
 
-    private void setScope(@Nullable String scope) {
+    private ManagedInstance setScope(@Nullable String scope) {
         if (scope == null || StringUtils.isBlank(scope))
             scope = "singleton";
 
         try {
-            setScope(Scope.valueOf(scope.strip().toUpperCase()));
+            return setScope(Scope.valueOf(scope.strip().toUpperCase()));
         } catch (IllegalArgumentException e) {
             throw new ManagedInstanceCreationException(String.format("Scope non valide : %s", scope));
         }

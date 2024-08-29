@@ -21,7 +21,7 @@ import java.lang.reflect.Parameter;
 public class MappingHandler {
     private Class<?> controllerClass;
     private Method   method;
-    private boolean  isJsonResponse;
+    private boolean  jsonResponse;
 
     public MappingHandler(Class<?> controllerClass, Method method, boolean jsonResponse) {
         this.setControllerClass(controllerClass)
@@ -59,7 +59,7 @@ public class MappingHandler {
     }
 
     public boolean isJsonResponse() {
-        return isJsonResponse;
+        return jsonResponse;
     }
 
     private MappingHandler setJsonResponse(boolean jsonResponse) {
@@ -67,7 +67,7 @@ public class MappingHandler {
         if (returnType == ModelView.class)
             throw new IllegalArgumentException("Impossible d'envoyer une réponse sous le format \"JSON\" si le type de retour est \"ModelView\"");
 
-        isJsonResponse = jsonResponse;
+        this.jsonResponse = jsonResponse;
         return this;
     }
 
@@ -102,9 +102,9 @@ public class MappingHandler {
                     args[i] = UtilFunctions.getSessionAttributeValue(parameterType, parameter, httpServletRequest.getSession());
                 else try {
                         args[i] = webApplicationContainer.getManagedInstance(parameterType);
-                    } catch (NoSuchManagedInstanceException ignored) {
+                     } catch (NoSuchManagedInstanceException ignored) {
                         throw new UnexpectedParameterException(parameter);
-                    }
+                     }
             }
 
             return method.invoke(webApplicationContainer.getManagedInstance(controllerClass), args);
