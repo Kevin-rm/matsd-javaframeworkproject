@@ -1,7 +1,6 @@
 package mg.itu.prom16.support;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -50,6 +49,14 @@ public class WebApplicationContainer extends AbstractXmlResourceContainer {
     }
 
     @Override
+    protected void defineCustomConfiguration() {
+        registerManagedInstance(
+            new ManagedInstance("_matsd_session", SessionImpl.class, "session", null, null),
+            new ManagedInstance("_jackson_objectmapper", ObjectMapper.class, "singleton", null, null)
+        );
+    }
+
+    @Override
     protected Object getManagedInstanceForWebScope(ManagedInstance managedInstance) {
         HttpServletRequest httpServletRequest = RequestContextHolder.getServletRequestAttributes().getRequest();
         String key = WEB_SCOPED_MANAGED_INSTANCES_PREFIX + managedInstance.getId();
@@ -72,17 +79,6 @@ public class WebApplicationContainer extends AbstractXmlResourceContainer {
         }
 
         return instance;
-    }
-
-    @Override
-    protected void customConfiguration() {
-        registerManagedInstance(
-            new ManagedInstance("_matsd_session", SessionImpl.class, "session", null, null),
-            new ManagedInstance("_jackson_objectmapper", ObjectMapper.class, "singleton", null, null)
-        );
-
-        ObjectMapper objectMapper = (ObjectMapper) getManagedInstance("_jackson_objectmapper");
-        objectMapper.configure(SerializationFeature.INDENT_OUTPUT, true);
     }
 
     @Override

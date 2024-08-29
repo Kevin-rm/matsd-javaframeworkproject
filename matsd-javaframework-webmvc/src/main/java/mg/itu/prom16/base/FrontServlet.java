@@ -1,9 +1,11 @@
 package mg.itu.prom16.base;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import mg.itu.prom16.annotations.JsonResponse;
 import mg.itu.prom16.annotations.RequestMapping;
 import mg.itu.prom16.base.internal.MappingHandler;
 import mg.itu.prom16.base.internal.RequestMappingInfo;
@@ -49,6 +51,7 @@ public class FrontServlet extends HttpServlet {
         for (Class<?> controllerClass : webApplicationContainer.retrieveControllerClasses()) {
             String pathPrefix = "";
             List<RequestMethod> sharedRequestMethods = new ArrayList<>();
+            boolean isJsonResponse = AnnotationUtils.hasAnnotation(JsonResponse.class, controllerClass);
 
             if (controllerClass.isAnnotationPresent(RequestMapping.class)) {
                 RequestMapping requestMapping = controllerClass.getAnnotation(RequestMapping.class);
@@ -75,7 +78,9 @@ public class FrontServlet extends HttpServlet {
                 if (mappingHandlerMap.containsKey(requestMappingInfo))
                     throw new DuplicateMappingException(requestMappingInfo);
 
-                mappingHandlerMap.put(requestMappingInfo, new MappingHandler(controllerClass, method));
+                mappingHandlerMap.put(requestMappingInfo,
+                    new MappingHandler(controllerClass, method, isJsonResponse || method.isAnnotationPresent(JsonResponse.class))
+                );
             }
         }
     }
@@ -88,7 +93,14 @@ public class FrontServlet extends HttpServlet {
             .orElse(null);
     }
 
-    private void stringToHttpResponse(
+    private void handleJsonResult(HttpServletResponse httpServletResponse, Object controllerMethodResult) {
+        httpServletResponse.setContentType("application/json");
+
+        ObjectMapper objectMapper = (ObjectMapper) webApplicationContainer.getManagedInstance("_jackson_objectmapper");
+
+    }
+
+    private void handleStringResult(
         HttpServletRequest  httpServletRequest,
         HttpServletResponse httpServletResponse,
         String originalString
@@ -141,14 +153,17 @@ public class FrontServlet extends HttpServlet {
             Object controllerMethodResult = mappingHandler.invokeMethod(
                 webApplicationContainer, request, response, session, mappingHandlerEntry.getKey()
             );
-            if (controllerMethodResult instanceof ModelView modelView) {
+
+            response.setCharacterEncoding("UTF-8");
+            if (mappingHandler.isJsonResponse()) handleJsonResult(response, controllerMethodResult);
+            else if (controllerMethodResult instanceof ModelView modelView) {
                 modelView.getData().forEach(request::setAttribute);
 
                 request.getRequestDispatcher(modelView.getView()).forward(request, response);
             } else if (controllerMethodResult instanceof RedirectView redirectView)
                 response.sendRedirect(redirectView.buildCompleteUrl());
             else if (controllerMethodResult instanceof String string)
-                stringToHttpResponse(request, response, string);
+                handleStringResult(request, response, string);
             else throw new InvalidReturnTypeException(mappingHandler.getMethod());
         } finally {
             RequestContextHolder.clear();

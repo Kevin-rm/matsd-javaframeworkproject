@@ -22,7 +22,7 @@ public abstract class ManagedInstanceFactory {
         managedInstanceDefinitionRegistry = new ManagedInstanceDefinitionRegistry(this);
         singletonsMap = new HashMap<>();
 
-        customConfiguration();
+        defineCustomConfiguration();
     }
 
     public ManagedInstanceFactory setComponentScanBasePackage(@Nullable String componentScanBasePackage) {
@@ -70,7 +70,8 @@ public abstract class ManagedInstanceFactory {
         return managedInstanceDefinitionRegistry.containsManagedInstance(id);
     }
 
-    public void registerManagedInstance(@Nullable ManagedInstance... managedInstances) {
+    public void registerManagedInstance(ManagedInstance... managedInstances) {
+        Assert.notNull(managedInstances, "L'argument managedInstances ne peut pas être \"null\"");
         Assert.noNullElements(managedInstances, "Chaque \"ManagedInstance\" à enregistrer ne peut pas être \"null\"");
 
         for (ManagedInstance m : managedInstances) managedInstanceDefinitionRegistry.registerManagedInstance(m);
@@ -115,9 +116,11 @@ public abstract class ManagedInstanceFactory {
         return componentScanPerformed;
     }
 
-    protected void customConfiguration() { }
+    protected void defineCustomConfiguration() { }
 
-    protected abstract Object getManagedInstanceForWebScope(ManagedInstance managedInstance);
+    protected Object getManagedInstanceForWebScope(ManagedInstance managedInstance) {
+        throw new UnsupportedOperationException("La méthode \"getManagedInstanceForWebScope\" n'est disponible que dans un contexte web");
+    }
 
     private Object getManagedInstance(ManagedInstance managedInstance) {
         String managedInstanceId = managedInstance.getId();

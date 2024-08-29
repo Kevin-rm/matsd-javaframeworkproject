@@ -7,6 +7,7 @@ import mg.itu.prom16.annotations.FromRequestParameters;
 import mg.itu.prom16.annotations.PathVariable;
 import mg.itu.prom16.annotations.RequestParameter;
 import mg.itu.prom16.annotations.SessionAttribute;
+import mg.itu.prom16.base.ModelView;
 import mg.itu.prom16.exceptions.UnexpectedParameterException;
 import mg.itu.prom16.http.Session;
 import mg.itu.prom16.support.WebApplicationContainer;
@@ -20,10 +21,12 @@ import java.lang.reflect.Parameter;
 public class MappingHandler {
     private Class<?> controllerClass;
     private Method   method;
+    private boolean  isJsonResponse;
 
-    public MappingHandler(Class<?> controllerClass, Method method) {
+    public MappingHandler(Class<?> controllerClass, Method method, boolean jsonResponse) {
         this.setControllerClass(controllerClass)
-            .setMethod(method);
+            .setMethod(method)
+            .setJsonResponse(jsonResponse);
     }
 
     public Class<?> getControllerClass() {
@@ -52,6 +55,19 @@ public class MappingHandler {
             ));
 
         this.method = method;
+        return this;
+    }
+
+    public boolean isJsonResponse() {
+        return isJsonResponse;
+    }
+
+    private MappingHandler setJsonResponse(boolean jsonResponse) {
+        Class<?> returnType = method.getReturnType();
+        if (returnType == ModelView.class)
+            throw new IllegalArgumentException("Impossible d'envoyer une réponse sous le format \"JSON\" si le type de retour est \"ModelView\"");
+
+        isJsonResponse = jsonResponse;
         return this;
     }
 
@@ -84,13 +100,11 @@ public class MappingHandler {
                     args[i] = UtilFunctions.bindRequestParameters(parameterType, parameter, httpServletRequest);
                 else if (parameter.isAnnotationPresent(SessionAttribute.class))
                     args[i] = UtilFunctions.getSessionAttributeValue(parameterType, parameter, httpServletRequest.getSession());
-                else {
-                    try {
+                else try {
                         args[i] = webApplicationContainer.getManagedInstance(parameterType);
                     } catch (NoSuchManagedInstanceException ignored) {
                         throw new UnexpectedParameterException(parameter);
                     }
-                }
             }
 
             return method.invoke(webApplicationContainer.getManagedInstance(controllerClass), args);
