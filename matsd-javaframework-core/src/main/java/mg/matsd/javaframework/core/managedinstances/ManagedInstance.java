@@ -184,7 +184,7 @@ public class ManagedInstance {
     }
 
     public void addConstructorArgument(int index, Class<?> type, @Nullable String reference) {
-        addConstructorArgument(new ConstructorArgument(index, type, reference));
+        addConstructorArgument(new ConstructorArgument(index, type, reference, this));
     }
 
     public void addConstructorArgument(
@@ -194,8 +194,16 @@ public class ManagedInstance {
         Constructor<?> constructor
     ) {
         addConstructorArgument(new ConstructorArgument(
-            index, value, reference, generateConstructorArgumentIndex(), constructor
+            index, value, reference, constructor, this
         ));
+    }
+
+    int generateConstructorArgumentIndex() {
+        return constructorArguments.stream()
+            .mapToInt(ConstructorArgument::getIndex)
+            .filter(constructorArgument -> constructorArgument >= 0)
+            .max()
+            .orElse(0) + 1;
     }
 
     private void addConstructorArgument(ConstructorArgument constructorArgument) {
@@ -208,13 +216,5 @@ public class ManagedInstance {
         });
 
         constructorArguments.add(constructorArgument);
-    }
-
-    private int generateConstructorArgumentIndex() {
-        return constructorArguments.stream()
-            .mapToInt(ConstructorArgument::getIndex)
-            .filter(constructorArgument -> constructorArgument >= 0)
-            .max()
-            .orElse(0) + 1;
     }
 }

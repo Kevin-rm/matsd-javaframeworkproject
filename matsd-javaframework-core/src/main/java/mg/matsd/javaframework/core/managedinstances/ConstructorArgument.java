@@ -15,25 +15,25 @@ public class ConstructorArgument {
     private Object   value;
     @Nullable
     private String   reference;
+    private final ManagedInstance managedInstance;
 
-    public ConstructorArgument(int index, Class<?> type, @Nullable String reference) {
+    ConstructorArgument(int index, Class<?> type, @Nullable String reference, ManagedInstance managedInstance) {
+        this.managedInstance = managedInstance;
         this.setIndex(index, null)
             .setType(type)
             .setReference(reference);
     }
 
-    public ConstructorArgument(
+    ConstructorArgument(
         @Nullable String index,
         @Nullable String value,
         @Nullable String reference,
-        int generatedIndex,
-        Constructor<?> constructor
+        Constructor<?> constructor,
+        ManagedInstance managedInstance
     ) {
-        if (index == null)
-             setIndex(generatedIndex, constructor);
-        else setIndex(index, constructor);
-
-        this.setType(constructor.getParameterTypes()[this.index])
+        this.managedInstance = managedInstance;
+        this.setIndex(index, constructor)
+            .setType(constructor.getParameterTypes()[this.index])
             .initValueAndReference(value, reference);
     }
 
@@ -70,9 +70,11 @@ public class ConstructorArgument {
         return this;
     }
 
-    private void setIndex(String index, @Nullable Constructor<?> constructor) {
+    private ConstructorArgument setIndex(String index, @Nullable Constructor<?> constructor) {
         try {
-            setIndex(StringConverter.convert(index, Integer.class), constructor);
+            return setIndex(
+                index == null ? managedInstance.generateConstructorArgumentIndex() : StringConverter.convert(index, Integer.class),
+                constructor);
         } catch (TypeMismatchException e) {
             throw new TypeMismatchException(String.format(
                 "La valeur de l'indice fournie \"%s\" n'est pas un \"integer\"", index

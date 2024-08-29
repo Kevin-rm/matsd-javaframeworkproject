@@ -16,7 +16,7 @@ public class Property {
     private String reference;
     private final ManagedInstance managedInstance;
 
-    public Property(String field, String value, String reference, ManagedInstance managedInstance) {
+    Property(String field, String value, String reference, ManagedInstance managedInstance) {
         if (value == null && reference == null)
             throw new InvalidPropertyException(String.format("Ni valeur ni référence n'a été spécifié pour la propriété \"%s\"", field));
 
