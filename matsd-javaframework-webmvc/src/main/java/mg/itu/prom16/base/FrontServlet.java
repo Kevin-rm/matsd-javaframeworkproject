@@ -85,6 +85,57 @@ public class FrontServlet extends HttpServlet {
         }
     }
 
+    protected final void processRequest(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {
+        RequestContextHolder.setServletRequestAttributes(new ServletRequestAttributes(request, response));
+        Session session = ((Session) webApplicationContainer.getManagedInstance(Session.class))
+            .setHttpSession(RequestContextHolder.getServletRequestAttributes().getSession());
+
+        try {
+            Map.Entry<RequestMappingInfo, MappingHandler> mappingHandlerEntry = resolveMappingHandler(request);
+            if (mappingHandlerEntry == null) {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND,
+                    String.format("Aucun mapping trouvé pour le path : \"%s\" et method : \"%s\"",
+                        request.getServletPath(), request.getMethod())
+                );
+                return;
+            }
+
+            MappingHandler mappingHandler = mappingHandlerEntry.getValue();
+            Method controllerMethod = mappingHandler.getMethod();
+            Object controllerMethodResult = mappingHandler.invokeMethod(
+                webApplicationContainer, request, response, session, mappingHandlerEntry.getKey()
+            );
+
+            response.setCharacterEncoding("UTF-8");
+            if (mappingHandler.isJsonResponse())
+                handleJsonResult(response, mappingHandler.getControllerClass(), controllerMethod, controllerMethodResult);
+            else if (controllerMethodResult instanceof ModelView modelView) {
+                modelView.getData().forEach(request::setAttribute);
+
+                request.getRequestDispatcher(modelView.getView()).forward(request, response);
+            } else if (controllerMethodResult instanceof RedirectView redirectView)
+                response.sendRedirect(redirectView.buildCompleteUrl());
+            else if (controllerMethodResult instanceof String string)
+                handleStringResult(request, response, string);
+            else throw new InvalidReturnTypeException(controllerMethod);
+        } finally {
+            RequestContextHolder.clear();
+        }
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {
+        processRequest(request, response);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {
+        processRequest(request, response);
+    }
+
     @Nullable
     private Map.Entry<RequestMappingInfo, MappingHandler> resolveMappingHandler(HttpServletRequest request) {
         return mappingHandlerMap.entrySet().stream()
@@ -140,56 +191,5 @@ public class FrontServlet extends HttpServlet {
         }
 
         httpServletResponse.sendRedirect(WebUtils.absolutePath(originalStringParts[1]));
-    }
-
-    protected final void processRequest(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
-        RequestContextHolder.setServletRequestAttributes(new ServletRequestAttributes(request, response));
-        Session session = ((Session) webApplicationContainer.getManagedInstance(Session.class))
-            .setHttpSession(RequestContextHolder.getServletRequestAttributes().getSession());
-
-        try {
-            Map.Entry<RequestMappingInfo, MappingHandler> mappingHandlerEntry = resolveMappingHandler(request);
-            if (mappingHandlerEntry == null) {
-                response.sendError(HttpServletResponse.SC_NOT_FOUND,
-                    String.format("Aucun mapping trouvé pour le path : \"%s\" et method : \"%s\"",
-                        request.getServletPath(), request.getMethod())
-                );
-                return;
-            }
-
-            MappingHandler mappingHandler = mappingHandlerEntry.getValue();
-            Method controllerMethod = mappingHandler.getMethod();
-            Object controllerMethodResult = mappingHandler.invokeMethod(
-                webApplicationContainer, request, response, session, mappingHandlerEntry.getKey()
-            );
-
-            response.setCharacterEncoding("UTF-8");
-            if (mappingHandler.isJsonResponse())
-                handleJsonResult(response, mappingHandler.getControllerClass(), controllerMethod, controllerMethodResult);
-            else if (controllerMethodResult instanceof ModelView modelView) {
-                modelView.getData().forEach(request::setAttribute);
-
-                request.getRequestDispatcher(modelView.getView()).forward(request, response);
-            } else if (controllerMethodResult instanceof RedirectView redirectView)
-                response.sendRedirect(redirectView.buildCompleteUrl());
-            else if (controllerMethodResult instanceof String string)
-                handleStringResult(request, response, string);
-            else throw new InvalidReturnTypeException(controllerMethod);
-        } finally {
-            RequestContextHolder.clear();
-        }
-    }
-
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
-        processRequest(request, response);
-    }
-
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
-        processRequest(request, response);
     }
 }
