@@ -1,6 +1,7 @@
 package mg.itu.prom16.support;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -18,7 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class WebApplicationContainer extends AbstractXmlResourceContainer {
-    public static final String WEB_SCOPED_MANAGED_INSTANCES_PREFIX = "web_scoped_managedinstance";
+    public static final String WEB_SCOPED_MANAGED_INSTANCES_KEY_PREFIX = "web_scoped_managedinstance";
+    public static final String JACKSON_OBJECT_MAPPER_ID = "_jackson_objectmapper";
 
     private ServletContext servletContext;
 
@@ -51,15 +53,18 @@ public class WebApplicationContainer extends AbstractXmlResourceContainer {
     @Override
     protected void defineCustomConfiguration() {
         registerManagedInstance(
-            new ManagedInstance("_matsd_session", SessionImpl.class, "session", null, null),
-            new ManagedInstance("_jackson_objectmapper", ObjectMapper.class, "singleton", null, null)
+            new ManagedInstance(SessionImpl.MANAGED_INSTANCE_ID, SessionImpl.class, "session", null, null),
+            new ManagedInstance(JACKSON_OBJECT_MAPPER_ID, ObjectMapper.class, "singleton", null, null)
         );
+
+        ObjectMapper objectMapper = (ObjectMapper) getManagedInstance(JACKSON_OBJECT_MAPPER_ID);
+        objectMapper.configure(SerializationFeature.INDENT_OUTPUT, true);
     }
 
     @Override
     protected Object getManagedInstanceForWebScope(ManagedInstance managedInstance) {
         HttpServletRequest httpServletRequest = RequestContextHolder.getServletRequestAttributes().getRequest();
-        String key = WEB_SCOPED_MANAGED_INSTANCES_PREFIX + managedInstance.getId();
+        String key = WEB_SCOPED_MANAGED_INSTANCES_KEY_PREFIX + managedInstance.getId();
 
         Object instance;
         if (managedInstance.getScope() == Scope.REQUEST) {

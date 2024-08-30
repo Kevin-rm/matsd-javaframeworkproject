@@ -93,11 +93,20 @@ public class FrontServlet extends HttpServlet {
             .orElse(null);
     }
 
-    private void handleJsonResult(HttpServletResponse httpServletResponse, Object controllerMethodResult) {
+    private void handleJsonResult(
+        HttpServletResponse httpServletResponse,
+        Class<?> controllerClass,
+        Method   controllerMethod,
+        Object   controllerMethodResult
+    ) throws IOException {
+        if (controllerMethodResult instanceof ModelView || controllerMethod.getReturnType() == void.class)
+            throw new InvalidReturnTypeException(String.format("Impossible d'envoyer une réponse sous le format \"JSON\" lorsque " +
+                "le type de retour est \"ModelView\" ou \"void\": méthode \"%s\" du contrôleur \"%s\"", controllerMethod.getName(), controllerClass)
+            );
+
         httpServletResponse.setContentType("application/json");
-
-        ObjectMapper objectMapper = (ObjectMapper) webApplicationContainer.getManagedInstance("_jackson_objectmapper");
-
+        ObjectMapper objectMapper = (ObjectMapper) webApplicationContainer.getManagedInstance(WebApplicationContainer.JACKSON_OBJECT_MAPPER_ID);
+        objectMapper.writeValue(httpServletResponse.getWriter(), controllerMethodResult);
     }
 
     private void handleStringResult(
@@ -150,12 +159,14 @@ public class FrontServlet extends HttpServlet {
             }
 
             MappingHandler mappingHandler = mappingHandlerEntry.getValue();
+            Method controllerMethod = mappingHandler.getMethod();
             Object controllerMethodResult = mappingHandler.invokeMethod(
                 webApplicationContainer, request, response, session, mappingHandlerEntry.getKey()
             );
 
             response.setCharacterEncoding("UTF-8");
-            if (mappingHandler.isJsonResponse()) handleJsonResult(response, controllerMethodResult);
+            if (mappingHandler.isJsonResponse())
+                handleJsonResult(response, mappingHandler.getControllerClass(), controllerMethod, controllerMethodResult);
             else if (controllerMethodResult instanceof ModelView modelView) {
                 modelView.getData().forEach(request::setAttribute);
 
@@ -164,7 +175,7 @@ public class FrontServlet extends HttpServlet {
                 response.sendRedirect(redirectView.buildCompleteUrl());
             else if (controllerMethodResult instanceof String string)
                 handleStringResult(request, response, string);
-            else throw new InvalidReturnTypeException(mappingHandler.getMethod());
+            else throw new InvalidReturnTypeException(controllerMethod);
         } finally {
             RequestContextHolder.clear();
         }

@@ -7,7 +7,6 @@ import mg.itu.prom16.annotations.FromRequestParameters;
 import mg.itu.prom16.annotations.PathVariable;
 import mg.itu.prom16.annotations.RequestParameter;
 import mg.itu.prom16.annotations.SessionAttribute;
-import mg.itu.prom16.base.ModelView;
 import mg.itu.prom16.exceptions.UnexpectedParameterException;
 import mg.itu.prom16.http.Session;
 import mg.itu.prom16.support.WebApplicationContainer;
@@ -21,12 +20,13 @@ import java.lang.reflect.Parameter;
 public class MappingHandler {
     private Class<?> controllerClass;
     private Method   method;
-    private boolean  jsonResponse;
+    private final boolean jsonResponse;
 
     public MappingHandler(Class<?> controllerClass, Method method, boolean jsonResponse) {
         this.setControllerClass(controllerClass)
-            .setMethod(method)
-            .setJsonResponse(jsonResponse);
+            .setMethod(method);
+
+        this.jsonResponse = jsonResponse;
     }
 
     public Class<?> getControllerClass() {
@@ -48,7 +48,7 @@ public class MappingHandler {
     }
 
     private MappingHandler setMethod(Method method) {
-        Assert.notNull(method, "La méthode associée au path ne peut pas être \"null\"");
+        Assert.notNull(method, "La méthode ne peut pas être \"null\"");
         Assert.state(method.getDeclaringClass() == controllerClass,
             () -> new IllegalArgumentException(
                 String.format("Le contrôleur \"%s\" ne dispose pas d'une méthode nommée \"%s\"", controllerClass.getName(), method.getName())
@@ -60,15 +60,6 @@ public class MappingHandler {
 
     public boolean isJsonResponse() {
         return jsonResponse;
-    }
-
-    private MappingHandler setJsonResponse(boolean jsonResponse) {
-        Class<?> returnType = method.getReturnType();
-        if (returnType == ModelView.class)
-            throw new IllegalArgumentException("Impossible d'envoyer une réponse sous le format \"JSON\" si le type de retour est \"ModelView\"");
-
-        this.jsonResponse = jsonResponse;
-        return this;
     }
 
     public Object invokeMethod(
@@ -120,6 +111,7 @@ public class MappingHandler {
         return "MappingHandler{" +
             "controllerClass=" + controllerClass +
             ", method=" + method +
+            ", jsonResponse=" + jsonResponse +
             '}';
     }
 }

@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SessionImpl implements Session {
+    public static final String MANAGED_INSTANCE_ID = "_matsd_session";
+
     private HttpSession httpSession;
 
     public SessionImpl() { }
