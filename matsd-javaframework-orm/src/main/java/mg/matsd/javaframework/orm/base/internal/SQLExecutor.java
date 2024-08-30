@@ -259,10 +259,20 @@ public class SQLExecutor {
     }
 
     private static void setParameters(PreparedStatement preparedStatement, @Nullable Object... parameters) throws SQLException {
-        int index = 1;
-        if (parameters == null) preparedStatement.setObject(index, NULL);
-        else for (Object parameter : parameters)
-            preparedStatement.setObject(index++, parameter);
+        if (parameters == null) {
+            preparedStatement.setNull(1, NULL);
+            return;
+        }
+
+        ResultSetMetaData resultSetMetaData = preparedStatement.getMetaData();
+        for (int i = 0; i < parameters.length; i++) {
+            int parameterIndex = i + 1;
+            Object parameter = parameters[i];
+
+            if (parameter == null)
+                preparedStatement.setNull(parameterIndex, resultSetMetaData.getColumnType(parameterIndex));
+            else preparedStatement.setObject(parameterIndex, parameter);
+        }
     }
 
     private static <T> List<T> mapResultSet(ResultSet resultSet, RowMapper<T> rowMapper) throws SQLException {
@@ -276,13 +286,13 @@ public class SQLExecutor {
     private static List<Map<String, Object>> resultSetToMapList(ResultSet resultSet) throws SQLException {
         List<Map<String, Object>> results = new ArrayList<>();
 
-        ResultSetMetaData metaData = resultSet.getMetaData();
-        int columnCount = metaData.getColumnCount();
+        ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
+        int columnCount = resultSetMetaData.getColumnCount();
 
         while (resultSet.next()) {
             Map<String, Object> row = new LinkedHashMap<>();
             for (int i = 1; i <= columnCount; i++)
-                row.put(metaData.getColumnName(i), resultSet.getObject(i));
+                row.put(resultSetMetaData.getColumnName(i), resultSet.getObject(i));
 
             results.add(row);
         }
