@@ -87,10 +87,16 @@ public class RequestMappingInfo {
     }
 
     private RequestMappingInfo setPathPattern() {
-        pathPattern = Pattern.compile(createRegexFromPath(
-            path, pathVariablesAttributes
-        ));
+        String regex = "^" + path;
+        for (Map.Entry<String, String> entry : pathVariablesAttributes.entrySet())
+            regex = regex.replace(
+                String.format("{%s%s}", entry.getKey(),
+                    entry.getValue().equals(PATH_VARIABLE_DEFAULT_REQUIREMENT) ? "" : ":" + entry.getValue()
+                ), "(" + entry.getValue() + ")"
+            );
+        regex += "/*$";
 
+        pathPattern = Pattern.compile(regex);
         return this;
     }
 
@@ -117,22 +123,6 @@ public class RequestMappingInfo {
         }
 
         return pathVariablesValues;
-    }
-
-    private static String createRegexFromPath(String path, Map<String, String> pathVariablesAttributes) {
-        String regex = "^" + path;
-        for (Map.Entry<String, String> entry : pathVariablesAttributes.entrySet())
-            regex = regex.replace(
-                String.format(
-                    "{%s%s}",
-                    entry.getKey(),
-                    entry.getValue().equals(PATH_VARIABLE_DEFAULT_REQUIREMENT) ? "" : ":" + entry.getValue()
-                ),
-                "(" + entry.getValue() + ")"
-            );
-        regex += "$";
-
-        return regex;
     }
 
     @Override
