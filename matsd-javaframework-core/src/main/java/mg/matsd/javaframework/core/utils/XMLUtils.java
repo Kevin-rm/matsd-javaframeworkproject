@@ -53,20 +53,17 @@ public final class XMLUtils {
         return document;
     }
 
+    public static List<Element> getChildElements(Element parentElement) {
+        Assert.notNull(parentElement, "L'argument parentElement ne peut pas être \"null\"");
+
+        return filterElementsFromNodeList(parentElement.getChildNodes());
+    }
+
     public static List<Element> getChildElementsByTagName(Element parentElement, String childElementTagName) {
         Assert.notNull(parentElement, "L'argument parentElement ne peut pas être \"null\"");
         Assert.notBlank(childElementTagName, false, "L'argument childElementTagName ne peut pas être vide ou \"null\"");
 
-        NodeList nodeList = parentElement.getElementsByTagName(childElementTagName);
-        return IntStream.range(0, nodeList.getLength())
-            .mapToObj(nodeList::item)
-            .filter(node -> node.getNodeType() == Node.ELEMENT_NODE)
-            .map(node -> (Element) node)
-            .collect(Collectors.toList());
-    }
-
-    public static List<Element> getChildElementsByTagName(Document document, String childElementTagName) {
-        return getChildElementsByTagName(document.getDocumentElement(), childElementTagName);
+        return filterElementsFromNodeList(parentElement.getElementsByTagName(childElementTagName));
     }
 
     @Nullable
@@ -78,16 +75,19 @@ public final class XMLUtils {
     }
 
     @Nullable
-    public static Element getFirstChildElementByTagName(Document document, String childElementTagName) {
-        return getFirstChildElementByTagName(document.getDocumentElement(), childElementTagName);
-    }
-
-    @Nullable
     public static String getElementAttributeValue(Element element, String attributeName) {
         Assert.notNull(element, "L'argument element ne peut pas être \"null\"");
         Assert.notBlank(attributeName, false, "L'argument attributeName ne peut pas être vide ou \"null\"");
 
         Attr attribute = element.getAttributeNode(attributeName);
         return attribute == null ? null : attribute.getValue();
+    }
+
+    private static List<Element> filterElementsFromNodeList(NodeList nodeList) {
+        return IntStream.range(0, nodeList.getLength())
+            .mapToObj(nodeList::item)
+            .filter(node -> node.getNodeType() == Node.ELEMENT_NODE)
+            .map(node -> (Element) node)
+            .collect(Collectors.toList());
     }
 }
