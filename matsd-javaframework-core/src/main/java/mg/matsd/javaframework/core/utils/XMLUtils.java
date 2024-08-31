@@ -49,11 +49,11 @@ public final class XMLUtils {
         return document;
     }
 
-    public static List<Element> getElementsByTagName(Element element, String childElementName) {
-        Assert.notNull(element, "L'argument element ne peut pas être \"null\"");
-        Assert.notBlank(childElementName, false, "L'argument childElementName ne peut pas être vide ou \"null\"");
+    public static List<Element> getChildElementsByTagName(Element parentElement, String childElementTagName) {
+        Assert.notNull(parentElement, "L'argument parentElement ne peut pas être \"null\"");
+        Assert.notBlank(childElementTagName, false, "L'argument childElementTagName ne peut pas être vide ou \"null\"");
 
-        NodeList nodeList = element.getElementsByTagName(childElementName);
+        NodeList nodeList = parentElement.getElementsByTagName(childElementTagName);
         return IntStream.range(0, nodeList.getLength())
             .mapToObj(nodeList::item)
             .filter(node -> node.getNodeType() == Node.ELEMENT_NODE)
@@ -61,10 +61,29 @@ public final class XMLUtils {
             .collect(Collectors.toList());
     }
 
+    public static List<Element> getChildElementsByTagName(Document document, String childElementTagName) {
+        return getChildElementsByTagName(document.getDocumentElement(), childElementTagName);
+    }
+
+    @Nullable
+    public static Element getFirstChildElementByTagName(Element parentElement, String childElementTagName) {
+        List<Element> childElements = getChildElementsByTagName(parentElement, childElementTagName);
+        if (childElements.size() == 0) return null;
+
+        return childElements.get(0);
+    }
+
+    @Nullable
+    public static Element getFirstChildElementByTagName(Document document, String childElementTagName) {
+        return getFirstChildElementByTagName(document.getDocumentElement(), childElementTagName);
+    }
+
     @Nullable
     public static String getElementAttributeValue(Element element, String attributeName) {
-        Attr attribute = element.getAttributeNode(attributeName);
+        Assert.notNull(element, "L'argument element ne peut pas être \"null\"");
+        Assert.notBlank(attributeName, false, "L'argument attributeName ne peut pas être vide ou \"null\"");
 
+        Attr attribute = element.getAttributeNode(attributeName);
         return attribute == null ? null : attribute.getValue();
     }
 }
