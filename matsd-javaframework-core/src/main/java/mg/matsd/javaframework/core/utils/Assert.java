@@ -87,9 +87,7 @@ public final class Assert {
             if (element == null) throw new IllegalArgumentException(exceptionMessage);
     }
 
-    private static RuntimeException nullSafeGet(
-        @Nullable Supplier<? extends RuntimeException> runtimeExceptionSupplier
-    ) {
+    private static RuntimeException nullSafeGet(Supplier<? extends RuntimeException> runtimeExceptionSupplier) {
         if (runtimeExceptionSupplier == null)
             return new IllegalStateException();
 
