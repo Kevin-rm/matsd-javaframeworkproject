@@ -27,7 +27,7 @@ public class MysqlConnector extends DatabaseConnector {
 
     @Override
     protected DatabaseConnector setPort(@Nullable String port) {
-        if (port == null || StringUtils.isBlank(port)) return setPort(DEFAULT_PORT);
+        if (port == null || StringUtils.isBlank(port)) return super.setPort(DEFAULT_PORT);
 
         return super.setPort(port);
     }

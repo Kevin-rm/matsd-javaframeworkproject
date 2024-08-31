@@ -17,9 +17,9 @@ import java.io.InputStream;
 import java.util.*;
 
 public class Configuration {
-    public  static final Set<String> SUPPORTED_DBMS   = new HashSet<>(Arrays.asList("mysql", "postgres", "oracle"));
-    public  static final String DEFAULT_CFG_FILENAME  = "database.cfg.xml";
-    public  static final String PROPERTIES_KEY_PREFIX = "matsd.orm.datasource.";
+    public static final Set<String> SUPPORTED_DBMS   = new HashSet<>(Arrays.asList("mysql", "postgres", "oracle"));
+    public static final String DEFAULT_CFG_FILENAME  = "database.cfg.xml";
+    public static final String PROPERTIES_KEY_PREFIX = "matsd.orm.datasource.";
     private static final Set<String> VALID_PROPERTY_NAMES = new HashSet<>(
         Arrays.asList("host", "port", "database-name", "username", "password", "pool-size")
     );

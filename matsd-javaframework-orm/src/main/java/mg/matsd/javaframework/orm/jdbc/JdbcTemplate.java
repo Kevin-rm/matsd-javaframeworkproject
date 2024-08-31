@@ -14,20 +14,17 @@ import java.util.List;
 import java.util.Map;
 
 public class JdbcTemplate implements JdbcOperations {
-    private DatabaseConnector databaseConnector;
+    private final DatabaseConnector databaseConnector;
     private int maxRows = -1;
 
-    public JdbcTemplate(DatabaseConnector databaseConnector) { this.setDatabaseConnector(databaseConnector); }
-
-    public DatabaseConnector getDatabaseConnector() {
-        return databaseConnector;
-    }
-
-    private JdbcTemplate setDatabaseConnector(DatabaseConnector databaseConnector) {
+    public JdbcTemplate(DatabaseConnector databaseConnector) {
         Assert.notNull(databaseConnector, "Le connecteur à la base de données ne peut pas être \"null\"");
 
         this.databaseConnector = databaseConnector;
-        return this;
+    }
+
+    public DatabaseConnector getDatabaseConnector() {
+        return databaseConnector;
     }
 
     public int getMaxRows() {
