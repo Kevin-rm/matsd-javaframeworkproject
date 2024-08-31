@@ -26,6 +26,10 @@ public final class XMLUtils {
         Assert.notNull(resource, "L'argument resource ne peut pas être \"null\"");
         Assert.notNull(schemas, "L'argument schemas ne peut pas être \"null\"");
         Assert.noNullElements(schemas, "Chaque élément de schemas ne peut pas être \"null\"");
+        for (String schema : schemas)
+            if (!schema.endsWith(".xsd"))
+                throw new IllegalArgumentException(String.format(
+                    "Le schéma XML \"%s\" est invalide car il n'a pas l'extension \".xsd\"", schema));
 
         Document document;
         try {

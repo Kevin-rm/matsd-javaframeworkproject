@@ -1,17 +1,14 @@
 package mg.matsd.javaframework.core.container;
 
-import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.io.Resource;
 import mg.matsd.javaframework.core.managedinstances.ManagedInstance;
 import mg.matsd.javaframework.core.managedinstances.ManagedInstanceUtils;
 import mg.matsd.javaframework.core.managedinstances.factory.ManagedInstanceFactory;
-import mg.matsd.javaframework.core.utils.StringUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 import java.lang.reflect.Constructor;
+import java.util.List;
 
 import static mg.matsd.javaframework.core.utils.XMLUtils.*;
 
@@ -24,25 +21,19 @@ class XMLConfigurationLoader {
 
         scanComponents(managedInstanceFactory, document);
 
-        NodeList managedInstanceNodeList = document.getElementsByTagName("managed-instance");
-        if (managedInstanceNodeList.getLength() == 0) return;
+        List<Element> elements = getChildElementsByTagName(document, "managed-instance");
+        if (elements.size() == 0) return;
 
-        for (int i = 0; i < managedInstanceNodeList.getLength(); i++) {
-            Node managedInstanceNode = managedInstanceNodeList.item(i);
+        for (Element element : elements) {
+            ManagedInstance managedInstance = new ManagedInstance(
+                getElementAttributeValue(element, "id"),
+                getElementAttributeValue(element, "class"),
+                getElementAttributeValue(element, "scope")
+            );
+            managedInstanceFactory.registerManagedInstance(managedInstance);
 
-            if (managedInstanceNode.getNodeType() == Node.ELEMENT_NODE) {
-                Element managedInstanceElement = (Element) managedInstanceNode;
-
-                ManagedInstance managedInstance = new ManagedInstance(
-                    getElementAttributeValue(managedInstanceElement, "id"),
-                    getElementAttributeValue(managedInstanceElement, "class"),
-                    getElementAttributeValue(managedInstanceElement, "scope")
-                );
-                managedInstanceFactory.registerManagedInstance(managedInstance);
-
-                addConstructorArguments(managedInstance, managedInstanceElement);
-                addProperties(managedInstance, managedInstanceElement);
-            }
+            addConstructorArguments(managedInstance, element);
+            addProperties(managedInstance, element);
         }
     }
 
@@ -54,54 +45,33 @@ class XMLConfigurationLoader {
             .scanComponents();
     }
 
-    private static void addConstructorArguments(ManagedInstance managedInstance, Element managedInstanceElement) {
-        NodeList constructorArgNodeList = managedInstanceElement.getElementsByTagName("constructor-arg");
-        if (constructorArgNodeList.getLength() == 0) return;
+    private static void addConstructorArguments(ManagedInstance managedInstance, Element parentElement) {
+        List<Element> elements = getChildElementsByTagName(parentElement, "constructor-arg");
+        if (elements == null) return;
 
         Constructor<?> constructor = ManagedInstanceUtils.constructorToUse(managedInstance);
-        for (int i = 0; i < constructorArgNodeList.getLength(); i++) {
-            Node constructorArgNode = constructorArgNodeList.item(i);
+        for (Element element : elements) {
+            String constructorArgValue = getElementAttributeValue(element, "value");
 
-            if (constructorArgNode.getNodeType() == Node.ELEMENT_NODE) {
-                Element constructorArgElement = (Element) constructorArgNode;
-
-                managedInstance.addConstructorArgument(
-                    getElementAttributeValue(constructorArgElement, "index"),
-                    getValue(constructorArgElement),
-                    getElementAttributeValue(constructorArgElement, "ref"),
-                    constructor
-                );
-            }
+            managedInstance.addConstructorArgument(
+                getElementAttributeValue(element, "index"),
+                constructorArgValue == null ? element.getTextContent() : constructorArgValue,
+                getElementAttributeValue(element, "ref"), constructor);
         }
     }
 
-    private static void addProperties(ManagedInstance managedInstance, Element managedInstanceElement) {
-        NodeList propertyNodeList = managedInstanceElement.getElementsByTagName("property");
-        if (propertyNodeList.getLength() == 0) return;
+    private static void addProperties(ManagedInstance managedInstance, Element parentElement) {
+        List<Element> elements = getChildElementsByTagName(parentElement, "property");
+        if (elements == null) return;
 
-        for (int i = 0; i < propertyNodeList.getLength(); i++) {
-            Node propertyNode = propertyNodeList.item(i);
+        for (Element element : elements) {
+            String propertyValue = getElementAttributeValue(element, "value");
 
-            if (propertyNode.getNodeType() == Node.ELEMENT_NODE) {
-                Element propertyElement = (Element) propertyNode;
-
-                managedInstance.addProperty(
-                    getElementAttributeValue(propertyElement, "name"),
-                    getValue(propertyElement),
-                    getElementAttributeValue(propertyElement, "ref")
-                );
-            }
+            managedInstance.addProperty(
+                getElementAttributeValue(element, "name"),
+                propertyValue == null ? element.getTextContent() : propertyValue,
+                getElementAttributeValue(element, "ref")
+            );
         }
-    }
-
-    @Nullable
-    private static String getValue(Element element) {
-        String value = getElementAttributeValue(element, "value");
-
-        String elementTextContent = element.getTextContent();
-        if (value == null && StringUtils.hasText(elementTextContent))
-            return elementTextContent;
-
-        return value;
     }
 }
