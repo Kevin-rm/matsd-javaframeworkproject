@@ -17,6 +17,7 @@ public final class StringConverter {
 
     private StringConverter() { }
 
+    @SuppressWarnings("unchecked")
     public static <T> T convert(String value, Class<T> type) throws TypeMismatchException {
         Assert.notNull(type, "L'argument type ne peut pas être \"null\"");
         Assert.notBlank(value, false, "La chaîne de caractère à convertir ne peut pas être vide ou \"null\"");

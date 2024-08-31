@@ -19,23 +19,20 @@ import java.util.*;
 public class Configuration {
     public static final Set<String> SUPPORTED_DBMS   = new HashSet<>(Arrays.asList("mysql", "postgres", "oracle"));
     public static final String DEFAULT_CFG_FILENAME  = "database.cfg.xml";
-    public static final String PROPERTIES_KEY_PREFIX = "matsd.orm.datasource.";
+    public static final String PROPERTIES_KEY_PREFIX = "orm.datasource.";
     private static final Set<String> VALID_PROPERTY_NAMES = new HashSet<>(
         Arrays.asList("host", "port", "database-name", "username", "password", "pool-size")
-    );
-    private static final Set<String> VALID_PROPERTY_ATTRIBUTES = new HashSet<>(
-        Arrays.asList("name", "value")
     );
 
     private Properties properties;
     private Set<String> availableDataSources;
 
-    public Configuration() {
-        configure(DEFAULT_CFG_FILENAME);
-    }
-
     public Configuration(String configFileName) {
         configure(configFileName);
+    }
+
+    public Configuration() {
+        this(DEFAULT_CFG_FILENAME);
     }
 
     public Properties getProperties() {
