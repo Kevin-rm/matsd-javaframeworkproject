@@ -76,7 +76,7 @@ public class Configuration {
                 String[] propertyNameParts = propertyName.substring(PROPERTIES_KEY_PREFIX.length()).split("\\.");
                 Assert.state(propertyNameParts.length == 2,
                     () -> new ConfigurationException(String.format("La déclaration des informations dans un fichier .properties " +
-                        "doivent être de la forme : %s.<type-de-base_de_données>.<propriété>", PROPERTIES_KEY_PREFIX))
+                        "doit être de la forme : %s.<type-de-base_de_données>.<propriété>", PROPERTIES_KEY_PREFIX))
                 );
 
                 propertyNameParts[0] = propertyNameParts[0].strip();
