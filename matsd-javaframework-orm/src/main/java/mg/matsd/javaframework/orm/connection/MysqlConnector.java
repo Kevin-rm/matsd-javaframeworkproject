@@ -2,7 +2,6 @@ package mg.matsd.javaframework.orm.connection;
 
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.StringUtils;
-import mg.matsd.javaframework.orm.exceptions.ConnectorInstantiationException;
 
 public class MysqlConnector extends DatabaseConnector {
     private static final String DRIVER    = "com.mysql.cj.jdbc.Driver";

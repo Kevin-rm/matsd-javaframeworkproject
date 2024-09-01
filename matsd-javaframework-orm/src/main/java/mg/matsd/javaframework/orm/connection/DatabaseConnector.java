@@ -3,15 +3,13 @@ package mg.matsd.javaframework.orm.connection;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.core.utils.StringUtils;
-import mg.matsd.javaframework.orm.exceptions.ConnectorInstantiationException;
 import mg.matsd.javaframework.orm.exceptions.DatabaseException;
-import mg.matsd.javaframework.orm.exceptions.NoAvailableConnectionException;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public abstract class DatabaseConnector {
     private static final Integer DEFAULT_POOL_SIZE = 10;
@@ -23,8 +21,8 @@ public abstract class DatabaseConnector {
     private String  password;
     private Integer poolSize;
     private String  driver;
-    private List<Connection> availableConnections;
-    private List<Connection> usedConnections;
+    private final Queue<Connection> availableConnections;
+    private final Queue<Connection> usedConnections;
 
     protected DatabaseConnector(
         @Nullable String host, Integer port, String dbName, String user, String password, @Nullable Integer poolSize, String driver
@@ -37,9 +35,10 @@ public abstract class DatabaseConnector {
                 .setPassword(password)
                 .setPoolSize(poolSize)
                 .setDriver  (driver)
-                .setAvailableConnections()
-                .setUsedConnections()
                 .configureShutdownCleanup();
+
+            availableConnections = new ConcurrentLinkedQueue<>();
+            usedConnections      = new ConcurrentLinkedQueue<>();
         } catch (Exception e) {
             throw new ConnectorInstantiationException(e);
         }
@@ -56,9 +55,10 @@ public abstract class DatabaseConnector {
                 .setPassword(password)
                 .setPoolSize(poolSize)
                 .setDriver  (driver)
-                .setAvailableConnections()
-                .setUsedConnections()
                 .configureShutdownCleanup();
+
+            availableConnections = new ConcurrentLinkedQueue<>();
+            usedConnections      = new ConcurrentLinkedQueue<>();
         } catch (Exception e) {
             throw new ConnectorInstantiationException(e);
         }
@@ -163,25 +163,22 @@ public abstract class DatabaseConnector {
         }
     }
 
-    protected DatabaseConnector setAvailableConnections() throws SQLException, ClassNotFoundException {
-        availableConnections = new ArrayList<>(poolSize);
-        for (int i = 0; i < poolSize; i++)
-            availableConnections.add(createConnection());
-
-        return this;
-    }
-
-    protected DatabaseConnector setUsedConnections() {
-        usedConnections = new ArrayList<>(poolSize);
-        return this;
-    }
-
     public synchronized Connection getConnection() {
-        if (availableConnections.isEmpty()) throw new NoAvailableConnectionException();
+        Connection conn;
 
-        Connection conn = availableConnections.remove(availableConnections.size() - 1);
+        if (!availableConnections.isEmpty()) conn = availableConnections.poll();
+        else  {
+            if (usedConnections.size() >= poolSize)
+                throw new NoAvailableConnectionException();
+
+            try {
+                conn = createConnection();
+            } catch (ClassNotFoundException | SQLException e) {
+                throw new DatabaseException(e);
+            }
+        }
+
         usedConnections.add(conn);
-
         return conn;
     }
 
