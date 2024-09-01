@@ -84,7 +84,7 @@ public class Configuration {
                         "doit être de la forme : %s.<type-de-base_de_données>.<propriété>", PROPERTIES_KEY_PREFIX))
                 );
 
-                originalPropertyNameParts[0] = originalPropertyNameParts[0].strip();
+                originalPropertyNameParts[0] = originalPropertyNameParts[0].strip().toLowerCase();
                 Assert.state(SUPPORTED_DBMS.contains(originalPropertyNameParts[0]),
                     () -> new UnsupportedDatasourceException(originalPropertyNameParts[0])
                 );

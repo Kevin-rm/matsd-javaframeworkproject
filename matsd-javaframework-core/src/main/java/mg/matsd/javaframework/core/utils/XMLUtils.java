@@ -12,9 +12,9 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
-import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -94,16 +94,19 @@ public final class XMLUtils {
         DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
         documentBuilderFactory.setNamespaceAware(true);
 
-        Schema schema = SCHEMA_FACTORY.newSchema(
-            Arrays.stream(schemas)
-                .map(schemaName -> {
-                    try (Resource r = new ClassPathResource(schemaName)) {
-                        return new StreamSource(r.getInputStream());
-                    }
-                })
-                .toArray(Source[]::new)
-        );
-        documentBuilderFactory.setSchema(schema);
+        List<StreamSource> streamSources = new ArrayList<>();
+        List<Resource> resources = new ArrayList<>();
+        try {
+            Arrays.stream(schemas).map(ClassPathResource::new).forEachOrdered(resource -> {
+                resources.add(resource);
+                StreamSource streamSource = new StreamSource(resource.getInputStream());
+                streamSources.add(streamSource);
+            });
+
+            documentBuilderFactory.setSchema(SCHEMA_FACTORY.newSchema(streamSources.toArray(new Source[0])));
+        } finally {
+            resources.forEach(Resource::close);
+        }
 
         return documentBuilderFactory;
     }
