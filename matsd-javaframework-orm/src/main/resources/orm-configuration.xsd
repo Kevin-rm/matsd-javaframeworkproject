@@ -13,7 +13,18 @@
                                 <xs:complexType>
                                     <xs:simpleContent>
                                         <xs:extension base="xs:string">
-                                            <xs:attribute name="name" type="xs:string" use="required"/>
+                                            <xs:attribute name="name" type="xs:string" use="required">
+                                                <xs:simpleType>
+                                                    <xs:restriction base="xs:string">
+                                                        <xs:enumeration value="host"/>
+                                                        <xs:enumeration value="port"/>
+                                                        <xs:enumeration value="database-name"/>
+                                                        <xs:enumeration value="user"/>
+                                                        <xs:enumeration value="password"/>
+                                                        <xs:enumeration value="pool-size"/>
+                                                    </xs:restriction>
+                                                </xs:simpleType>
+                                            </xs:attribute>
                                             <xs:attribute name="value" type="xs:string"/>
                                         </xs:extension>
                                     </xs:simpleContent>

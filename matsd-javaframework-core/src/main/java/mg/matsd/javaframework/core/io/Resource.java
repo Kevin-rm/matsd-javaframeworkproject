@@ -45,6 +45,8 @@ public abstract class Resource implements Closeable {
             isClosed = true;
         } catch (IOException ignored) {
             throw new InternalException();
+        } finally {
+            inputStream = null;
         }
     }
 }

@@ -21,13 +21,13 @@ class XMLConfigurationLoader {
         scanComponents(managedInstanceFactory, documentElement);
 
         List<Element> elements = getChildElementsByTagName(documentElement, "managed-instance");
-        if (elements.size() == 0) return;
+        if (elements.isEmpty()) return;
 
         for (Element element : elements) {
             ManagedInstance managedInstance = new ManagedInstance(
-                getElementAttributeValue(element, "id"),
-                getElementAttributeValue(element, "class"),
-                getElementAttributeValue(element, "scope")
+                getAttributeValue(element, "id"),
+                getAttributeValue(element, "class"),
+                getAttributeValue(element, "scope")
             );
             managedInstanceFactory.registerManagedInstance(managedInstance);
 
@@ -43,26 +43,26 @@ class XMLConfigurationLoader {
         Element firstChildElementByTagName = getFirstChildElementByTagName(documentElement, "container:component-scan");
         if (firstChildElementByTagName == null) return;
 
-        managedInstanceFactory.setComponentScanBasePackage(getElementAttributeValue(firstChildElementByTagName, "base-package"))
+        managedInstanceFactory.setComponentScanBasePackage(getAttributeValue(firstChildElementByTagName, "base-package"))
             .scanComponents();
     }
 
     private static void addConstructorArguments(ManagedInstance managedInstance, Element element) {
         Constructor<?> constructor = ManagedInstanceUtils.constructorToUse(managedInstance);
 
-        String constructorArgValue = getElementAttributeValue(element, "value");
+        String constructorArgValue = getAttributeValue(element, "value");
         managedInstance.addConstructorArgument(
-            getElementAttributeValue(element, "index"),
+            getAttributeValue(element, "index"),
             constructorArgValue == null ? element.getTextContent() : constructorArgValue,
-            getElementAttributeValue(element, "ref"), constructor);
+            getAttributeValue(element, "ref"), constructor);
     }
 
     private static void addProperties(ManagedInstance managedInstance, Element element) {
-        String propertyValue = getElementAttributeValue(element, "value");
+        String propertyValue = getAttributeValue(element, "value");
         managedInstance.addProperty(
-            getElementAttributeValue(element, "name"),
+            getAttributeValue(element, "name"),
             propertyValue == null ? element.getTextContent() : propertyValue,
-            getElementAttributeValue(element, "ref")
+            getAttributeValue(element, "ref")
         );
     }
 }

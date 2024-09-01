@@ -54,7 +54,7 @@ public class EntityManagerFactory implements SessionFactory  {
     }
 
     private EntityManagerFactory setDialect(@Nullable String dialect) {
-        Set<String> availableDataSources = configuration.getAvailableDataSources();
+        Set<String> availableDataSources = configuration.getAvailableDatasources();
         if (StringUtils.isBlank(dialect))
             dialect = availableDataSources.iterator().next();
 

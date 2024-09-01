@@ -74,7 +74,7 @@ public final class XMLUtils {
     }
 
     @Nullable
-    public static String getElementAttributeValue(Element element, String attributeName) {
+    public static String getAttributeValue(Element element, String attributeName) {
         Assert.notNull(element, "L'argument element ne peut pas être \"null\"");
         Assert.notBlank(attributeName, false, "L'argument attributeName ne peut pas être vide ou \"null\"");
 
