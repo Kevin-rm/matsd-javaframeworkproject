@@ -13,9 +13,13 @@ import java.util.*;
 import static mg.matsd.javaframework.core.utils.XMLUtils.*;
 
 public class Configuration {
-    public static final Set<String> SUPPORTED_DBMS   = new HashSet<>(Arrays.asList("mysql", "postgres", "oracle"));
-    public static final String DEFAULT_CFG_FILENAME  = "database.cfg.xml";
-    public static final String PROPERTIES_KEY_PREFIX = "orm.datasource.";
+    public static final Set<String> SUPPORTED_DBMS  = new HashSet<>(Arrays.asList("mysql", "postgres", "oracle"));
+    public static final String DEFAULT_CFG_FILENAME = "database.cfg.xml";
+
+    private static final String PROPERTIES_KEY_PREFIX = "orm.datasource.";
+    private static final Set<String> VALID_PROPERTY_NAMES = new HashSet<>(
+        Arrays.asList("host", "port", "database-name", "username", "password", "pool-size")
+    );
 
     private Properties properties;
     private Set<String> availableDatasources;
@@ -66,26 +70,32 @@ public class Configuration {
     private void loadProperties(ClassPathResource classPathResource) {
         try {
             properties = new Properties();
-            properties.load(classPathResource.getInputStream());
             availableDatasources = new HashSet<>();
 
-            for (String propertyName : properties.stringPropertyNames()) {
-                propertyName = propertyName.strip();
-                if (!propertyName.startsWith(PROPERTIES_KEY_PREFIX)) continue;
+            Properties originalProperties = new Properties();
+            originalProperties.load(classPathResource.getInputStream());
+            for (String originalPropertyName : originalProperties.stringPropertyNames()) {
+                originalPropertyName = originalPropertyName.strip();
+                if (!originalPropertyName.startsWith(PROPERTIES_KEY_PREFIX)) continue;
 
-                String[] propertyNameParts = propertyName.substring(PROPERTIES_KEY_PREFIX.length()).split("\\.");
-                Assert.state(propertyNameParts.length == 2,
+                String[] originalPropertyNameParts = originalPropertyName.substring(PROPERTIES_KEY_PREFIX.length()).split("\\.");
+                Assert.state(originalPropertyNameParts.length == 2,
                     () -> new ConfigurationException(String.format("La déclaration des informations dans un fichier .properties " +
                         "doit être de la forme : %s.<type-de-base_de_données>.<propriété>", PROPERTIES_KEY_PREFIX))
                 );
 
-                propertyNameParts[0] = propertyNameParts[0].strip();
-                Assert.state(SUPPORTED_DBMS.contains(propertyNameParts[0]),
-                    () -> new UnsupportedDatasourceException(propertyNameParts[0])
+                originalPropertyNameParts[0] = originalPropertyNameParts[0].strip();
+                Assert.state(SUPPORTED_DBMS.contains(originalPropertyNameParts[0]),
+                    () -> new UnsupportedDatasourceException(originalPropertyNameParts[0])
                 );
+                originalPropertyNameParts[1] = originalPropertyNameParts[1].strip();
+                Assert.state(VALID_PROPERTY_NAMES.contains(originalPropertyNameParts[1]),
+                    () ->  new ConfigurationException(String.format("Le nom de propriété \"%s\" n'est pas valide",
+                        originalPropertyNameParts[1])
+                    ));
 
-                properties.setProperty(propertyName, properties.getProperty(propertyName));
-                availableDatasources.add(propertyNameParts[0]);
+                properties.setProperty(String.format("%s.%s", originalPropertyNameParts[0], originalPropertyNameParts[1]), originalProperties.getProperty(originalPropertyName));
+                availableDatasources.add(originalPropertyNameParts[0]);
             }
         } catch (IOException e) {
             throw new ConfigurationException(String.format("Erreur lors de la lecture du fichier de configuration : \"%s\"", classPathResource.getName()), e);
@@ -98,7 +108,7 @@ public class Configuration {
 
         loadXmlConfigs(classPathResource).forEach((datasourceType, datasourceInfos) -> {
             datasourceInfos.forEach(
-                (propertyName, propertyValue) -> properties.setProperty(String.format("%s%s.%s", PROPERTIES_KEY_PREFIX, datasourceType, propertyName), propertyValue)
+                (propertyName, propertyValue) -> properties.setProperty(String.format("%s.%s", datasourceType, propertyName), propertyValue)
             );
 
             availableDatasources.add(datasourceType);
