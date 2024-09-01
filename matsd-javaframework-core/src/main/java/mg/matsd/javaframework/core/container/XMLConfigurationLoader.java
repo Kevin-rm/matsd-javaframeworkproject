@@ -15,8 +15,8 @@ class XMLConfigurationLoader {
     private XMLConfigurationLoader() { }
 
     static void doLoadManagedInstances(ManagedInstanceFactory managedInstanceFactory, Resource resource) {
-        Element documentElement = buildValidatedDocument(XMLConfigurationLoader.class.getClassLoader(), resource,
-            "container.xsd", "managedinstances.xsd").getDocumentElement();
+        Element documentElement = buildDocumentElement(XMLConfigurationLoader.class.getClassLoader(), resource,
+            "container.xsd", "managedinstances.xsd");
 
         scanComponents(managedInstanceFactory, documentElement);
 

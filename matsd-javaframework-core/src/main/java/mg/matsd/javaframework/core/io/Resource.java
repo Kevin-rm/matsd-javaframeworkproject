@@ -10,6 +10,7 @@ import java.io.InputStream;
 public abstract class Resource implements Closeable {
     protected String      name;
     protected InputStream inputStream;
+    private boolean isClosed;
 
     protected Resource(String name) {
         setName(name);
@@ -29,6 +30,10 @@ public abstract class Resource implements Closeable {
         return inputStream;
     }
 
+    public boolean isClosed() {
+        return isClosed;
+    }
+
     protected abstract void initializeInputStream() throws ResourceNotFoundException;
 
     @Override
@@ -37,6 +42,7 @@ public abstract class Resource implements Closeable {
 
         try {
             inputStream.close();
+            isClosed = true;
         } catch (IOException ignored) {
             throw new InternalException();
         }

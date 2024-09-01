@@ -150,10 +150,6 @@ public class Configuration {
         }
         document.getDocumentElement().normalize();
 
-        Assert.state(document.getFirstChild().getNodeName().equals("matsd-orm-configuration"),
-            () -> new ConfigurationException("L'élément racine dans un fichier de configuration XML doit être \"<matsd-orm-configuration>\"")
-        );
-
         NodeList datasourceNodeList = document.getElementsByTagName("datasource");
         if (datasourceNodeList.getLength() == 0)
             throw new ConfigurationException("Aucune source de données précisées dans le fichier de configuration");
