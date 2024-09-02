@@ -94,18 +94,17 @@ public final class XMLUtils {
         DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
         documentBuilderFactory.setNamespaceAware(true);
 
-        List<StreamSource> streamSources = new ArrayList<>();
         List<Resource> resources = new ArrayList<>();
         try {
-            Arrays.stream(schemas).map(ClassPathResource::new).forEachOrdered(resource -> {
-                resources.add(resource);
-                StreamSource streamSource = new StreamSource(resource.getInputStream());
-                streamSources.add(streamSource);
-            });
-
-            documentBuilderFactory.setSchema(SCHEMA_FACTORY.newSchema(streamSources.toArray(new Source[0])));
+            documentBuilderFactory.setSchema(SCHEMA_FACTORY.newSchema(
+                Arrays.stream(schemas).map(schema -> {
+                    ClassPathResource resource = new ClassPathResource(schema);
+                    resources.add(resource);
+                    return new StreamSource(resource.getInputStream());
+                }).toArray(Source[]::new))
+            );
         } finally {
-            resources.forEach(Resource::close);
+            resources.stream().filter(resource -> !resource.isClosed()).forEachOrdered(Resource::close);
         }
 
         return documentBuilderFactory;

@@ -144,7 +144,7 @@ public class Configuration {
         for (Element propertyElement : propertyElements) {
             String propertyName = getAttributeValue(propertyElement, "name");
             if (datasourceInfos.containsKey(propertyName))
-                throw new ConfigurationException(String.format("Duplication détectée pour le nom de propriété \"%s\"", propertyName));
+                throw new ConfigurationException(String.format("Duplication détectée pour la propriété \"%s\"", propertyName));
 
             String propertyValue = getAttributeValue(propertyElement, "value");
             datasourceInfos.put(propertyName, propertyValue == null ? propertyElement.getTextContent() : propertyValue);

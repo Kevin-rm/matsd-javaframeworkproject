@@ -1,6 +1,5 @@
 package mg.matsd.javaframework.core.io;
 
-import com.sun.jdi.InternalException;
 import mg.matsd.javaframework.core.utils.Assert;
 
 import java.io.Closeable;
@@ -8,22 +7,18 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public abstract class Resource implements Closeable {
-    protected String      name;
+    protected final String name;
     protected InputStream inputStream;
-    private boolean isClosed;
+    private boolean isClosed = false;
 
     protected Resource(String name) {
-        setName(name);
+        Assert.notBlank(name, false, "Le nom d'une ressource ne peut pas être vide ou \"null\"");
+
+        this.name = name.strip();
     }
 
     public String getName() {
         return name;
-    }
-
-    protected void setName(String name) {
-        Assert.notBlank(name, false, "Le nom d'une ressource ne peut pas être vide ou \"null\"");
-
-        this.name = name.strip();
     }
 
     public InputStream getInputStream() {
@@ -38,13 +33,13 @@ public abstract class Resource implements Closeable {
 
     @Override
     public void close() {
-        if (inputStream == null) return;
+        if (inputStream == null || isClosed()) return;
 
         try {
             inputStream.close();
             isClosed = true;
-        } catch (IOException ignored) {
-            throw new InternalException();
+        } catch (IOException e) {
+            throw new RuntimeException("Erreur lors de la fermeture de l'\"inputStream\"");
         } finally {
             inputStream = null;
         }
