@@ -6,22 +6,23 @@
     <xs:element name="orm-configuration">
         <xs:complexType>
             <xs:sequence>
-                <xs:element name="datasource" maxOccurs="3">
+                <xs:element name="session-factory" maxOccurs="unbounded">
                     <xs:complexType>
                         <xs:sequence>
-                            <xs:element name="property" minOccurs="3" maxOccurs="6">
+                            <xs:element name="property" maxOccurs="7">
                                 <xs:complexType>
                                     <xs:simpleContent>
                                         <xs:extension base="xs:string">
                                             <xs:attribute name="name" use="required">
                                                 <xs:simpleType>
                                                     <xs:restriction base="xs:string">
-                                                        <xs:enumeration value="host"/>
-                                                        <xs:enumeration value="port"/>
-                                                        <xs:enumeration value="database-name"/>
-                                                        <xs:enumeration value="user"/>
-                                                        <xs:enumeration value="password"/>
-                                                        <xs:enumeration value="pool-size"/>
+                                                        <xs:enumeration value="connection.url"/>
+                                                        <xs:enumeration value="connection.user"/>
+                                                        <xs:enumeration value="connection.password"/>
+                                                        <xs:enumeration value="connection.driver_class"/>
+                                                        <xs:enumeration value="connection.pool_size"/>
+                                                        <xs:enumeration value="show_sql"/>
+                                                        <xs:enumeration value="format_sql"/>
                                                     </xs:restriction>
                                                 </xs:simpleType>
                                             </xs:attribute>
@@ -31,7 +32,7 @@
                                 </xs:complexType>
                             </xs:element>
                         </xs:sequence>
-                        <xs:attribute name="type" type="xs:string" use="required"/>
+                        <xs:attribute name="name" type="xs:string"/>
                     </xs:complexType>
                 </xs:element>
             </xs:sequence>
