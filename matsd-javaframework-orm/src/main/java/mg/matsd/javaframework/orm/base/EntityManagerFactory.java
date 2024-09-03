@@ -16,10 +16,17 @@ public class EntityManagerFactory implements SessionFactory {
             .setFormatSql(formatSql);
     }
 
+    @Override
+    public DatabaseConnector getDatabaseConnector() {
+        return databaseConnector;
+    }
+
+    @Override
     public boolean isShowSql() {
         return showSql;
     }
 
+    @Override
     public EntityManagerFactory setShowSql(boolean showSql) {
         this.showSql = showSql;
         return this;
@@ -36,10 +43,12 @@ public class EntityManagerFactory implements SessionFactory {
         }
     }
 
+    @Override
     public boolean isFormatSql() {
         return formatSql;
     }
 
+    @Override
     public EntityManagerFactory setFormatSql(boolean formatSql) {
         this.formatSql = formatSql;
         return this;
