@@ -2,9 +2,7 @@ package mg.matsd.javaframework.orm.setup;
 
 import mg.matsd.javaframework.core.io.ClassPathResource;
 import mg.matsd.javaframework.core.utils.Assert;
-import mg.matsd.javaframework.orm.base.EntityManagerFactory;
-import mg.matsd.javaframework.orm.base.SessionFactory;
-import mg.matsd.javaframework.orm.exceptions.UnsupportedDatasourceException;
+import mg.matsd.javaframework.core.utils.StringUtils;
 import org.w3c.dom.Element;
 
 import java.io.IOException;
@@ -13,125 +11,124 @@ import java.util.*;
 import static mg.matsd.javaframework.core.utils.XMLUtils.*;
 
 public final class Configuration {
-    public static final String DEFAULT_CFG_FILENAME = "database.cfg.xml";
+    public static final String DEFAULT_CFG_FILENAME  = "database.cfg.xml";
+    public static final String PROPERTIES_KEY_PREFIX = "orm.session_factory_";
 
-    private static final String PROPERTIES_KEY_PREFIX = "orm.session_factory_";
     private static final Set<String> VALID_PROPERTY_NAMES = new HashSet<>(Arrays.asList(
         "connection.url", "connection.user", "connection.password", "connection.driver_class", "connection.pool_size",
         "show_sql", "format_sql"
     ));
 
-    private Properties properties;
+    public Map<Object, Map<String, String>> configs;
+
+
 
     public Configuration(String configFileName) {
-        loadProperties(configFileName);
+        loadConfigs(configFileName);
     }
 
     public Configuration() {
         this(DEFAULT_CFG_FILENAME);
     }
 
-    public Properties getProperties() {
-        return properties;
-    }
-
-    public SessionFactory buildSessionFactory(String datasourceToUse) {
-        return new EntityManagerFactory(this, datasourceToUse);
-    }
-
-    public SessionFactory buildSessionFactory() {
-        return buildSessionFactory(getAvailableDatasources().iterator().next());
-    }
-
-    private void loadProperties(String configFileName) {
+    private void loadConfigs(String configFileName) {
         try (ClassPathResource classPathResource = new ClassPathResource(configFileName)) {
             String resourceName = classPathResource.getName();
 
-            if      (resourceName.endsWith(".properties")) loadProperties       (classPathResource);
-            else if (resourceName.endsWith(".xml"))        loadPropertiesFromXml(classPathResource);
+            if      (resourceName.endsWith(".properties")) loadConfigsFromProperties(classPathResource);
+            else if (resourceName.endsWith(".xml"))        loadConfigsFromXml(classPathResource);
             else throw new IllegalArgumentException(String.format("Fichier au format properties (.properties) ou XML (.xml) attendu mais \"%s\" donné", resourceName));
         }
     }
 
-    private void loadProperties(ClassPathResource classPathResource) {
+    private void loadConfigsFromProperties(ClassPathResource classPathResource) {
         try {
-            properties = new Properties();
+            Properties properties = new Properties();
+            properties.load(classPathResource.getInputStream());
 
-            Properties originalProperties = new Properties();
-            originalProperties.load(classPathResource.getInputStream());
-            for (String originalPropertyName : originalProperties.stringPropertyNames()) {
-                originalPropertyName = originalPropertyName.strip();
-                if (!originalPropertyName.startsWith(PROPERTIES_KEY_PREFIX)) continue;
+            configs = new HashMap<>();
+            properties.stringPropertyNames()
+                .stream()
+                .map(String::strip)
+                .filter(propertyName -> propertyName.startsWith(PROPERTIES_KEY_PREFIX))
+                .forEach(propertyName -> {
+                    String[] propertyNameParts = propertyName.substring(PROPERTIES_KEY_PREFIX.length()).split("\\.", 2);
+                    Assert.state(propertyNameParts.length >= 2,
+                        () -> new ConfigurationException(String.format("La déclaration des informations dans un fichier .properties " +
+                            "doit être de la forme : %s[session_factory_id].[property_name]", PROPERTIES_KEY_PREFIX))
+                    );
 
-                /*
-                    orm.session_factory_[id].[property_name] = property_value
-                 */
-                String[] originalPropertyNameParts = originalPropertyName.substring(PROPERTIES_KEY_PREFIX.length()).split("\\.");
-                Assert.state(originalPropertyNameParts.length == 2,
-                    () -> new ConfigurationException(String.format("La déclaration des informations dans un fichier .properties " +
-                        "doit être de la forme : %s.<type-de-base_de_données>.<propriété>", PROPERTIES_KEY_PREFIX))
-                );
+                    propertyNameParts[0] = propertyNameParts[0].strip();
 
-                originalPropertyNameParts[0] = originalPropertyNameParts[0].strip().toLowerCase();
-                Assert.state(SUPPORTED_DBMS.contains(originalPropertyNameParts[0]),
-                    () -> new UnsupportedDatasourceException(originalPropertyNameParts[0])
-                );
-                originalPropertyNameParts[1] = originalPropertyNameParts[1].strip();
-                Assert.state(VALID_PROPERTY_NAMES.contains(originalPropertyNameParts[1]),
-                    () ->  new ConfigurationException(String.format("Le nom de propriété \"%s\" n'est pas valide",
-                        originalPropertyNameParts[1])
-                    ));
+                    Map<String, String> sessionFactoryProperties = configs.get(propertyNameParts[0]);
+                    if (sessionFactoryProperties == null) {
+                        validateSessionFactoryId(propertyNameParts[0]);
 
-                properties.setProperty(String.format("%s.%s", originalPropertyNameParts[0], originalPropertyNameParts[1]), originalProperties.getProperty(originalPropertyName));
-            }
+                        sessionFactoryProperties = new HashMap<>();
+                        configs.put(propertyNameParts[0], sessionFactoryProperties);
+                    }
+
+                    propertyNameParts[1] = propertyNameParts[1].strip();
+                    Assert.state(VALID_PROPERTY_NAMES.contains(propertyNameParts[1]),
+                        () -> new ConfigurationException(String.format("Le nom de propriété \"%s\" n'est pas valide",
+                            propertyNameParts[1])
+                        ));
+                    ensureUniqueProperty(propertyNameParts[1], propertyNameParts[0], sessionFactoryProperties);
+
+                    sessionFactoryProperties.put(propertyNameParts[1], properties.getProperty(propertyName));
+                });
         } catch (IOException e) {
             throw new ConfigurationException(String.format("Erreur lors de la lecture du fichier de configuration : \"%s\"", classPathResource.getName()), e);
         }
     }
 
-    private void loadPropertiesFromXml(ClassPathResource classPathResource) {
-        properties = new Properties();
-
-        loadConfigsFromXml(classPathResource).forEach((sessionFactoryId, value) ->
-            value.forEach((propertyName, propertyValue) -> properties.setProperty(
-                String.format("%s%s.%s", PROPERTIES_KEY_PREFIX, sessionFactoryId, propertyName), propertyValue)
-            ));
-    }
-
-    private static Map<Object, Map<String, String>> loadConfigsFromXml(ClassPathResource classPathResource) {
+    private void loadConfigsFromXml(ClassPathResource classPathResource) {
         List<Element> sessionFactoryElements = getChildElementsByTagName(
             buildDocumentElement(Configuration.class.getClassLoader(), classPathResource, "orm-configuration.xsd"),
             "session-factory"
         );
 
-        Map<Object, Map<String, String>> configsFromXml = new HashMap<>();
-        int index = 0;
+        configs = new HashMap<>();
+        int index = 1;
         for (Element sessionFactoryElement : sessionFactoryElements) {
-            Object sessionFactoryId = getAttributeValue(sessionFactoryElement, "name").strip();
-            sessionFactoryId = sessionFactoryId != null ? sessionFactoryId : index++;
+            Object sessionFactoryId = getAttributeValue(sessionFactoryElement, "name");
+            sessionFactoryId = sessionFactoryId != null ? ((String) sessionFactoryId).strip() : index++;
+            validateSessionFactoryId(sessionFactoryId);
 
-            if (configsFromXml.containsKey(sessionFactoryId))
-                throw new ConfigurationException(String.format("Duplication détectée pour l'identifiant de la session factory : \"%s\"", sessionFactoryId));
-
-            configsFromXml.put(sessionFactoryId, getSessionFactoryProperties(sessionFactoryElement));
+            configs.put(sessionFactoryId, getSessionFactoryProperties(sessionFactoryElement, sessionFactoryId));
         }
-
-        return configsFromXml;
     }
 
-    private static Map<String, String> getSessionFactoryProperties(Element sessionFactoryElement) {
+    private void validateSessionFactoryId(Object id) {
+        if (id instanceof String string && StringUtils.isBlank(string) && configs.entrySet().size() > 1)
+            throw new ConfigurationException("L'identifiant d'une session factory ne peut pas être vide lorsqu'il y en a plusieurs");
+
+        if (configs.containsKey(id))
+            throw new ConfigurationException(String.format("Duplication détectée pour l'identifiant de la session factory : \"%s\"", id));
+    }
+
+    private static Map<String, String> getSessionFactoryProperties(Element sessionFactoryElement, Object sessionFactoryId) {
         Map<String, String> sessionFactoryProperties = new HashMap<>();
 
         List<Element> propertyElements = getChildElementsByTagName(sessionFactoryElement, "property");
         for (Element propertyElement : propertyElements) {
             String propertyName = getAttributeValue(propertyElement, "name");
-            if (sessionFactoryProperties.containsKey(propertyName))
-                throw new ConfigurationException(String.format("Duplication détectée pour la propriété \"%s\"", propertyName));
+            ensureUniqueProperty(propertyName, sessionFactoryId, sessionFactoryProperties);
 
             String propertyValue = getAttributeValue(propertyElement, "value");
             sessionFactoryProperties.put(propertyName, propertyValue == null ? propertyElement.getTextContent() : propertyValue);
         }
 
         return sessionFactoryProperties;
+    }
+
+    private static void ensureUniqueProperty(String property, Object sessionFactoryId, Map<String, String> sessionFactoryProperties) {
+        if (!sessionFactoryProperties.containsKey(property)) return;
+
+        String message = String.format("Duplication détectée pour la propriété \"%s\"", property);
+        if (!(sessionFactoryId instanceof String string) || !StringUtils.isBlank(string))
+            message += String.format(" de la session factory avec l'identifiant : \"%s\"", sessionFactoryId);
+
+        throw new ConfigurationException(message);
     }
 }
