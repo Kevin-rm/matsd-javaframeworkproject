@@ -114,7 +114,7 @@ public class DatabaseConnector {
             return this;
         }
 
-        Assert.positive(poolSize, "L'argument poolSize ne peut pas être négatif ou nul");
+        Assert.positive(poolSize, "La valeur de la propriété \"poolSize\" ne peut pas être négatif ou nul");
 
         this.poolSize = poolSize;
         return this;
@@ -124,7 +124,7 @@ public class DatabaseConnector {
         try {
             return setPoolSize(poolSize == null || StringUtils.isBlank(poolSize) ? null : Integer.valueOf(poolSize.strip()));
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("L'argument poolSize doit être un nombre entier positif");
+            throw new IllegalArgumentException("La valeur de la propriété \"poolSize\" doit être un nombre entier positif");
         }
     }
 

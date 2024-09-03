@@ -1,8 +1,10 @@
 package mg.matsd.javaframework.orm.base;
 
+import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.io.ClassPathResource;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.core.utils.StringUtils;
+import mg.matsd.javaframework.orm.connection.DatabaseConnector;
 import org.w3c.dom.Element;
 
 import java.io.IOException;
@@ -20,6 +22,7 @@ public final class Configuration {
     ));
 
     private Map<Object, Map<String, String>> configs;
+    private Map<String, String> currentSessionFactoryProperties;
 
     public Configuration(String configFileName) {
         loadConfigs(configFileName);
@@ -29,8 +32,41 @@ public final class Configuration {
         this(DEFAULT_CFG_FILENAME);
     }
 
-    public void doConfigure() {
+    public Configuration configure(@Nullable Object sessionFactoryId) {
+        Map<String, String> sessionFactoryProperties;
+        if (sessionFactoryId != null) {
+            if (!configs.containsKey(sessionFactoryId))
+                throw new IllegalArgumentException(String.format("Aucune configuration de \"session factory\" trouvée pour l'identifiant spécifié : \"%s\"", sessionFactoryId));
 
+               sessionFactoryProperties = configs.get(sessionFactoryId);
+        } else sessionFactoryProperties = configs.entrySet().iterator().next().getValue();
+
+        if (currentSessionFactoryProperties == sessionFactoryProperties) return this;
+        currentSessionFactoryProperties = sessionFactoryProperties;
+
+        return this;
+    }
+
+    public Configuration configure() {
+        return configure(null);
+    }
+
+    public SessionFactory buildSessionFactory() {
+        Assert.state(currentSessionFactoryProperties != null, "Aucune \"session factory\" n'a été configurée. " +
+            "Veuillez d'abord appeler la méthode \"configure\" avant de tenter d'en créer une");
+
+        EntityManagerFactory entityManagerFactory = new EntityManagerFactory(
+            new DatabaseConnector(
+                currentSessionFactoryProperties.get("connection.url"),
+                currentSessionFactoryProperties.get("connection.user"),
+                currentSessionFactoryProperties.get("connection.password"),
+                currentSessionFactoryProperties.get("connection.driver_class"),
+                currentSessionFactoryProperties.get("connection.pool_size")
+            ), currentSessionFactoryProperties.get("show_sql"), currentSessionFactoryProperties.get("format_sql")
+        );
+
+        currentSessionFactoryProperties = null;
+        return entityManagerFactory;
     }
 
     private void loadConfigs(String configFileName) {
@@ -103,10 +139,10 @@ public final class Configuration {
 
     private void validateSessionFactoryId(Object id) {
         if (id instanceof String string && StringUtils.isBlank(string) && configs.entrySet().size() > 1)
-            throw new ConfigurationException("L'identifiant d'une session factory ne peut pas être vide lorsqu'il y en a plusieurs");
+            throw new ConfigurationException("L'identifiant d'une \"session factory\" ne peut pas être vide lorsqu'il y en a plusieurs");
 
         if (configs.containsKey(id))
-            throw new ConfigurationException(String.format("Duplication détectée pour l'identifiant de la session factory : \"%s\"", id));
+            throw new ConfigurationException(String.format("Duplication détectée pour l'identifiant de la \"session factory\" : \"%s\"", id));
     }
 
     private static Map<String, String> getSessionFactoryProperties(Element sessionFactoryElement, Object sessionFactoryId) {
@@ -129,7 +165,7 @@ public final class Configuration {
 
         String message = String.format("Duplication détectée pour la propriété \"%s\"", property);
         if (!(sessionFactoryId instanceof String string) || !StringUtils.isBlank(string))
-            message += String.format(" de la session factory avec l'identifiant : \"%s\"", sessionFactoryId);
+            message += String.format(" de la \"session factory\" avec l'identifiant : \"%s\"", sessionFactoryId);
 
         throw new ConfigurationException(message);
     }
