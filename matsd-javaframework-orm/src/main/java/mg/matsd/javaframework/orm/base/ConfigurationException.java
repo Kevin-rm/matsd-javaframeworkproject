@@ -1,4 +1,4 @@
-package mg.matsd.javaframework.orm.setup;
+package mg.matsd.javaframework.orm.base;
 
 import mg.matsd.javaframework.core.exceptions.BaseException;
 

@@ -1,21 +1,33 @@
 package mg.matsd.javaframework.orm.base;
 
-import mg.matsd.javaframework.core.annotations.Nullable;
-import mg.matsd.javaframework.core.utils.Assert;
-import mg.matsd.javaframework.core.utils.StringUtils;
 import mg.matsd.javaframework.orm.connection.DatabaseConnector;
-import mg.matsd.javaframework.orm.exceptions.DataSourceNotFoundException;
-import mg.matsd.javaframework.orm.setup.Configuration;
-
-import java.util.Properties;
-import java.util.Set;
 
 public class EntityManagerFactory  {
-    private Configuration configuration;
-    private DatabaseConnector databaseConnector;
+    private final DatabaseConnector databaseConnector;
     private boolean showSql;
     private boolean formatSql;
 
+    EntityManagerFactory(DatabaseConnector databaseConnector, boolean showSql, boolean formatSql) {
+        this.databaseConnector = databaseConnector;
+        this.setShowSql(showSql)
+            .setFormatSql(formatSql);
+    }
 
+    public boolean isShowSql() {
+        return showSql;
+    }
 
+    public EntityManagerFactory setShowSql(boolean showSql) {
+        this.showSql = showSql;
+        return this;
+    }
+
+    public boolean isFormatSql() {
+        return formatSql;
+    }
+
+    public EntityManagerFactory setFormatSql(boolean formatSql) {
+        this.formatSql = formatSql;
+        return this;
+    }
 }

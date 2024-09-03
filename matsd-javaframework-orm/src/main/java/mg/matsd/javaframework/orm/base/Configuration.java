@@ -1,4 +1,4 @@
-package mg.matsd.javaframework.orm.setup;
+package mg.matsd.javaframework.orm.base;
 
 import mg.matsd.javaframework.core.io.ClassPathResource;
 import mg.matsd.javaframework.core.utils.Assert;
@@ -19,9 +19,7 @@ public final class Configuration {
         "show_sql", "format_sql"
     ));
 
-    public Map<Object, Map<String, String>> configs;
-
-
+    private Map<Object, Map<String, String>> configs;
 
     public Configuration(String configFileName) {
         loadConfigs(configFileName);
@@ -29,6 +27,10 @@ public final class Configuration {
 
     public Configuration() {
         this(DEFAULT_CFG_FILENAME);
+    }
+
+    public void doConfigure() {
+
     }
 
     private void loadConfigs(String configFileName) {
