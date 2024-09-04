@@ -43,9 +43,10 @@ public final class SQLExecutor {
 
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 setStartRow(resultSet, startRow);
-                results = mapResultSet(resultSet, rowMapper);
+                results = resultSetToGenericList(resultSet, rowMapper);
             }
         }
+
         return results;
     }
 
@@ -60,11 +61,56 @@ public final class SQLExecutor {
 
             try (ResultSet resultSet = statement.executeQuery(sql)) {
                 setStartRow(resultSet, startRow);
-                results = mapResultSet(resultSet, rowMapper);
+                results = resultSetToGenericList(resultSet, rowMapper);
             }
         }
 
         return results;
+    }
+
+    public static <T> T queryForObject(
+        Connection connection, String sql, RowMapper<T> rowMapper, int startRow, int maxRows, @Nullable Object... parameters
+    ) throws SQLException, NoResultException, NotSingleResultException {
+        validateDQLQuery(sql);
+
+        try (PreparedStatement preparedStatement = connection.prepareStatement(
+            sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
+        ) {
+            setMaxRows(preparedStatement, maxRows);
+            setParameters(preparedStatement, parameters);
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                setStartRow(resultSet, startRow);
+
+                T result;
+                if (!resultSet.next()) throw new NoResultException(sql);
+                result = rowMapper.mapRow(resultSet);
+                if (resultSet.next()) throw new NotSingleResultException(sql);
+
+                return result;
+            }
+        }
+    }
+
+    public static <T> T queryForObject(
+        Connection connection, String sql, RowMapper<T> rowMapper, int startRow, int maxRows
+    ) throws SQLException, NoResultException, NotSingleResultException {
+        validateDQLQuery(sql);
+
+        try (Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
+            setMaxRows(statement, maxRows);
+
+            try (ResultSet resultSet = statement.executeQuery(sql)) {
+                setStartRow(resultSet, startRow);
+
+                T result;
+                if (!resultSet.next()) throw new NoResultException(sql);
+                result = rowMapper.mapRow(resultSet);
+                if (resultSet.next()) throw new NotSingleResultException(sql);
+
+                return result;
+            }
+        }
     }
 
     public static List<Map<String, Object>> queryForMapList(
@@ -99,33 +145,52 @@ public final class SQLExecutor {
     }
 
     public static Map<String, Object> queryForMap(
-        Connection connection, String sql, int start, int maxRows, @Nullable Object... parameters
+        Connection connection, String sql, int startRow, int maxRows, @Nullable Object... parameters
     ) throws SQLException, NoResultException, NotSingleResultException {
-        List<Map<String, Object>> results = queryForMapList(connection, sql, start, maxRows, parameters);
+        validateDQLQuery(sql);
 
-        if (results.isEmpty())  throw new NoResultException(sql);
-        if (results.size() > 1) throw new NotSingleResultException(sql);
+        try (PreparedStatement preparedStatement = connection.prepareStatement(
+            sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
+        ) {
+            setMaxRows(preparedStatement, maxRows);
+            setParameters(preparedStatement, parameters);
 
-        return results.get(0);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                setStartRow(resultSet, startRow);
+
+                if (!resultSet.next()) throw new NoResultException(sql);
+                Map<String, Object> result = resultSetToMap(resultSet);
+                if (resultSet.next())  throw new NotSingleResultException(sql);
+
+                return result;
+            }
+        }
     }
 
-    public static Map<String, Object> queryForMap(Connection connection, String sql, int startRow, int maxRows)
-        throws SQLException, NoResultException, NotSingleResultException {
-        List<Map<String, Object>> results = queryForMapList(connection, sql, startRow, maxRows);
+    public static Map<String, Object> queryForMap(
+        Connection connection, String sql, int startRow, int maxRows
+    ) throws SQLException, NoResultException, NotSingleResultException {
+        validateDQLQuery(sql);
 
-        if (results.isEmpty())  throw new NoResultException(sql);
-        if (results.size() > 1) throw new NotSingleResultException(sql);
+        try (Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
+            setMaxRows(statement, maxRows);
 
-        return results.get(0);
+            try (ResultSet resultSet = statement.executeQuery(sql)) {
+                setStartRow(resultSet, startRow);
+
+                if (!resultSet.next()) throw new NoResultException(sql);
+                Map<String, Object> result = resultSetToMap(resultSet);
+                if (resultSet.next())  throw new NotSingleResultException(sql);
+
+                return result;
+            }
+        }
     }
 
     public static <T> List<T> queryForUniqueColumnList(
         Connection connection, String sql, Class<T> resultType, int startRow, int maxRows, @Nullable Object... parameters
     ) throws SQLException, NonUniqueColumnException {
-        validateDQLQuery(sql);
-        Assert.state(ClassUtils.isStandardClass(resultType),
-            () -> new IllegalArgumentException(String.format("La classe \"%s\" n'est pas une classe standard de JAVA", resultType.getName()))
-        );
+        validationForUniqueColumn(sql, resultType);
 
         try (PreparedStatement preparedStatement = connection.prepareStatement(
             sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
@@ -142,10 +207,7 @@ public final class SQLExecutor {
 
     public static <T> List<T> queryForUniqueColumnList(Connection connection, String sql, Class<T> resultType, int startRow, int maxRows)
         throws SQLException, NonUniqueColumnException {
-        validateDQLQuery(sql);
-        Assert.state(ClassUtils.isStandardClass(resultType),
-            () -> new IllegalArgumentException(String.format("La classe \"%s\" n'est pas une classe standard de JAVA", resultType.getName()))
-        );
+        validationForUniqueColumn(sql, resultType);
 
         try (Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
             setMaxRows(statement, maxRows);
@@ -159,23 +221,45 @@ public final class SQLExecutor {
 
     public static <T> T queryForUniqueColumn(
         Connection connection, String sql, Class<T> resultType, int startRow, int maxRows, @Nullable Object... parameters
-    ) throws SQLException, NonUniqueColumnException, NoResultException, NotSingleResultException {
-        List<T> results = queryForUniqueColumnList(connection, sql, resultType, startRow, maxRows, parameters);
+    ) throws SQLException, NoResultException, NonUniqueColumnException, NotSingleResultException {
+        validationForUniqueColumn(sql, resultType);
 
-        if (results.isEmpty())  throw new NoResultException(sql);
-        if (results.size() > 1) throw new NotSingleResultException(sql);
+        try (PreparedStatement preparedStatement = connection.prepareStatement(
+            sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
+        ) {
+            setMaxRows(preparedStatement, maxRows);
+            setParameters(preparedStatement, parameters);
 
-        return results.get(0);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                setStartRow(resultSet, startRow);
+
+                if (!resultSet.next()) throw new NoResultException(sql);
+                T result = resultSetToUniqueColumn(resultSet, resultType, sql);
+                if (resultSet.next()) throw new NotSingleResultException(sql);
+
+                return result;
+            }
+        }
     }
 
-    public static <T> T queryForUniqueColumn(Connection connection, String sql, Class<T> resultType, int startRow, int maxRows)
-        throws SQLException, NonUniqueColumnException, NoResultException, NotSingleResultException {
-        List<T> results = queryForUniqueColumnList(connection, sql, resultType, startRow, maxRows);
+    public static <T> T queryForUniqueColumn(
+        Connection connection, String sql, Class<T> resultType, int startRow, int maxRows
+    ) throws SQLException, NoResultException, NonUniqueColumnException, NotSingleResultException {
+        validationForUniqueColumn(sql, resultType);
 
-        if (results.isEmpty())  throw new NoResultException(sql);
-        if (results.size() > 1) throw new NotSingleResultException(sql);
+        try (Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
+            setMaxRows(statement, maxRows);
 
-        return results.get(0);
+            try (ResultSet resultSet = statement.executeQuery(sql)) {
+                setStartRow(resultSet, startRow);
+
+                if (!resultSet.next()) throw new NoResultException(sql);
+                T result = resultSetToUniqueColumn(resultSet, resultType, sql);
+                if (resultSet.next()) throw new NotSingleResultException(sql);
+
+                return result;
+            }
+        }
     }
 
     public static int update(Connection connection, String sql, @Nullable Object... parameters) throws SQLException {
@@ -246,12 +330,15 @@ public final class SQLExecutor {
         );
     }
 
-    private static void setStartRow(ResultSet resultSet, int startRow) throws SQLException {
-        if (startRow > 0) resultSet.absolute(startRow);
+    private static void validationForUniqueColumn(String sql, Class<?> resultType) {
+        validateDQLQuery(sql);
+        Assert.state(ClassUtils.isStandardClass(resultType),
+            () -> new IllegalArgumentException(String.format("La classe \"%s\" n'est pas une classe standard de JAVA", resultType.getName()))
+        );
     }
 
-    private static void setMaxRows(PreparedStatement preparedStatement, int maxRows) throws SQLException {
-        if (maxRows > -1) preparedStatement.setMaxRows(maxRows);
+    private static void setStartRow(ResultSet resultSet, int startRow) throws SQLException {
+        if (startRow > 0) resultSet.absolute(startRow);
     }
 
     private static void setMaxRows(Statement statement, int maxRows) throws SQLException {
@@ -275,12 +362,22 @@ public final class SQLExecutor {
         }
     }
 
-    private static <T> List<T> mapResultSet(ResultSet resultSet, RowMapper<T> rowMapper) throws SQLException {
+    private static <T> List<T> resultSetToGenericList(ResultSet resultSet, RowMapper<T> rowMapper) throws SQLException {
         List<T> results = new ArrayList<>();
         while (resultSet.next())
             results.add(rowMapper.mapRow(resultSet));
 
         return results;
+    }
+
+    private static Map<String, Object> resultSetToMap(ResultSet resultSet) throws SQLException {
+        Map<String, Object> map = new LinkedHashMap<>();
+
+        ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
+        for (int i = 1; i <= resultSetMetaData.getColumnCount(); i++)
+            map.put(resultSetMetaData.getColumnName(i), resultSet.getObject(i));
+
+        return map;
     }
 
     private static List<Map<String, Object>> resultSetToMapList(ResultSet resultSet) throws SQLException {
@@ -298,6 +395,19 @@ public final class SQLExecutor {
         }
 
         return results;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> T resultSetToUniqueColumn(ResultSet resultSet, Class<T> resultType, String sql) throws SQLException, NonUniqueColumnException {
+        if (resultSet.getMetaData().getColumnCount() != 1)
+            throw new NonUniqueColumnException(sql);
+
+        T result;
+        if (resultType == Object.class)
+             result = (T) resultSet.getObject(1);
+        else result = resultSet.getObject(1, resultType);
+
+        return result;
     }
 
     @SuppressWarnings("unchecked")

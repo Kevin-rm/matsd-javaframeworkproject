@@ -13,9 +13,9 @@ public interface Session extends AutoCloseable {
 
     boolean isOpen();
 
-    RawQuery createRawQuery(String sql);
+    RawQuery<?> createRawQuery(String sql);
 
-    RawQuery createRawQuery(String sql, Class<?> entityResultClass);
+    <T> RawQuery<T> createRawQuery(String sql, Class<T> entityResultClass);
 
     @Override
     void close();

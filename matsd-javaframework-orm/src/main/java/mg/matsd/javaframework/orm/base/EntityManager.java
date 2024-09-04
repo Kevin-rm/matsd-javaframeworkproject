@@ -44,13 +44,13 @@ public class EntityManager implements Session {
     }
 
     @Override
-    public RawQuery createRawQuery(String sql) {
-        return new RawQuery(this, sql);
+    public RawQuery<?> createRawQuery(String sql) {
+        return new RawQuery<>(this, sql);
     }
 
     @Override
-    public RawQuery createRawQuery(String sql, Class<?> entityResultClass) {
-        return new RawQuery(this, sql, entityResultClass);
+    public <T> RawQuery<T> createRawQuery(String sql, Class<T> entityResultClass) {
+        return new RawQuery<>(this, sql, entityResultClass);
     }
 
     public void findAll(Class<?> entityClass) {

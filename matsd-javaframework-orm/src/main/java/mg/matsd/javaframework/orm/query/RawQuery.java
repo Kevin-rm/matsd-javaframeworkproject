@@ -18,7 +18,8 @@ import java.util.Comparator;
 import java.util.List;
 
 public class RawQuery<T> {
-    private Session session;
+    private final Session session;
+    private final String originalSql;
     private String sql;
     @Nullable
     private Class<T> resultClass;
@@ -27,22 +28,22 @@ public class RawQuery<T> {
     private final List<QueryParameter> parameters;
 
     public RawQuery(Session session, String sql, @Nullable Class<T> resultClass) {
-        this.setSession(session)
-            .setSql(sql)
+        Assert.notNull(session, "La session ne peut pas être \"null\"");
+
+        this.setSql(sql)
             .setResultClass(resultClass);
 
-        parameters = new ArrayList<>();
+        this.session = session;
+        originalSql  = this.sql;
+        parameters   = new ArrayList<>();
     }
 
     public RawQuery(Session session, String sql) {
         this(session, sql, null);
     }
 
-    private RawQuery<T> setSession(Session session) {
-        Assert.notNull(session, "La session ne peut pas être \"null\"");
-
-        this.session = session;
-        return this;
+    public String getOriginalSql() {
+        return originalSql;
     }
 
     public String getSql() {
@@ -131,6 +132,10 @@ public class RawQuery<T> {
         } catch (SQLException e) {
             throw new DatabaseException(e);
         }
+    }
+
+    public T getSingleResult() {
+        return null;
     }
 
     public Object uniqueColumnResult()

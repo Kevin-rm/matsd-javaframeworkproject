@@ -37,8 +37,9 @@ public final class UtilFunctions {
                field.isAnnotationPresent(OneToOne.class);
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> T resultSetToObject(Class<T> clazz, ResultSet resultSet) throws SQLException {
-        T result = null;
+        T result;
 
         if (clazz == Object.class)
             return (T) resultSet.getObject(1);
@@ -62,7 +63,7 @@ public final class UtilFunctions {
         for (int i = 1; i <= columnCount; i++) {
             String columnLabel = resultSetMetaData.getColumnLabel(i);
 
-            Field field = null;
+            Field field;
             if (isEntity(clazz))
                 field = new Relation(clazz).getColumn(columnLabel).getField();
             else {

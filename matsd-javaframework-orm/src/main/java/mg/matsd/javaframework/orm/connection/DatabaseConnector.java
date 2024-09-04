@@ -108,7 +108,7 @@ public class DatabaseConnector {
         return poolSize;
     }
 
-    private DatabaseConnector setPoolSize(@Nullable Integer poolSize) {
+    public DatabaseConnector setPoolSize(@Nullable Integer poolSize) {
         if (poolSize == null) {
             this.poolSize = DEFAULT_POOL_SIZE;
             return this;

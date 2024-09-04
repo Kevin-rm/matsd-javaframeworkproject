@@ -13,6 +13,10 @@ public interface JdbcOperations {
 
     <T> List<T> query(String sql, RowMapper<T> rowMapper) throws JdbcException;
 
+    <T> T queryForObject(String sql, RowMapper<T> rowMapper, @Nullable Object... parameters);
+
+    <T> T queryForObject(String sql, RowMapper<T> rowMapper);
+
     List<Map<String, Object>> queryForMapList(String sql, @Nullable Object... parameters) throws JdbcException;
 
     List<Map<String, Object>> queryForMapList(String sql) throws JdbcException;

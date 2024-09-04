@@ -70,12 +70,45 @@ public class JdbcTemplate implements JdbcOperations {
     }
 
     @Override
+    public <T> T queryForObject(String sql, RowMapper<T> rowMapper, Object... parameters)
+        throws JdbcException, NoResultException, NotSingleResultException  {
+        T result;
+
+        Connection connection = databaseConnector.getConnection();
+        try {
+            result = SQLExecutor.queryForObject(connection, sql, rowMapper, -1, maxRows, parameters);
+        } catch (SQLException e) {
+            throw new JdbcException(e);
+        } finally {
+            databaseConnector.releaseConnection(connection);
+        }
+
+        return result;
+    }
+
+    @Override
+    public <T> T queryForObject(String sql, RowMapper<T> rowMapper) throws JdbcException, NoResultException, NotSingleResultException {
+        T result;
+
+        Connection connection = databaseConnector.getConnection();
+        try {
+            result = SQLExecutor.queryForObject(connection, sql, rowMapper, -1, maxRows);
+        } catch (SQLException e) {
+            throw new JdbcException(e);
+        } finally {
+            databaseConnector.releaseConnection(connection);
+        }
+
+        return result;
+    }
+
+    @Override
     public List<Map<String, Object>> queryForMapList(String sql, Object... parameters) throws JdbcException {
         List<Map<String, Object>> results;
 
         Connection connection = databaseConnector.getConnection();
         try {
-            results = SQLExecutor.queryForMapList(connection, sql, maxRows, -1, parameters);
+            results = SQLExecutor.queryForMapList(connection, sql, -1, maxRows, parameters);
         } catch (SQLException e) {
             throw new JdbcException(e);
         } finally {
@@ -108,7 +141,7 @@ public class JdbcTemplate implements JdbcOperations {
 
         Connection connection = databaseConnector.getConnection();
         try {
-            result = SQLExecutor.queryForMap(connection, sql, maxRows, -1, parameters);
+            result = SQLExecutor.queryForMap(connection, sql, -1, maxRows, parameters);
         } catch (SQLException e) {
             throw new JdbcException(e);
         } finally {
@@ -169,7 +202,7 @@ public class JdbcTemplate implements JdbcOperations {
 
     @Override
     public <T> T queryForUniqueColumn(String sql, Class<T> resultType, Object... parameters)
-        throws JdbcException, NonUniqueColumnException, NoResultException, NotSingleResultException {
+        throws JdbcException, NoResultException, NonUniqueColumnException, NotSingleResultException {
         T result;
 
         Connection connection = databaseConnector.getConnection();
@@ -186,7 +219,7 @@ public class JdbcTemplate implements JdbcOperations {
 
     @Override
     public <T> T queryForUniqueColumn(String sql, Class<T> resultType)
-        throws JdbcException, NonUniqueColumnException, NoResultException, NotSingleResultException {
+        throws JdbcException, NoResultException, NonUniqueColumnException, NotSingleResultException {
         T result;
 
         Connection connection = databaseConnector.getConnection();
