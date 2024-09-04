@@ -8,14 +8,12 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 public class EntityManager implements Session {
-    private DatabaseConnector databaseConnector;
-    private String            dialect;
-    private Connection        connection;
+    private final DatabaseConnector databaseConnector;
+    private Connection connection;
 
-    EntityManager(DatabaseConnector databaseConnector, String dialect) {
+    EntityManager(final DatabaseConnector databaseConnector) {
         this.databaseConnector = databaseConnector;
-        this.dialect           = dialect;
-        connection             = databaseConnector.getConnection();
+        connection = databaseConnector.getConnection();
     }
 
     @Override

@@ -64,4 +64,13 @@ public class EntityManagerFactory implements SessionFactory {
                 "n'est pas de type boolean : \"%s\"", formatSql));
         }
     }
+
+    public EntityManager createEntityManager() {
+        return null;
+    }
+
+    @Override
+    public Session createSession() {
+        return createEntityManager();
+    }
 }

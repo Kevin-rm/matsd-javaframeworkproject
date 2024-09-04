@@ -12,4 +12,6 @@ public interface SessionFactory {
     boolean isFormatSql();
 
     EntityManagerFactory setFormatSql(boolean formatSql);
+
+    Session createSession();
 }
