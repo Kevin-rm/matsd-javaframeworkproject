@@ -419,7 +419,7 @@ public final class SQLExecutor {
                 throw new NonUniqueColumnException(sql);
 
             if (resultType == Object.class)
-                results.add((T) resultSet.getObject(1));
+                 results.add((T) resultSet.getObject(1));
             else results.add(resultSet.getObject(1, resultType));
         }
 
