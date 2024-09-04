@@ -138,8 +138,11 @@ public final class Configuration {
     }
 
     private void validateSessionFactoryId(Object id) {
-        if (id instanceof String string && StringUtils.isBlank(string) && configs.entrySet().size() > 1)
-            throw new ConfigurationException("L'identifiant d'une \"session factory\" ne peut pas être vide lorsqu'il y en a plusieurs");
+        if (id instanceof String string) {
+            if (StringUtils.isBlank(string) && configs.entrySet().size() > 1)
+                throw new ConfigurationException("L'identifiant d'une \"session factory\" ne peut pas être vide lorsqu'il y en a plusieurs");
+            else id = 1;
+        }
 
         if (configs.containsKey(id))
             throw new ConfigurationException(String.format("Duplication détectée pour l'identifiant de la \"session factory\" : \"%s\"", id));
