@@ -124,7 +124,7 @@ public class RawQuery<T> {
         return this;
     }
 
-    public List<T> getResultsAsList() {
+    public List<T> getResultsAsList() throws DatabaseException {
         try {
             return SQLExecutor.query(
                 session.connection(), sql, this::processResultSet, firstResult, maxResults, prepareParameters()
@@ -134,12 +134,18 @@ public class RawQuery<T> {
         }
     }
 
-    public T getSingleResult() {
-        return null;
+    public T getSingleResult() throws DatabaseException, NoResultException, NotSingleResultException {
+        try {
+            return SQLExecutor.queryForObject(
+                session.connection(), sql, this::processResultSet, firstResult, maxResults, prepareParameters()
+            );
+        } catch (SQLException e) {
+            throw new DatabaseException(e);
+        }
     }
 
     public Object uniqueColumnResult()
-        throws NonUniqueColumnException, NoResultException, NotSingleResultException {
+        throws DatabaseException, NoResultException, NonUniqueColumnException, NotSingleResultException {
         try {
             Class<?> resultType = resultClass == null ? Object.class : resultClass;
             return SQLExecutor.queryForUniqueColumn(
@@ -150,7 +156,7 @@ public class RawQuery<T> {
         }
     }
 
-    public int executeUpdate() {
+    public int executeUpdate() throws DatabaseException {
         try {
             return SQLExecutor.update(session.connection(), sql, prepareParameters());
         } catch (SQLException e) {
