@@ -66,7 +66,7 @@ public class EntityManagerFactory implements SessionFactory {
     }
 
     public EntityManager createEntityManager() {
-        return null;
+        return new EntityManager(databaseConnector);
     }
 
     @Override

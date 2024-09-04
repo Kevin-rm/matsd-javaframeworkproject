@@ -4,14 +4,14 @@ import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 
 class QueryParameter {
-    private RawQuery rawQuery;
-    private int      index;
+    private final RawQuery<?> rawQuery;
+    private int    index;
     @Nullable
-    private String   name;
+    private String name;
     @Nullable
-    private Object   value;
+    private final Object value;
 
-    QueryParameter(RawQuery rawQuery, String name, @Nullable Object value) {
+    QueryParameter(RawQuery<?> rawQuery, String name, @Nullable Object value) {
         this.rawQuery = rawQuery;
         this.value    = value;
         this.setName(name);
@@ -19,7 +19,7 @@ class QueryParameter {
         convertNameToPlaceholder();
     }
 
-    QueryParameter(RawQuery rawQuery, int index, @Nullable Object value) {
+    QueryParameter(RawQuery<?> rawQuery, int index, @Nullable Object value) {
         this.rawQuery = rawQuery;
         this.value    = value;
         this.setIndex(index);
@@ -31,7 +31,7 @@ class QueryParameter {
         return index;
     }
 
-    private QueryParameter setIndex(int index) {
+    private void setIndex(int index) {
         Assert.positive(index, "L'indice d'un paramètre ne peut pas être négatif ou nul");
 
         int placeholdersCount = countParameterPlaceholders(rawQuery.getSql());
@@ -41,10 +41,9 @@ class QueryParameter {
             );
 
         this.index = index;
-        return this;
     }
 
-    private QueryParameter setName(String name) {
+    private void setName(String name) {
         String sql = rawQuery.getSql();
 
         Assert.notBlank(name, false, "Le nom d'un paramètre ne peut pas être vide ou \"null\"");
@@ -56,7 +55,6 @@ class QueryParameter {
         );
 
         this.name = name;
-        return this;
     }
 
     Object getValue() {

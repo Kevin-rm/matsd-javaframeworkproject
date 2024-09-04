@@ -3,7 +3,7 @@ package mg.matsd.javaframework.orm.query;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.core.utils.ClassUtils;
-import mg.matsd.javaframework.orm.base.EntityManager;
+import mg.matsd.javaframework.orm.base.Session;
 import mg.matsd.javaframework.orm.base.internal.SQLExecutor;
 import mg.matsd.javaframework.orm.base.internal.UtilFunctions;
 import mg.matsd.javaframework.orm.exceptions.DatabaseException;
@@ -18,30 +18,30 @@ import java.util.Comparator;
 import java.util.List;
 
 public class RawQuery<T> {
-    private EntityManager entityManager;
+    private Session session;
     private String sql;
     @Nullable
     private Class<T> resultClass;
-    private List<QueryParameter> parameters;
-    private int  firstResult = -1;
-    private int  maxResults  = -1;
+    private int firstResult = -1;
+    private int maxResults  = -1;
+    private final List<QueryParameter> parameters;
 
-    public RawQuery(EntityManager entityManager, String sql) {
-        this(entityManager, sql, null);
-    }
-
-    public RawQuery(EntityManager entityManager, String sql, @Nullable Class<T> resultClass) {
-        this.setEntityManager(entityManager)
+    public RawQuery(Session session, String sql, @Nullable Class<T> resultClass) {
+        this.setSession(session)
             .setSql(sql)
             .setResultClass(resultClass);
 
         parameters = new ArrayList<>();
     }
 
-    private RawQuery<T> setEntityManager(EntityManager entityManager) {
-        Assert.notNull(entityManager, "L'argument entityManager ne peut pas être \"null\"");
+    public RawQuery(Session session, String sql) {
+        this(session, sql, null);
+    }
 
-        this.entityManager = entityManager;
+    private RawQuery<T> setSession(Session session) {
+        Assert.notNull(session, "La session ne peut pas être \"null\"");
+
+        this.session = session;
         return this;
     }
 
@@ -126,7 +126,7 @@ public class RawQuery<T> {
     public List<T> getResultsAsList() {
         try {
             return SQLExecutor.query(
-                entityManager.connection(), sql, this::processResultSet, firstResult, maxResults, prepareParameters()
+                session.connection(), sql, this::processResultSet, firstResult, maxResults, prepareParameters()
             );
         } catch (SQLException e) {
             throw new DatabaseException(e);
@@ -138,7 +138,7 @@ public class RawQuery<T> {
         try {
             Class<?> resultType = resultClass == null ? Object.class : resultClass;
             return SQLExecutor.queryForUniqueColumn(
-                entityManager.connection(), sql, resultType, firstResult, maxResults, prepareParameters()
+                session.connection(), sql, resultType, firstResult, maxResults, prepareParameters()
             );
         } catch (SQLException e) {
             throw new DatabaseException(e);
@@ -147,7 +147,7 @@ public class RawQuery<T> {
 
     public int executeUpdate() {
         try {
-            return SQLExecutor.update(entityManager.connection(), sql, prepareParameters());
+            return SQLExecutor.update(session.connection(), sql, prepareParameters());
         } catch (SQLException e) {
             throw new DatabaseException(e);
         }
@@ -163,6 +163,7 @@ public class RawQuery<T> {
         return params;
     }
 
+    @SuppressWarnings("unchecked")
     private T processResultSet(ResultSet resultSet) throws SQLException {
         if (resultClass != null)
             return UtilFunctions.resultSetToObject(resultClass, resultSet);

@@ -11,7 +11,7 @@ import java.util.*;
 
 import static java.sql.Types.NULL;
 
-public class SQLExecutor {
+public final class SQLExecutor {
     private static final Set<String> DDL_QUERY_STARTS;
     private static final Set<String> DML_QUERY_STARTS;
 
