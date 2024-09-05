@@ -7,11 +7,11 @@ public interface SessionFactory {
 
     boolean isShowSql();
 
-    EntityManagerFactory setShowSql(boolean showSql);
+    SessionFactory setShowSql(boolean showSql);
 
     boolean isFormatSql();
 
-    EntityManagerFactory setFormatSql(boolean formatSql);
+    SessionFactory setFormatSql(boolean formatSql);
 
     Session createSession();
 }

@@ -32,9 +32,7 @@ public enum SQLTypes {
         javaClassToSqlTypeMap.put(float.class, sqlTypesForFloat);
         javaClassToSqlTypeMap.put(Float.class, sqlTypesForFloat);
 
-        List<SQLTypes> sqlTypesForDouble = Arrays.asList(
-            DOUBLE, DECIMAL, NUMERIC
-        );
+        List<SQLTypes> sqlTypesForDouble = Arrays.asList(DOUBLE, DECIMAL, NUMERIC);
         javaClassToSqlTypeMap.put(double.class, sqlTypesForDouble);
         javaClassToSqlTypeMap.put(Double.class, sqlTypesForDouble);
 
