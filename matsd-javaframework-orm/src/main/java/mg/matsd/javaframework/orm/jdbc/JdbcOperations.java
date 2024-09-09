@@ -13,9 +13,9 @@ public interface JdbcOperations {
 
     <T> List<T> query(String sql, RowMapper<T> rowMapper) throws JdbcException;
 
-    <T> T queryForObject(String sql, RowMapper<T> rowMapper, @Nullable Object... parameters);
+    <T> T queryForObject(String sql, RowMapper<T> rowMapper, @Nullable Object... parameters) throws JdbcException, NoResultException, NotSingleResultException;
 
-    <T> T queryForObject(String sql, RowMapper<T> rowMapper);
+    <T> T queryForObject(String sql, RowMapper<T> rowMapper) throws JdbcException, NoResultException, NotSingleResultException;
 
     List<Map<String, Object>> queryForMapList(String sql, @Nullable Object... parameters) throws JdbcException;
 
