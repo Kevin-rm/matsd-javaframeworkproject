@@ -30,7 +30,7 @@ class Relationship {
     private final Field  field;
     private RelationshipType relationshipType;
     private Class<?> targetEntityClass;
-    private String mappedBy;
+    private String  mappedBy;
     private boolean optional      = false;
     private boolean orphanRemoval = false;
     private FetchType fetchType   = FetchType.LAZY;
@@ -58,7 +58,7 @@ class Relationship {
         return this;
     }
 
-    public Class<?> getTargetEntityClass() {
+    Class<?> getTargetEntityClass() {
         return targetEntityClass;
     }
 
@@ -102,6 +102,17 @@ class Relationship {
                     "Les relations ne peuvent pas se référer à l'entité elle-même.",
                 targetEntityClass.getName(), entity.getClazz().getName(), field.getName()));
 
+        return this;
+    }
+
+    String getMappedBy() {
+        return mappedBy;
+    }
+
+    public Relationship setMappedBy() {
+        
+
+        this.mappedBy = mappedBy;
         return this;
     }
 
