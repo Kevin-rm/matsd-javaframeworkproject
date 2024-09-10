@@ -63,7 +63,7 @@ public class SessionFactoryOptions {
         return properties.getProperty(key);
     }
 
-    void setProperty(String key, @Nullable String value) {
+    void setProperty(String key, @Nullable String value) throws ConfigurationException {
         validatePropertyKey(key);
 
         properties.setProperty(key, value);
@@ -76,10 +76,11 @@ public class SessionFactoryOptions {
 
         if (!properties.containsKey(key)) return;
 
-        String message = String.format("Duplication détectée pour la propriété \"%s\" de la \"session factory\"", key);
+        String message = String.format("La propriété \"%s\" de la \"session factory\"", key);
         if (name == null)
             message += String.format(" à l'indice %d", index);
         else message += String.format(" avec le nom \"%s\"", name);
+        message += " a déjà été définie";
 
         throw new ConfigurationException(message);
     }

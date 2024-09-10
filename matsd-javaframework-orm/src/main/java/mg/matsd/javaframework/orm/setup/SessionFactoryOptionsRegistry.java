@@ -56,7 +56,7 @@ class SessionFactoryOptionsRegistry {
         }
     }
 
-    SessionFactoryOptions registerSessionFactoryOptions(@Nullable String name) {
+    SessionFactoryOptions registerSessionFactoryOptions(@Nullable String name) throws ConfigurationException {
         if (containsSessionFactoryOptions(name))
             throw new ConfigurationException(String.format("Duplication détectée pour le nom d'une \"session factory\" : \"%s\"", name));
 
