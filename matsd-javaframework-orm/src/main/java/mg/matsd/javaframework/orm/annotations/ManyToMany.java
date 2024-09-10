@@ -10,9 +10,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface ManyToMany {
-    Class<?>  targetEntity();
+    Class<?>  targetEntity() default void.class;
 
-    String    mappedBy()  default "";
+    String    mappedBy()     default "";
 
-    FetchType fetchType() default FetchType.LAZY;
+    FetchType fetchType()    default FetchType.LAZY;
 }

@@ -14,12 +14,14 @@ public class Entity {
     private String       tableName;
     private Set<Column>  primaryKey;
     private List<Column> columns;
+    private List<Relationship> relationships;
 
     public Entity(Class<?> clazz) {
         this.setClazz(clazz)
             .setTableName()
             .setColumns()
-            .setPrimaryKey();
+            .setPrimaryKey()
+            .setRelationships();
     }
 
     public Class<?> getClazz() {
@@ -76,6 +78,19 @@ public class Entity {
         Arrays.stream(clazz.getDeclaredFields())
             .filter(field -> !field.isAnnotationPresent(Transient.class) && !UtilFunctions.isRelationshipField(field))
             .forEachOrdered(field -> columns.add(new Column(field, this)));
+
+        return this;
+    }
+
+    public List<Relationship> getRelationships() {
+        return relationships;
+    }
+
+    private Entity setRelationships() {
+        relationships = new ArrayList<>();
+        Arrays.stream(clazz.getDeclaredFields())
+            .filter(UtilFunctions::isRelationshipField)
+            .forEachOrdered(field -> relationships.add(new Relationship(this, field)));
 
         return this;
     }
