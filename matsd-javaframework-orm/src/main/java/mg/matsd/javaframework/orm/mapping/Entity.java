@@ -62,7 +62,7 @@ public class Entity {
             .forEachOrdered(column -> primaryKey.add(column));
 
         if (primaryKey.isEmpty())
-            throw new PrimaryKeyNotFoundException(clazz);
+            throw new MissingPrimaryKeyException(this);
 
         return this;
     }
