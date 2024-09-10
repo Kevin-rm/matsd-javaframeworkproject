@@ -8,4 +8,8 @@ public class MappingException extends BaseException {
     public MappingException(String message) {
         super(message, PREFIX);
     }
+
+    public MappingException(Throwable cause) {
+        super(cause);
+    }
 }

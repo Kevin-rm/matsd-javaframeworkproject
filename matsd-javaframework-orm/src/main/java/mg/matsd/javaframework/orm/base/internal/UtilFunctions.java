@@ -4,7 +4,6 @@ import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.ClassUtils;
 import mg.matsd.javaframework.orm.annotations.*;
 import mg.matsd.javaframework.orm.mapping.MappingException;
-import mg.matsd.javaframework.orm.mapping.Relation;
 
 import java.lang.reflect.Field;
 import java.sql.ResultSet;

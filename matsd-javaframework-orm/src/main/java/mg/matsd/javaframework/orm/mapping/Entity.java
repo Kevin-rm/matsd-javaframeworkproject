@@ -2,51 +2,51 @@ package mg.matsd.javaframework.orm.mapping;
 
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.core.utils.StringUtils;
-import mg.matsd.javaframework.orm.annotations.*;
+import mg.matsd.javaframework.orm.annotations.PrimaryKey;
+import mg.matsd.javaframework.orm.annotations.Table;
+import mg.matsd.javaframework.orm.annotations.Transient;
 import mg.matsd.javaframework.orm.base.internal.UtilFunctions;
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-public class Relation {
-    private Class<?>     entityClass;
-    private String       name;
+public class Entity {
+    private Class<?>     clazz;
+    private String       tableName;
     private Set<Column>  primaryKey;
     private List<Column> columns;
 
-    public Relation(Class<?> entityClass) {
-        this.setEntityClass(entityClass)
+    public Entity(Class<?> clazz) {
+        this.setClazz(clazz)
             .setTableName()
             .setColumns()
             .setPrimaryKey();
     }
 
-    public Class<?> getEntityClass() {
-        return entityClass;
+    public Class<?> getClazz() {
+        return clazz;
     }
 
-    private Relation setEntityClass(Class<?> entityClass) {
-        UtilFunctions.assertIsEntity(entityClass);
+    private Entity setClazz(Class<?> clazz) {
+        UtilFunctions.assertIsEntity(clazz);
 
-        this.entityClass = entityClass;
+        this.clazz = clazz;
         return this;
     }
 
-    public String getName() {
-        return name;
+    public String getTableName() {
+        return tableName;
     }
 
-    public Relation setTableName() {
-        if (entityClass.isAnnotationPresent(Table.class)) {
-            name = entityClass.getAnnotation(Table.class).name();
+    private Entity setTableName() {
+        if (clazz.isAnnotationPresent(Table.class)) {
+            tableName = clazz.getAnnotation(Table.class).name();
+            if (StringUtils.isBlank(tableName))
+                throw new MappingException("Le nom de la table d'une entité ne peut pas être vide");
 
             return this;
         }
 
-        name = StringUtils.toSnakeCase(entityClass.getSimpleName());
+        tableName = StringUtils.toSnakeCase(clazz.getSimpleName());
         return this;
     }
 
@@ -54,15 +54,15 @@ public class Relation {
         return primaryKey;
     }
 
-    private Relation setPrimaryKey() {
+    private Entity setPrimaryKey() {
         primaryKey = new HashSet<>();
 
-        for (Column column : columns)
-            if (column.getField().isAnnotationPresent(PrimaryKey.class))
-                primaryKey.add(column);
+        columns.stream()
+            .filter(column -> column.getField().isAnnotationPresent(PrimaryKey.class))
+            .forEachOrdered(column -> primaryKey.add(column));
 
         if (primaryKey.isEmpty())
-            throw new PrimaryKeyNotFoundException(entityClass);
+            throw new PrimaryKeyNotFoundException(clazz);
 
         return this;
     }
@@ -71,24 +71,18 @@ public class Relation {
         return columns;
     }
 
-    private Relation setColumns() {
+    private Entity setColumns() {
         columns = new ArrayList<>();
-        for (Field field : entityClass.getDeclaredFields()) {
-            if (
-                field.isAnnotationPresent(Transient.class)  ||
-                field.isAnnotationPresent(ManyToMany.class) ||
-                field.isAnnotationPresent(OneToMany.class)
-            ) continue;
-            columns.add(new Column(field));
-        }
+        Arrays.stream(clazz.getDeclaredFields())
+            .filter(field -> !field.isAnnotationPresent(Transient.class) && !UtilFunctions.isRelationshipField(field))
+            .forEachOrdered(field -> columns.add(new Column(field, this)));
 
         return this;
     }
 
     public Column getColumn(String name, boolean byFieldName) throws NoSuchColumnException {
-        Assert.notBlank(name, false,
-            String.format("%s ne peut pas être vide ou \"null\"", (byFieldName ? "Le nom du champ" : "Le nom de colonne"))
-        );
+        Assert.notBlank(name, false, String.format("%s ne peut pas être vide ou \"null\"",
+            (byFieldName ? "Le nom du champ" : "Le nom de colonne")));
 
         name = name.strip();
         for (Column column : columns) {
