@@ -17,6 +17,7 @@ public class Transaction {
     public void begin() {
         try {
             checkIfSessionIsOpen();
+            Assert.state(!isActive(), "La transaction actuelle est déjà active");
 
             Connection connection = session.connection();
             if (connection.getAutoCommit()) connection.setAutoCommit(false);

@@ -9,7 +9,8 @@ import java.sql.SQLException;
 
 public class EntityManager implements Session {
     private final DatabaseConnector databaseConnector;
-    private Connection connection;
+    private Connection  connection;
+    private Transaction transaction;
 
     EntityManager(final DatabaseConnector databaseConnector) {
         this.databaseConnector = databaseConnector;
@@ -23,12 +24,14 @@ public class EntityManager implements Session {
 
     @Override
     public Transaction getTransaction() {
-        return new Transaction(this);
+        if (transaction == null) transaction = new Transaction(this);
+
+        return transaction;
     }
 
     @Override
     public Transaction beginTransaction() {
-        Transaction transaction = new Transaction(this);
+        Transaction transaction = getTransaction();
         transaction.begin();
 
         return transaction;
