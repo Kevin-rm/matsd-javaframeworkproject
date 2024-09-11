@@ -18,5 +18,5 @@ public @interface OneToOne {
 
     boolean   orphanRemoval() default false;
 
-    FetchType fetchType()     default FetchType.LAZY;
+    FetchType fetchType()     default FetchType.EAGER;
 }

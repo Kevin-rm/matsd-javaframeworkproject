@@ -14,5 +14,5 @@ public @interface ManyToOne {
 
     boolean   optional()     default true;
 
-    FetchType fetchType()    default FetchType.LAZY;
+    FetchType fetchType()    default FetchType.EAGER;
 }

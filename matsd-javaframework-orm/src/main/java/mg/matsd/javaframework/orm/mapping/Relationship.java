@@ -1,5 +1,6 @@
 package mg.matsd.javaframework.orm.mapping;
 
+import mg.matsd.javaframework.core.utils.StringUtils;
 import mg.matsd.javaframework.orm.annotations.ManyToMany;
 import mg.matsd.javaframework.orm.annotations.ManyToOne;
 import mg.matsd.javaframework.orm.annotations.OneToMany;
@@ -15,15 +16,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 class Relationship {
-    private static final Map<Class<? extends Annotation>, RelationshipType> annotationToTypeMap;
+    private static final Map<Class<? extends Annotation>, RelationshipType> ANNOTATION_TO_RELATION_TYPE;
 
     static {
-        annotationToTypeMap = new HashMap<>();
+        ANNOTATION_TO_RELATION_TYPE = new HashMap<>();
 
-        annotationToTypeMap.put(ManyToMany.class, RelationshipType.MANY_TO_MANY);
-        annotationToTypeMap.put(ManyToOne.class, RelationshipType.MANY_TO_ONE);
-        annotationToTypeMap.put(OneToMany.class, RelationshipType.ONE_TO_MANY);
-        annotationToTypeMap.put(OneToOne.class, RelationshipType.ONE_TO_ONE);
+        ANNOTATION_TO_RELATION_TYPE.put(ManyToMany.class, RelationshipType.MANY_TO_MANY);
+        ANNOTATION_TO_RELATION_TYPE.put(ManyToOne.class,  RelationshipType.MANY_TO_ONE);
+        ANNOTATION_TO_RELATION_TYPE.put(OneToMany.class,  RelationshipType.ONE_TO_MANY);
+        ANNOTATION_TO_RELATION_TYPE.put(OneToOne.class,   RelationshipType.ONE_TO_ONE);
     }
 
     private final Entity entity;
@@ -33,14 +34,17 @@ class Relationship {
     private String  mappedBy;
     private boolean optional      = false;
     private boolean orphanRemoval = false;
-    private FetchType fetchType   = FetchType.LAZY;
+    private FetchType fetchType;
 
     Relationship(Entity entity, Field field) {
         this.entity = entity;
         this.field  = field;
-
         this.setRelationshipType()
-            .setTargetEntityClass();
+            .setTargetEntityClass()
+            .setMappedBy()
+            .setOptional()
+            .setOrphanRemoval()
+            .setFetchType();
     }
 
     RelationshipType getRelationshipType() {
@@ -48,7 +52,7 @@ class Relationship {
     }
 
     private Relationship setRelationshipType() {
-        relationshipType = annotationToTypeMap.entrySet()
+        relationshipType = ANNOTATION_TO_RELATION_TYPE.entrySet()
             .stream()
             .filter(entry -> field.isAnnotationPresent(entry.getKey()))
             .findFirst()
@@ -62,6 +66,7 @@ class Relationship {
         return targetEntityClass;
     }
 
+    @SuppressWarnings("all")
     private Relationship setTargetEntityClass() {
         Class<?> targetEntityClass = null;
         Class<?> fieldType = field.getType();
@@ -77,8 +82,7 @@ class Relationship {
                 throw new MappingException(
                     String.format("La classe d'entité cible définie dans l'annotation pour le champ \"%s\" de l'entité \"%s\" " +
                         "est \"%s\", mais le type réel du champ est \"%s\". Ils doivent correspondre.",
-                    field.getName(), entity.getClazz().getName(), targetEntityClass.getName(), fieldType.getName())
-                );
+                    field.getName(), entity.getClazz().getName(), targetEntityClass.getName(), fieldType.getName()));
         } else {
             if (!Collection.class.isAssignableFrom(fieldType))
                 throw new MappingException(String.format("Les colonnes de type relation (%s et %s) " +
@@ -105,7 +109,8 @@ class Relationship {
         }
 
         if (targetEntityClass == entity.getClazz())
-            throw new MappingException(String.format("La classe d'entité cible \"%s\" est identique à l'entité actuelle \"%s\" pour le champ \"%s\". " +
+            throw new MappingException(
+                String.format("La classe d'entité cible \"%s\" est identique à l'entité actuelle \"%s\" pour le champ \"%s\". " +
                     "Les relations ne peuvent pas se référer à l'entité elle-même.",
                 targetEntityClass.getName(), entity.getClazz().getName(), field.getName()));
         UtilFunctions.assertIsEntity(targetEntityClass);
@@ -118,10 +123,68 @@ class Relationship {
         return mappedBy;
     }
 
+    @SuppressWarnings("all")
     private Relationship setMappedBy() {
-        
+        String mappedBy = null;
+        if (relationshipType == RelationshipType.MANY_TO_MANY)
+            mappedBy = field.getAnnotation(ManyToMany.class).mappedBy();
+        else if (relationshipType == RelationshipType.ONE_TO_MANY)
+            mappedBy = field.getAnnotation(OneToMany.class).mappedBy();
+        else if (relationshipType == RelationshipType.ONE_TO_ONE)
+            mappedBy = field.getAnnotation(OneToOne.class).mappedBy();
+
+        if (StringUtils.isBlank(mappedBy)) return this;
+
+        try {
+            targetEntityClass.getDeclaredField(mappedBy);
+        } catch (NoSuchFieldException e) {
+            throw new MappingException(String.format("Le champ \"%s\" n'existe pas dans l'entité cible \"%s\"",
+                mappedBy, targetEntityClass.getName()
+            ));
+        }
 
         this.mappedBy = mappedBy;
+        return this;
+    }
+
+    public boolean isOptional() {
+        return optional;
+    }
+
+    private Relationship setOptional() {
+        if (relationshipType == RelationshipType.MANY_TO_ONE)
+            optional = field.getAnnotation(ManyToOne.class).optional();
+        else if (relationshipType == RelationshipType.ONE_TO_ONE)
+            optional = field.getAnnotation(OneToOne.class).optional();
+
+        return this;
+    }
+
+    public boolean isOrphanRemoval() {
+        return orphanRemoval;
+    }
+
+    private Relationship setOrphanRemoval() {
+        if (relationshipType == RelationshipType.ONE_TO_MANY)
+            orphanRemoval = field.getAnnotation(OneToMany.class).orphanRemoval();
+        else if (relationshipType == RelationshipType.ONE_TO_ONE)
+            orphanRemoval = field.getAnnotation(OneToOne.class).orphanRemoval();
+
+        return this;
+    }
+
+    public FetchType getFetchType() {
+        return fetchType;
+    }
+
+    private Relationship setFetchType() {
+        switch (relationshipType) {
+            case MANY_TO_MANY -> fetchType = field.getAnnotation(ManyToMany.class).fetchType();
+            case MANY_TO_ONE  -> fetchType = field.getAnnotation(ManyToOne.class).fetchType();
+            case ONE_TO_MANY  -> fetchType = field.getAnnotation(OneToMany.class).fetchType();
+            case ONE_TO_ONE   -> fetchType = field.getAnnotation(OneToOne.class).fetchType();
+        }
+
         return this;
     }
 
