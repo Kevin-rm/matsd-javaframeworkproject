@@ -90,7 +90,10 @@ public class SessionFactoryOptions {
     void setEntityScanPackage(String entityScanPackage) {
         if (this.entityScanPackage != null) return;
 
-        Assert.notBlank(entityScanPackage, false, "Le nom package des entités à scanner ne peut pas être vide ou \"null\"");
+        Assert.notBlank(entityScanPackage, false, "Le nom de package des entités à scanner ne peut pas être vide ou \"null\"");
+        Assert.state(StringUtils.isValidPackageName(entityScanPackage),
+            () -> new ConfigurationException(String.format("Le nom de package des entités à scanner fourni \"%s\" n'est pas valide", entityScanPackage))
+        );
 
         this.entityScanPackage = entityScanPackage;
     }
@@ -100,8 +103,9 @@ public class SessionFactoryOptions {
     }
 
     private SessionFactoryOptions setEntities() {
-        entities = new ArrayList<>();
+        Assert.state(entityScanPackage != null, "Le nom de package des entités à scanner n'a pas été défini");
 
+        entities = new ArrayList<>();
 
         return this;
     }

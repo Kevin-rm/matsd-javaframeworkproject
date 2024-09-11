@@ -4,7 +4,6 @@ import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.io.ClassPathResource;
 import mg.matsd.javaframework.core.io.Resource;
 import mg.matsd.javaframework.core.utils.Assert;
-import mg.matsd.javaframework.core.utils.XMLUtils;
 import mg.matsd.javaframework.orm.base.EntityManagerFactory;
 import mg.matsd.javaframework.orm.base.SessionFactory;
 import org.w3c.dom.Element;
@@ -77,6 +76,7 @@ public final class Configuration {
 
                     String actualPropertyName = propertyNameParts[1].strip();
                     String propertyValue      = properties.getProperty(propertyName);
+
                     if ("entity_scan.package".equals(actualPropertyName))
                          sessionFactoryOptions.setEntityScanPackage(propertyValue);
                     else sessionFactoryOptions.setProperty(actualPropertyName, propertyValue);
