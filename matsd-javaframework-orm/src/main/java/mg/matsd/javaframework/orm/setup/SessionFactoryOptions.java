@@ -4,6 +4,7 @@ import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.core.utils.StringUtils;
 import mg.matsd.javaframework.orm.connection.DatabaseConnector;
+import mg.matsd.javaframework.orm.mapping.Entity;
 
 import java.util.*;
 
@@ -13,31 +14,20 @@ public class SessionFactoryOptions {
         "show_sql", "format_sql"
     ));
 
-    private DatabaseConnector databaseConnector;
     private final int index;
     @Nullable
     private String name;
+    private DatabaseConnector databaseConnector;
+    private List<Entity> entities;
     private final Properties properties;
 
     SessionFactoryOptions(int index, @Nullable String name) {
         this.index = index;
-        setName(name);
         properties = new Properties();
-    }
 
-    public DatabaseConnector getDatabaseConnector() {
-        if (databaseConnector != null) return databaseConnector;
-
-        databaseConnector = new DatabaseConnector(
-            properties.getProperty("connection.url"),
-            properties.getProperty("connection.user"),
-            properties.getProperty("connection.password"),
-            properties.getProperty("connection.driver_class"),
-            properties.getProperty("connection.pool_size")
-        );
-        properties.keySet().removeIf(key -> key.toString().startsWith("connection"));
-
-        return databaseConnector;
+        this.setName(name)
+            .setDatabaseConnector()
+            .setEntities();
     }
 
     int getIndex() {
@@ -48,10 +38,38 @@ public class SessionFactoryOptions {
         return name;
     }
 
-    private void setName(@Nullable String name) {
-        if (StringUtils.isBlank(name)) return;
+    private SessionFactoryOptions setName(@Nullable String name) {
+        if (StringUtils.isBlank(name)) return this;
 
         this.name = name;
+        return this;
+    }
+
+    public DatabaseConnector getDatabaseConnector() {
+        return databaseConnector;
+    }
+
+    private SessionFactoryOptions setDatabaseConnector() {
+        databaseConnector = new DatabaseConnector(
+            properties.getProperty("connection.url"),
+            properties.getProperty("connection.user"),
+            properties.getProperty("connection.password"),
+            properties.getProperty("connection.driver_class"),
+            properties.getProperty("connection.pool_size")
+        );
+        properties.keySet().removeIf(key -> key.toString().startsWith("connection"));
+
+        return this;
+    }
+
+    public List<Entity> getEntities() {
+        return entities;
+    }
+
+    private SessionFactoryOptions setEntities() {
+        entities = new ArrayList<>();
+
+        return this;
     }
 
     public Properties getProperties() {
