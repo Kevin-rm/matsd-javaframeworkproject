@@ -63,11 +63,22 @@ class Relationship {
     }
 
     private Relationship setTargetEntityClass() {
+        Class<?> targetEntityClass = null;
         Class<?> fieldType = field.getType();
-        if (relationshipType == RelationshipType.MANY_TO_ONE || relationshipType == RelationshipType.ONE_TO_ONE) {
-            UtilFunctions.assertIsEntity(fieldType);
 
-            targetEntityClass = fieldType;
+        if (relationshipType == RelationshipType.MANY_TO_ONE || relationshipType == RelationshipType.ONE_TO_ONE) {
+            if (field.isAnnotationPresent(ManyToOne.class))
+                targetEntityClass = field.getAnnotation(ManyToOne.class).targetEntity();
+            else if (field.isAnnotationPresent(OneToOne.class))
+                targetEntityClass = field.getAnnotation(OneToOne.class).targetEntity();
+
+            if (targetEntityClass == void.class) targetEntityClass = fieldType;
+            else if (targetEntityClass != fieldType)
+                throw new MappingException(
+                    String.format("La classe d'entité cible définie dans l'annotation pour le champ \"%s\" de l'entité \"%s\" " +
+                        "est \"%s\", mais le type réel du champ est \"%s\". Ils doivent correspondre.",
+                    field.getName(), entity.getClazz().getName(), targetEntityClass.getName(), fieldType.getName())
+                );
         } else {
             if (!Collection.class.isAssignableFrom(fieldType))
                 throw new MappingException(String.format("Les colonnes de type relation (%s et %s) " +
@@ -75,32 +86,31 @@ class Relationship {
                     RelationshipType.MANY_TO_MANY, RelationshipType.ONE_TO_MANY, field.getName(), entity.getClazz().getName(), fieldType)
                 );
 
-            Class<?> c = null;
             if (field.isAnnotationPresent(ManyToMany.class))
-                c = field.getAnnotation(ManyToMany.class).targetEntity();
-            else if (field.isAnnotationPresent(ManyToOne.class))
-                c = field.getAnnotation(ManyToOne.class).targetEntity();
+                targetEntityClass = field.getAnnotation(ManyToMany.class).targetEntity();
+            else if (field.isAnnotationPresent(OneToMany.class))
+                targetEntityClass = field.getAnnotation(OneToMany.class).targetEntity();
 
             Type genericType = field.getGenericType();
-            if (!(genericType instanceof ParameterizedType) && c == void.class)
-                throw new MappingException(
-                    String.format("Le champ \"%s\" de l'entité \"%s\" est une collection mais " +
-                        "le type générique de la collection n'est pas spécifié, et aucune entité cible n'est définie dans l'annotation",
-                    field.getName(), entity.getClazz().getName())
-                );
+            if (targetEntityClass == void.class) {
+                if (!(genericType instanceof ParameterizedType))
+                    throw new MappingException(
+                        String.format("Le champ \"%s\" de l'entité \"%s\" est une collection mais " +
+                                "le type générique de la collection n'est pas spécifié, et aucune entité cible n'est définie dans l'annotation",
+                            field.getName(), entity.getClazz().getName())
+                    );
 
-            if (c == void.class) {
-                c = (Class<?>) ((ParameterizedType) genericType).getActualTypeArguments()[0];
-                UtilFunctions.assertIsEntity(c);
+                targetEntityClass = (Class<?>) ((ParameterizedType) genericType).getActualTypeArguments()[0];
             }
-            targetEntityClass = c;
         }
 
         if (targetEntityClass == entity.getClazz())
             throw new MappingException(String.format("La classe d'entité cible \"%s\" est identique à l'entité actuelle \"%s\" pour le champ \"%s\". " +
                     "Les relations ne peuvent pas se référer à l'entité elle-même.",
                 targetEntityClass.getName(), entity.getClazz().getName(), field.getName()));
+        UtilFunctions.assertIsEntity(targetEntityClass);
 
+        this.targetEntityClass = targetEntityClass;
         return this;
     }
 
@@ -109,7 +119,7 @@ class Relationship {
     }
 
     private Relationship setMappedBy() {
-
+        
 
         this.mappedBy = mappedBy;
         return this;
