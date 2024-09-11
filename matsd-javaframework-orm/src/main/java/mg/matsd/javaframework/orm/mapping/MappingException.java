@@ -10,6 +10,6 @@ public class MappingException extends BaseException {
     }
 
     public MappingException(Throwable cause) {
-        super(cause);
+        super(PREFIX, cause);
     }
 }

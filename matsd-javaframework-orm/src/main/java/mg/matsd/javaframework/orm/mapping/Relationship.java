@@ -89,7 +89,6 @@ class Relationship {
                     field.getName(), entity.getClazz().getName())
                 );
 
-
             if (c == void.class) {
                 c = (Class<?>) ((ParameterizedType) genericType).getActualTypeArguments()[0];
                 UtilFunctions.assertIsEntity(c);
@@ -109,8 +108,8 @@ class Relationship {
         return mappedBy;
     }
 
-    public Relationship setMappedBy() {
-        
+    private Relationship setMappedBy() {
+
 
         this.mappedBy = mappedBy;
         return this;
