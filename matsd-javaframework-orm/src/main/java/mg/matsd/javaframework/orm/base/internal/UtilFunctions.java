@@ -62,9 +62,9 @@ public final class UtilFunctions {
         for (int i = 1; i <= columnCount; i++) {
             String columnLabel = resultSetMetaData.getColumnLabel(i);
 
-            Field field;
-            if (isEntity(clazz))
-                field = new Relation(clazz).getColumn(columnLabel).getField();
+            Field field = null;
+            if (isEntity(clazz)) { }
+            //    field = new Relation(clazz).getColumn(columnLabel).getField();
             else {
                 try {
                     field = clazz.getDeclaredField(columnLabel);

@@ -1,8 +1,10 @@
 package mg.matsd.javaframework.orm.setup;
 
 import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.exceptions.TypeMismatchException;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.core.utils.StringUtils;
+import mg.matsd.javaframework.core.utils.converter.StringConverter;
 import mg.matsd.javaframework.orm.connection.DatabaseConnector;
 import mg.matsd.javaframework.orm.mapping.Entity;
 
@@ -14,35 +16,36 @@ public class SessionFactoryOptions {
         "show_sql", "format_sql"
     ));
 
+    private final Properties properties;
     private final int index;
     @Nullable
-    private String name;
+    private final String name;
     private DatabaseConnector databaseConnector;
+    private boolean showSql;
+    private boolean formatSql;
     private List<Entity> entities;
-    private final Properties properties;
 
     SessionFactoryOptions(int index, @Nullable String name) {
         this.index = index;
+        this.name = StringUtils.isBlank(name) ? null : name;
         properties = new Properties();
-
-        this.setName(name)
-            .setDatabaseConnector()
-            .setEntities();
     }
 
-    int getIndex() {
-        return index;
+    @Nullable
+    public String getProperty(String key) {
+        String value = properties.getProperty(key);
+
+        return value == null || StringUtils.isBlank(value) ? null : value;
+    }
+
+    void setProperty(String key, @Nullable String value) throws ConfigurationException {
+        validatePropertyKey(key);
+
+        properties.setProperty(key, value);
     }
 
     String getName() {
         return name;
-    }
-
-    private SessionFactoryOptions setName(@Nullable String name) {
-        if (StringUtils.isBlank(name)) return this;
-
-        this.name = name;
-        return this;
     }
 
     public DatabaseConnector getDatabaseConnector() {
@@ -57,8 +60,25 @@ public class SessionFactoryOptions {
             properties.getProperty("connection.driver_class"),
             properties.getProperty("connection.pool_size")
         );
-        properties.keySet().removeIf(key -> key.toString().startsWith("connection"));
 
+        return this;
+    }
+
+    public boolean isShowSql() {
+        return showSql;
+    }
+
+    private SessionFactoryOptions setShowSql() {
+        showSql = getBooleanProperty("show_sql");
+        return this;
+    }
+
+    public boolean isFormatSql() {
+        return formatSql;
+    }
+
+    private SessionFactoryOptions setFormatSql() {
+        formatSql = getBooleanProperty("format_sql");
         return this;
     }
 
@@ -72,19 +92,23 @@ public class SessionFactoryOptions {
         return this;
     }
 
-    public Properties getProperties() {
-        return properties;
+    SessionFactoryOptions configure() {
+        return setDatabaseConnector()
+            .setEntities()
+            .setShowSql()
+            .setFormatSql();
     }
 
-    @Nullable
-    public String getProperty(String key) {
-        return properties.getProperty(key);
-    }
+    private boolean getBooleanProperty(String key) {
+        String value = getProperty(key);
+        if (value == null) return false;
 
-    void setProperty(String key, @Nullable String value) throws ConfigurationException {
-        validatePropertyKey(key);
-
-        properties.setProperty(key, value);
+        try {
+            return StringConverter.convert(value, boolean.class);
+        } catch (TypeMismatchException e) {
+            throw new ConfigurationException(String.format("La valeur de la propriété \"%s\" fournie " +
+                "n'est pas de type boolean : \"%s\"", key, value));
+        }
     }
 
     private void validatePropertyKey(String key) {
@@ -96,7 +120,7 @@ public class SessionFactoryOptions {
 
         String message = String.format("La propriété \"%s\" de la \"session factory\"", key);
         if (name == null)
-            message += String.format(" à l'indice %d", index);
+             message += String.format(" à l'indice %d", index);
         else message += String.format(" avec le nom \"%s\"", name);
         message += " a déjà été définie";
 

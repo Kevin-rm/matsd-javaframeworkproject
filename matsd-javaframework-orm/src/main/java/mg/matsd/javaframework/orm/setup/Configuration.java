@@ -48,7 +48,7 @@ public final class Configuration {
     }
 
     public SessionFactory buildSessionFactory(@Nullable String name) {
-        return new EntityManagerFactory(sessionFactoryOptionsRegistry.getSessionFactoryOptions(name));
+        return new EntityManagerFactory(sessionFactoryOptionsRegistry.getSessionFactoryOptions(name).configure());
     }
 
     public SessionFactory buildSessionFactory() {
