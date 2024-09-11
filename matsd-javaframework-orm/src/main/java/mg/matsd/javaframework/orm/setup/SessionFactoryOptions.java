@@ -14,8 +14,8 @@ import java.util.*;
 
 public class SessionFactoryOptions {
     private static final Set<String> VALID_PROPERTY_NAMES = new HashSet<>(Arrays.asList(
-        "connection.url", "connection.user", "connection.password", "connection.driver_class", "connection.pool_size",
-        "show_sql", "format_sql", "entity_scan.package"
+        "connection.url", "connection.user", "connection.password", "connection.driver-class", "connection.pool-size",
+        "show-sql", "format-sql", "entity-scan.package"
     ));
 
     private final Properties properties;
@@ -60,8 +60,8 @@ public class SessionFactoryOptions {
             properties.getProperty("connection.url"),
             properties.getProperty("connection.user"),
             properties.getProperty("connection.password"),
-            properties.getProperty("connection.driver_class"),
-            properties.getProperty("connection.pool_size")
+            properties.getProperty("connection.driver-class"),
+            properties.getProperty("connection.pool-size")
         );
 
         return this;
@@ -72,7 +72,7 @@ public class SessionFactoryOptions {
     }
 
     private SessionFactoryOptions setShowSql() {
-        showSql = getBooleanProperty("show_sql");
+        showSql = getBooleanProperty("show-sql");
         return this;
     }
 
@@ -81,7 +81,7 @@ public class SessionFactoryOptions {
     }
 
     private SessionFactoryOptions setFormatSql() {
-        formatSql = getBooleanProperty("format_sql");
+        formatSql = getBooleanProperty("format-sql");
         return this;
     }
 
