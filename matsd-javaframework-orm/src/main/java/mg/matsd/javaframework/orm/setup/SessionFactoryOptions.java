@@ -3,8 +3,10 @@ package mg.matsd.javaframework.orm.setup;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.exceptions.TypeMismatchException;
 import mg.matsd.javaframework.core.utils.Assert;
+import mg.matsd.javaframework.core.utils.ClassScanner;
 import mg.matsd.javaframework.core.utils.StringUtils;
 import mg.matsd.javaframework.core.utils.converter.StringConverter;
+import mg.matsd.javaframework.orm.base.internal.UtilFunctions;
 import mg.matsd.javaframework.orm.connection.DatabaseConnector;
 import mg.matsd.javaframework.orm.mapping.Entity;
 
@@ -106,6 +108,11 @@ public class SessionFactoryOptions {
         Assert.state(entityScanPackage != null, "Le nom de package des entités à scanner n'a pas été défini");
 
         entities = new ArrayList<>();
+        ClassScanner.doScan(entityScanPackage, clazz -> {
+            if (!UtilFunctions.isEntity(clazz)) return;
+            entities.add(new Entity(clazz));
+        });
+
 
         return this;
     }
