@@ -13,7 +13,7 @@ import java.util.*;
 public class SessionFactoryOptions {
     private static final Set<String> VALID_PROPERTY_NAMES = new HashSet<>(Arrays.asList(
         "connection.url", "connection.user", "connection.password", "connection.driver_class", "connection.pool_size",
-        "show_sql", "format_sql"
+        "show_sql", "format_sql", "entity_scan.package"
     ));
 
     private final Properties properties;
@@ -23,6 +23,7 @@ public class SessionFactoryOptions {
     private DatabaseConnector databaseConnector;
     private boolean showSql;
     private boolean formatSql;
+    private String  entityScanPackage;
     private List<Entity> entities;
 
     SessionFactoryOptions(int index, @Nullable String name) {
@@ -82,12 +83,25 @@ public class SessionFactoryOptions {
         return this;
     }
 
+    public String getEntityScanPackage() {
+        return entityScanPackage;
+    }
+
+    void setEntityScanPackage(String entityScanPackage) {
+        if (this.entityScanPackage != null) return;
+
+        Assert.notBlank(entityScanPackage, false, "Le nom package des entités à scanner ne peut pas être vide ou \"null\"");
+
+        this.entityScanPackage = entityScanPackage;
+    }
+
     public List<Entity> getEntities() {
         return entities;
     }
 
     private SessionFactoryOptions setEntities() {
         entities = new ArrayList<>();
+
 
         return this;
     }

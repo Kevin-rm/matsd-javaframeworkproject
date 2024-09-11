@@ -4,14 +4,13 @@ import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.exceptions.InvalidPackageException;
 import mg.matsd.javaframework.core.managedinstances.*;
 import mg.matsd.javaframework.core.utils.Assert;
+import mg.matsd.javaframework.core.utils.StringUtils;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public abstract class ManagedInstanceFactory {
-    private static final String PACKAGE_NAME_REGEX = "^[a-zA-Z_][a-zA-Z0-9_]*(\\.[a-zA-Z_][a-zA-Z0-9_]*)*$";
-
     protected ManagedInstanceDefinitionRegistry managedInstanceDefinitionRegistry;
     @Nullable
     protected String componentScanBasePackage;
@@ -25,10 +24,10 @@ public abstract class ManagedInstanceFactory {
         defineCustomConfiguration();
     }
 
-    public ManagedInstanceFactory setComponentScanBasePackage(@Nullable String componentScanBasePackage) {
-        Assert.notBlank(componentScanBasePackage, true,
-            "Le nom de package des \"component\" à scanner ne peut pas être vide");
-        Assert.state(isValidPackageName(componentScanBasePackage),
+    public ManagedInstanceFactory setComponentScanBasePackage(String componentScanBasePackage) {
+        Assert.notBlank(componentScanBasePackage, false,
+            "Le nom de package des \"component\" à scanner ne peut pas être vide ou \"null\"");
+        Assert.state(StringUtils.isValidPackageName(componentScanBasePackage),
             () -> new InvalidPackageException(
                 String.format("Le nom de package des \"component\" \"%s\" à scanner n'est pas valide", componentScanBasePackage)
             )
@@ -146,9 +145,5 @@ public abstract class ManagedInstanceFactory {
 
     private static void validateId(String id) {
         Assert.notNull(id, "L'identifiant ne peut pas être vide ou \"null\"");
-    }
-
-    private static boolean isValidPackageName(@Nullable String packageName) {
-        return packageName != null && packageName.matches(PACKAGE_NAME_REGEX);
     }
 }

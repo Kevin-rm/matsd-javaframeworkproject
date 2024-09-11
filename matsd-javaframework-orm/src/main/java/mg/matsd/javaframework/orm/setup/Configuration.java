@@ -4,6 +4,7 @@ import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.io.ClassPathResource;
 import mg.matsd.javaframework.core.io.Resource;
 import mg.matsd.javaframework.core.utils.Assert;
+import mg.matsd.javaframework.core.utils.XMLUtils;
 import mg.matsd.javaframework.orm.base.EntityManagerFactory;
 import mg.matsd.javaframework.orm.base.SessionFactory;
 import org.w3c.dom.Element;
@@ -74,7 +75,11 @@ public final class Configuration {
                     SessionFactoryOptions sessionFactoryOptions = sessionFactoryOptionsRegistry
                         .getSessionFactoryOptionsOrRegisterIfAbsent(propertyNameParts[0].strip());
 
-                    sessionFactoryOptions.setProperty(propertyNameParts[1].strip(), properties.getProperty(propertyName));
+                    String actualPropertyName = propertyNameParts[1].strip();
+                    String propertyValue      = properties.getProperty(propertyName);
+                    if ("entity_scan.package".equals(actualPropertyName))
+                         sessionFactoryOptions.setEntityScanPackage(propertyValue);
+                    else sessionFactoryOptions.setProperty(actualPropertyName, propertyValue);
                 });
         } catch (IOException e) {
             throw new ConfigurationException(String.format("Erreur lors de la lecture du fichier de configuration : \"%s\"", resource.getName()), e);
@@ -100,6 +105,10 @@ public final class Configuration {
                     propertyValue == null ? propertyElement.getTextContent() : propertyValue
                 );
             }
+
+            sessionFactoryOptions.setEntityScanPackage(getAttributeValue(
+                getFirstChildElementByTagName(sessionFactoryElement, "entity-scan"), "package"
+            ));
         }
     }
 }
