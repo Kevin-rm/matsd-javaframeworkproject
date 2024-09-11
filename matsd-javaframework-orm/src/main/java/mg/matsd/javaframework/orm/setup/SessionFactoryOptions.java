@@ -113,7 +113,6 @@ public class SessionFactoryOptions {
             entities.add(new Entity(clazz));
         });
 
-
         return this;
     }
 
