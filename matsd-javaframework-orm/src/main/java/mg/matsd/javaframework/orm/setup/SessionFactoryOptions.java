@@ -15,7 +15,7 @@ import java.util.*;
 public class SessionFactoryOptions {
     private static final Set<String> VALID_PROPERTY_NAMES = new HashSet<>(Arrays.asList(
         "connection.url", "connection.user", "connection.password", "connection.driver-class", "connection.pool-size",
-        "show-sql", "format-sql", "entity-scan.package"
+        "show-sql", "format-sql"
     ));
 
     private final Properties properties;
@@ -92,9 +92,11 @@ public class SessionFactoryOptions {
     void setEntityScanPackage(String entityScanPackage) {
         if (this.entityScanPackage != null) return;
 
-        Assert.notBlank(entityScanPackage, false, "Le nom de package des entités à scanner ne peut pas être vide ou \"null\"");
+        Assert.notBlank(entityScanPackage, false, String.format("Le nom de package des entités à scanner ne peut pas être vide ou \"null\" " +
+            "pour la \"session factory\" à l'indice %d", index));
         Assert.state(StringUtils.isValidPackageName(entityScanPackage),
-            () -> new ConfigurationException(String.format("Le nom de package des entités à scanner fourni \"%s\" n'est pas valide", entityScanPackage))
+            () -> new ConfigurationException(String.format("Le nom de package des entités à scanner fourni \"%s\" n'est pas valide " +
+                "pour la \"session factory\" à l'indice %d", entityScanPackage, index))
         );
 
         this.entityScanPackage = entityScanPackage;

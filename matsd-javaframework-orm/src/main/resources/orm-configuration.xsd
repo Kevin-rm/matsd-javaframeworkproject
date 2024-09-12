@@ -19,10 +19,10 @@
                                                         <xs:enumeration value="connection.url"/>
                                                         <xs:enumeration value="connection.user"/>
                                                         <xs:enumeration value="connection.password"/>
-                                                        <xs:enumeration value="connection.driver_class"/>
-                                                        <xs:enumeration value="connection.pool_size"/>
-                                                        <xs:enumeration value="show_sql"/>
-                                                        <xs:enumeration value="format_sql"/>
+                                                        <xs:enumeration value="connection.driver-class"/>
+                                                        <xs:enumeration value="connection.pool-size"/>
+                                                        <xs:enumeration value="show-sql"/>
+                                                        <xs:enumeration value="format-sql"/>
                                                     </xs:restriction>
                                                 </xs:simpleType>
                                             </xs:attribute>

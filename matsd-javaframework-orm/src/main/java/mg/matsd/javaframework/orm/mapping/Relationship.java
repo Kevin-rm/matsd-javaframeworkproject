@@ -123,7 +123,6 @@ class Relationship {
         return mappedBy;
     }
 
-    @SuppressWarnings("all")
     private Relationship setMappedBy() {
         String mappedBy = null;
         if (relationshipType == RelationshipType.MANY_TO_MANY)
@@ -133,7 +132,7 @@ class Relationship {
         else if (relationshipType == RelationshipType.ONE_TO_ONE)
             mappedBy = field.getAnnotation(OneToOne.class).mappedBy();
 
-        if (StringUtils.isBlank(mappedBy)) return this;
+        if (mappedBy == null || StringUtils.isBlank(mappedBy)) return this;
 
         try {
             targetEntityClass.getDeclaredField(mappedBy);
