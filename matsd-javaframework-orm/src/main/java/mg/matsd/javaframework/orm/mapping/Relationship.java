@@ -142,23 +142,23 @@ class Relationship {
             Field f = targetEntityClass.getDeclaredField(mappedBy);
 
             Class<? extends Annotation> expectedAnnotation = null;
-            switch (relationshipType) {
-                case MANY_TO_MANY -> expectedAnnotation = ManyToMany.class;
-                case ONE_TO_MANY  -> expectedAnnotation = ManyToOne.class;
-                case ONE_TO_ONE   -> expectedAnnotation = OneToOne.class;
-            }
+            for (Map.Entry<Class<? extends Annotation>, RelationshipType> entry : ANNOTATION_TO_RELATION_TYPE.entrySet())
+                if (relationshipType == entry.getValue()) {
+                    expectedAnnotation = entry.getKey();
+                    break;
+                }
 
             if (!f.isAnnotationPresent(expectedAnnotation))
-                throw new MappingException(String.format("Le champ \"mappedBy\" \"%s\" de l'entité cible \"%s\" " +
-                        "spécifié via l'annotation \"%s\" n'est pas annoté avec \"%s\"",
-                    mappedBy, targetEntityClass.getName(), relationshipType, expectedAnnotation.getSimpleName()
+                throw new MappingException(String.format(
+                    "Le champ \"%s\" de l'entité cible \"%s\" n'a pas l'annotation attendue \"%s\" qui inverse la relation",
+                    mappedBy, targetEntityClass.getName(), expectedAnnotation.getSimpleName()
                 ));
 
             this.mappedBy = f;
         } catch (NoSuchFieldException e) {
             throw new MappingException(String.format(
-                "Le champ \"mappedBy\" \"%s\" spécifié via l'annotation \"%s\" n'existe pas dans l'entité cible \"%s\"",
-                mappedBy, relationshipType, targetEntityClass.getName()
+                "Le champ \"%s\" spécifié dans \"mappedBy\" sur l'annotation du champ \"%s\" de l'entité actuelle \"%s\", n'existe pas dans l'entité cible \"%s\"",
+                mappedBy, field.getName(), entity.getClazz().getName(), targetEntityClass.getName()
             ));
         }
 
