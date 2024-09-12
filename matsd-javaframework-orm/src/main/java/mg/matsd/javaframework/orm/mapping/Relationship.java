@@ -125,6 +125,7 @@ class Relationship {
         return mappedBy;
     }
 
+    @SuppressWarnings("all")
     private Relationship setMappedBy() {
         String mappedBy = null;
         if (relationshipType == RelationshipType.MANY_TO_MANY)
@@ -137,15 +138,27 @@ class Relationship {
         if (mappedBy == null || StringUtils.isBlank(mappedBy)) return this;
 
         try {
+            mappedBy = mappedBy.strip();
             Field f = targetEntityClass.getDeclaredField(mappedBy);
-            if (relationshipType == RelationshipType.MANY_TO_MANY) {
 
+            Class<? extends Annotation> expectedAnnotation = null;
+            switch (relationshipType) {
+                case MANY_TO_MANY -> expectedAnnotation = ManyToMany.class;
+                case ONE_TO_MANY  -> expectedAnnotation = ManyToOne.class;
+                case ONE_TO_ONE   -> expectedAnnotation = OneToOne.class;
             }
+
+            if (!f.isAnnotationPresent(expectedAnnotation))
+                throw new MappingException(String.format("Le champ \"mappedBy\" \"%s\" de l'entité cible \"%s\" " +
+                        "spécifié via l'annotation \"%s\" n'est pas annoté avec \"%s\"",
+                    mappedBy, targetEntityClass.getName(), relationshipType, expectedAnnotation.getSimpleName()
+                ));
 
             this.mappedBy = f;
         } catch (NoSuchFieldException e) {
-            throw new MappingException(String.format("Le champ \"%s\" n'existe pas dans l'entité cible \"%s\"",
-                mappedBy, targetEntityClass.getName()
+            throw new MappingException(String.format(
+                "Le champ \"mappedBy\" \"%s\" spécifié via l'annotation \"%s\" n'existe pas dans l'entité cible \"%s\"",
+                mappedBy, relationshipType, targetEntityClass.getName()
             ));
         }
 
