@@ -1,5 +1,6 @@
 package mg.matsd.javaframework.orm.mapping;
 
+import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.StringUtils;
 import mg.matsd.javaframework.orm.annotations.ManyToMany;
 import mg.matsd.javaframework.orm.annotations.ManyToOne;
@@ -31,7 +32,8 @@ class Relationship {
     private final Field  field;
     private RelationshipType relationshipType;
     private Class<?> targetEntityClass;
-    private String  mappedBy;
+    @Nullable
+    private Field  mappedBy;
     private boolean optional      = false;
     private boolean orphanRemoval = false;
     private FetchType fetchType;
@@ -78,10 +80,10 @@ class Relationship {
                 targetEntityClass = field.getAnnotation(OneToOne.class).targetEntity();
 
             if (targetEntityClass == void.class) targetEntityClass = fieldType;
-            else if (targetEntityClass != fieldType)
+            else if (!fieldType.isAssignableFrom(targetEntityClass))
                 throw new MappingException(
                     String.format("La classe d'entité cible définie dans l'annotation pour le champ \"%s\" de l'entité \"%s\" " +
-                        "est \"%s\", mais le type réel du champ est \"%s\". Ils doivent correspondre.",
+                        "est \"%s\", mais le type réel du champ est \"%s\"",
                     field.getName(), entity.getClazz().getName(), targetEntityClass.getName(), fieldType.getName()));
         } else {
             if (!Collection.class.isAssignableFrom(fieldType))
@@ -111,7 +113,7 @@ class Relationship {
         if (targetEntityClass == entity.getClazz())
             throw new MappingException(
                 String.format("La classe d'entité cible \"%s\" est identique à l'entité actuelle \"%s\" pour le champ \"%s\". " +
-                    "Les relations ne peuvent pas se référer à l'entité elle-même.",
+                    "Les relations ne peuvent pas se référer à l'entité elle-même",
                 targetEntityClass.getName(), entity.getClazz().getName(), field.getName()));
         UtilFunctions.assertIsEntity(targetEntityClass);
 
@@ -119,7 +121,7 @@ class Relationship {
         return this;
     }
 
-    String getMappedBy() {
+    Field getMappedBy() {
         return mappedBy;
     }
 
@@ -135,14 +137,18 @@ class Relationship {
         if (mappedBy == null || StringUtils.isBlank(mappedBy)) return this;
 
         try {
-            targetEntityClass.getDeclaredField(mappedBy);
+            Field f = targetEntityClass.getDeclaredField(mappedBy);
+            if (relationshipType == RelationshipType.MANY_TO_MANY) {
+
+            }
+
+            this.mappedBy = f;
         } catch (NoSuchFieldException e) {
             throw new MappingException(String.format("Le champ \"%s\" n'existe pas dans l'entité cible \"%s\"",
                 mappedBy, targetEntityClass.getName()
             ));
         }
 
-        this.mappedBy = mappedBy;
         return this;
     }
 

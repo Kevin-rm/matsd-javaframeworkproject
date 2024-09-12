@@ -24,7 +24,7 @@ public final class UtilFunctions {
     public static void assertIsEntity(@Nullable Class<?> clazz) {
         if (!isEntity(clazz))
             throw new IllegalArgumentException(
-                String.format("La classe \"%s\" n'est pas annotée comme étant une entité", clazz.getName()));
+                String.format("La classe \"%s\" n'est pas une entité", clazz.getName()));
     }
 
     public static boolean isRelationshipField(@Nullable Field field) {

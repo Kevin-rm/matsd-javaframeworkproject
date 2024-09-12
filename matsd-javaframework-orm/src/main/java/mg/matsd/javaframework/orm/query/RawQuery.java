@@ -61,7 +61,7 @@ public class RawQuery<T> {
         return resultClass;
     }
 
-    RawQuery<T> setResultClass(@Nullable Class<T> resultClass) {
+    private RawQuery<T> setResultClass(@Nullable Class<T> resultClass) {
         if (resultClass == null) return this;
         if (
             resultClass.isArray()              ||
