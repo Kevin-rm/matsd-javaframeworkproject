@@ -17,15 +17,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 class Relationship {
-    private static final Map<Class<? extends Annotation>, RelationshipType> ANNOTATION_TO_RELATION_TYPE;
+    private static final Map<RelationshipType, Class<? extends Annotation>> RELATION_TYPE_ANNOTATION_MAP;
 
     static {
-        ANNOTATION_TO_RELATION_TYPE = new HashMap<>();
+        RELATION_TYPE_ANNOTATION_MAP = new HashMap<>();
 
-        ANNOTATION_TO_RELATION_TYPE.put(ManyToMany.class, RelationshipType.MANY_TO_MANY);
-        ANNOTATION_TO_RELATION_TYPE.put(ManyToOne.class,  RelationshipType.MANY_TO_ONE);
-        ANNOTATION_TO_RELATION_TYPE.put(OneToMany.class,  RelationshipType.ONE_TO_MANY);
-        ANNOTATION_TO_RELATION_TYPE.put(OneToOne.class,   RelationshipType.ONE_TO_ONE);
+        RELATION_TYPE_ANNOTATION_MAP.put(RelationshipType.MANY_TO_MANY, ManyToMany.class);
+        RELATION_TYPE_ANNOTATION_MAP.put(RelationshipType.MANY_TO_ONE,  ManyToOne.class);
+        RELATION_TYPE_ANNOTATION_MAP.put(RelationshipType.ONE_TO_MANY,  OneToMany.class);
+        RELATION_TYPE_ANNOTATION_MAP.put(RelationshipType.ONE_TO_ONE,   OneToOne.class);
     }
 
     private final Entity entity;
@@ -54,11 +54,12 @@ class Relationship {
     }
 
     private Relationship setRelationshipType() {
-        relationshipType = ANNOTATION_TO_RELATION_TYPE.entrySet()
+        relationshipType = RELATION_TYPE_ANNOTATION_MAP
+            .entrySet()
             .stream()
-            .filter(entry -> field.isAnnotationPresent(entry.getKey()))
+            .filter(entry -> field.isAnnotationPresent(entry.getValue()))
             .findFirst()
-            .map(Map.Entry::getValue)
+            .map(Map.Entry::getKey)
             .orElse(relationshipType);
 
         return this;
@@ -142,11 +143,12 @@ class Relationship {
             Field f = targetEntityClass.getDeclaredField(mappedBy);
 
             Class<? extends Annotation> expectedAnnotation = null;
-            for (Map.Entry<Class<? extends Annotation>, RelationshipType> entry : ANNOTATION_TO_RELATION_TYPE.entrySet())
-                if (relationshipType == entry.getValue()) {
-                    expectedAnnotation = entry.getKey();
+            for (Map.Entry<RelationshipType, Class<? extends Annotation>> entry : RELATION_TYPE_ANNOTATION_MAP.entrySet()) {
+                if (relationshipType == entry.getKey()) {
+                    expectedAnnotation = entry.getValue();
                     break;
                 }
+            }
 
             if (!f.isAnnotationPresent(expectedAnnotation))
                 throw new MappingException(String.format(
