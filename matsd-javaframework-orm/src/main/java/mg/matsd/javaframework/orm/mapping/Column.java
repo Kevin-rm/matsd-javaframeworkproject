@@ -31,6 +31,10 @@ public class Column {
             .setUpdatable();
     }
 
+    public Entity getEntity() {
+        return entity;
+    }
+
     public Field getField() {
         return field;
     }
