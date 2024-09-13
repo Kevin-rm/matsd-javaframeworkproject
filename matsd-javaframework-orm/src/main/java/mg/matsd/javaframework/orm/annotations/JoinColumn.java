@@ -1,12 +1,10 @@
 package mg.matsd.javaframework.orm.annotations;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
+@Repeatable(JoinColumns.class)
 public @interface JoinColumn {
     String  name();
 

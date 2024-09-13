@@ -6,15 +6,12 @@ import mg.matsd.javaframework.orm.annotations.ManyToMany;
 import mg.matsd.javaframework.orm.annotations.ManyToOne;
 import mg.matsd.javaframework.orm.annotations.OneToMany;
 import mg.matsd.javaframework.orm.annotations.OneToOne;
-import mg.matsd.javaframework.orm.base.internal.UtilFunctions;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 class Relationship {
     private static final Map<RelationshipType, Class<? extends Annotation>> RELATION_TYPE_ANNOTATION_MAP;
@@ -31,9 +28,13 @@ class Relationship {
     private final Entity entity;
     private final Field  field;
     private RelationshipType relationshipType;
-    private Class<?> targetEntityClass;
+    private Entity targetEntity;
     @Nullable
     private Field  mappedBy;
+    @Nullable
+    private List<JoinColumn> joinColumns;
+    @Nullable
+    private JoinTable joinTable;
     private boolean optional      = false;
     private boolean orphanRemoval = false;
     private FetchType fetchType;
@@ -42,11 +43,21 @@ class Relationship {
         this.entity = entity;
         this.field  = field;
         this.setRelationshipType()
-            .setTargetEntityClass()
+            .setTargetEntity()
             .setMappedBy()
+            .setJoinColumns()
+            .setJoinTable()
             .setOptional()
             .setOrphanRemoval()
             .setFetchType();
+    }
+
+    Entity getEntity() {
+        return entity;
+    }
+
+    Field getField() {
+        return field;
     }
 
     RelationshipType getRelationshipType() {
@@ -65,14 +76,16 @@ class Relationship {
         return this;
     }
 
-    Class<?> getTargetEntityClass() {
-        return targetEntityClass;
+    Entity getTargetEntity() {
+        return targetEntity;
     }
 
     @SuppressWarnings("all")
-    private Relationship setTargetEntityClass() {
+    private Relationship setTargetEntity() {
         Class<?> targetEntityClass = null;
         Class<?> fieldType = field.getType();
+        final String fieldName       = field.getName();
+        final String entityClassName = entity.getClazz().getName();
 
         if (relationshipType == RelationshipType.MANY_TO_ONE || relationshipType == RelationshipType.ONE_TO_ONE) {
             if (field.isAnnotationPresent(ManyToOne.class))
@@ -85,12 +98,12 @@ class Relationship {
                 throw new MappingException(
                     String.format("La classe d'entité cible définie dans l'annotation pour le champ \"%s\" de l'entité \"%s\" " +
                         "est \"%s\", mais le type réel du champ est \"%s\"",
-                    field.getName(), entity.getClazz().getName(), targetEntityClass.getName(), fieldType.getName()));
+                    fieldName, entityClassName, targetEntityClass.getName(), fieldType.getName()));
         } else {
             if (!Collection.class.isAssignableFrom(fieldType))
                 throw new MappingException(String.format("Les colonnes de type relation (%s et %s) " +
                     "doivent être des collections, mais le champ \"%s\" de l'entité \"%s\" est de type \"%s\"",
-                    RelationshipType.MANY_TO_MANY, RelationshipType.ONE_TO_MANY, field.getName(), entity.getClazz().getName(), fieldType)
+                    RelationshipType.MANY_TO_MANY, RelationshipType.ONE_TO_MANY, fieldName, entityClassName, fieldType)
                 );
 
             if (field.isAnnotationPresent(ManyToMany.class))
@@ -104,21 +117,26 @@ class Relationship {
                     throw new MappingException(
                         String.format("Le champ \"%s\" de l'entité \"%s\" est une collection mais " +
                                 "le type générique de la collection n'est pas spécifié, et aucune entité cible n'est définie dans l'annotation",
-                            field.getName(), entity.getClazz().getName())
+                            fieldName, entityClassName)
                     );
 
                 targetEntityClass = (Class<?>) ((ParameterizedType) genericType).getActualTypeArguments()[0];
             }
         }
 
+        Entity targetEntity = entity.getSessionFactoryOptions().getEntity(targetEntityClass);
+        if (targetEntity == null)
+            throw new MappingException(String.format("Le type \"%s\" du champ de relation \"%s\" n'est pas une entité",
+                targetEntityClass, fieldName
+            ));
+
         if (targetEntityClass == entity.getClazz())
             throw new MappingException(
                 String.format("La classe d'entité cible \"%s\" est identique à l'entité actuelle \"%s\" pour le champ \"%s\". " +
                     "Les relations ne peuvent pas se référer à l'entité elle-même",
-                targetEntityClass.getName(), entity.getClazz().getName(), field.getName()));
-        UtilFunctions.assertIsEntity(targetEntityClass);
+                targetEntityClass.getName(), entityClassName, fieldName));
 
-        this.targetEntityClass = targetEntityClass;
+        this.targetEntity = targetEntity;
         return this;
     }
 
@@ -138,6 +156,7 @@ class Relationship {
 
         if (mappedBy == null || StringUtils.isBlank(mappedBy)) return this;
 
+        Class<?> targetEntityClass = targetEntity.getClazz();
         try {
             mappedBy = mappedBy.strip();
             Field f = targetEntityClass.getDeclaredField(mappedBy);
@@ -167,7 +186,46 @@ class Relationship {
         return this;
     }
 
-    public boolean isOptional() {
+    List<JoinColumn> getJoinColumns() {
+        return joinColumns;
+    }
+
+    private Relationship setJoinColumns() {
+        if (relationshipType  != RelationshipType.MANY_TO_ONE &&
+            (relationshipType != RelationshipType.ONE_TO_ONE || mappedBy != null)
+        ) return this;
+
+        mg.matsd.javaframework.orm.annotations.JoinColumn[] joinColumns = null;
+        if (field.isAnnotationPresent(mg.matsd.javaframework.orm.annotations.JoinColumn.class))
+            joinColumns = field.getAnnotationsByType(mg.matsd.javaframework.orm.annotations.JoinColumn.class);
+
+        this.joinColumns = new ArrayList<>();
+        if (joinColumns == null || joinColumns.length == 0)
+            this.joinColumns.add(new JoinColumn(this, null));
+        else Arrays.stream(joinColumns)
+            .forEachOrdered(joinColumn ->
+                this.joinColumns.add(new JoinColumn(this, joinColumn))
+            );
+
+        return this;
+    }
+
+    JoinTable getJoinTable() {
+        return joinTable;
+    }
+
+    private Relationship setJoinTable() {
+        if (relationshipType != RelationshipType.MANY_TO_MANY && relationshipType != RelationshipType.ONE_TO_MANY) return this;
+
+        mg.matsd.javaframework.orm.annotations.JoinTable j = null;
+        if (field.isAnnotationPresent(mg.matsd.javaframework.orm.annotations.JoinTable.class))
+            j = field.getAnnotation(mg.matsd.javaframework.orm.annotations.JoinTable.class);
+
+        joinTable = new JoinTable(this, j);
+        return this;
+    }
+
+    boolean isOptional() {
         return optional;
     }
 
@@ -180,7 +238,7 @@ class Relationship {
         return this;
     }
 
-    public boolean isOrphanRemoval() {
+    boolean isOrphanRemoval() {
         return orphanRemoval;
     }
 
@@ -193,7 +251,7 @@ class Relationship {
         return this;
     }
 
-    public FetchType getFetchType() {
+    FetchType getFetchType() {
         return fetchType;
     }
 

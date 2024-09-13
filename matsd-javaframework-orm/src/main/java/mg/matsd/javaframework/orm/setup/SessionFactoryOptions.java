@@ -106,13 +106,21 @@ public class SessionFactoryOptions {
         return entities;
     }
 
+    @Nullable
+    public Entity getEntity(Class<?> entityClass) {
+        return entities.stream()
+            .filter(entity -> entity.getClazz() == entityClass)
+            .findFirst()
+            .orElse(null);
+    }
+
     private SessionFactoryOptions setEntities() {
         Assert.state(entityScanPackage != null, "Le nom de package des entités à scanner n'a pas été défini");
 
         entities = new ArrayList<>();
         ClassScanner.doScan(entityScanPackage, clazz -> {
             if (!UtilFunctions.isEntity(clazz)) return;
-            entities.add(new Entity(clazz));
+            entities.add(new Entity(clazz, this));
         });
 
         return this;

@@ -6,22 +6,33 @@ import mg.matsd.javaframework.orm.annotations.PrimaryKey;
 import mg.matsd.javaframework.orm.annotations.Table;
 import mg.matsd.javaframework.orm.annotations.Transient;
 import mg.matsd.javaframework.orm.base.internal.UtilFunctions;
+import mg.matsd.javaframework.orm.setup.SessionFactoryOptions;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class Entity {
+    private final SessionFactoryOptions sessionFactoryOptions;
     private Class<?>     clazz;
     private String       tableName;
-    private Set<Column>  primaryKey;
+    private List<Column> primaryKey;
     private List<Column> columns;
     private List<Relationship> relationships;
 
-    public Entity(Class<?> clazz) {
+    public Entity(Class<?> clazz, SessionFactoryOptions sessionFactoryOptions) {
+        Assert.notNull(sessionFactoryOptions, "L'argument sessionFactoryOptions ne peut pas être \"null\"");
+
+        this.sessionFactoryOptions = sessionFactoryOptions;
         this.setClazz(clazz)
             .setTableName()
             .setColumns()
             .setPrimaryKey()
             .setRelationships();
+    }
+
+    public SessionFactoryOptions getSessionFactoryOptions() {
+        return sessionFactoryOptions;
     }
 
     public Class<?> getClazz() {
@@ -52,12 +63,12 @@ public class Entity {
         return this;
     }
 
-    public Set<Column> getPrimaryKey() {
+    public List<Column> getPrimaryKey() {
         return primaryKey;
     }
 
     private Entity setPrimaryKey() {
-        primaryKey = new HashSet<>();
+        primaryKey = new ArrayList<>();
 
         columns.stream()
             .filter(column -> column.getField().isAnnotationPresent(PrimaryKey.class))
