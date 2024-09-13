@@ -14,16 +14,12 @@ import java.lang.reflect.Type;
 import java.util.*;
 
 class Relationship {
-    private static final Map<RelationshipType, Class<? extends Annotation>> RELATION_TYPE_ANNOTATION_MAP;
-
-    static {
-        RELATION_TYPE_ANNOTATION_MAP = new HashMap<>();
-
-        RELATION_TYPE_ANNOTATION_MAP.put(RelationshipType.MANY_TO_MANY, ManyToMany.class);
-        RELATION_TYPE_ANNOTATION_MAP.put(RelationshipType.MANY_TO_ONE,  ManyToOne.class);
-        RELATION_TYPE_ANNOTATION_MAP.put(RelationshipType.ONE_TO_MANY,  OneToMany.class);
-        RELATION_TYPE_ANNOTATION_MAP.put(RelationshipType.ONE_TO_ONE,   OneToOne.class);
-    }
+    private static final Map<RelationshipType, Class<? extends Annotation>> RELATION_TYPE_ANNOTATION_MAP = Map.of(
+        RelationshipType.MANY_TO_MANY, ManyToMany.class,
+        RelationshipType.MANY_TO_ONE,  ManyToOne.class,
+        RelationshipType.ONE_TO_MANY,  OneToMany.class,
+        RelationshipType.ONE_TO_ONE,   OneToOne.class
+    );
 
     private final Entity entity;
     private final Field  field;
