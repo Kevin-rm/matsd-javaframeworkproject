@@ -6,7 +6,6 @@ import mg.matsd.javaframework.core.utils.StringUtils;
 
 import java.lang.reflect.Field;
 import java.util.List;
-import java.util.Objects;
 
 public class Column {
     private final Entity entity;
@@ -168,37 +167,5 @@ public class Column {
              updatable = field.getAnnotation(mg.matsd.javaframework.orm.annotations.Column.class).updatable();
 
         return this;
-    }
-
-    @Override
-    public String toString() {
-        return "Column{" +
-            "entity=" + entity +
-            ", name='" + name + '\'' +
-            ", columnDefinition=" + columnDefinition +
-            ", length=" + length +
-            ", precision=" + precision +
-            ", scale=" + scale +
-            ", unique=" + unique +
-            ", updatable=" + updatable +
-            '}';
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Column column = (Column) o;
-
-        if (!Objects.equals(field, column.field)) return false;
-        return Objects.equals(name, column.name);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = entity.hashCode();
-        result = 31 * result + name.hashCode();
-        return result;
     }
 }
