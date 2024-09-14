@@ -122,8 +122,8 @@ class Relationship {
 
         Entity targetEntity = entity.getSessionFactoryOptions().getEntity(targetEntityClass);
         if (targetEntity == null)
-            throw new MappingException(String.format("Le type \"%s\" du champ de relation \"%s\" n'est pas une entité",
-                targetEntityClass, fieldName
+            throw new MappingException(String.format("La classe d'entité cible \"%s\" du champ \"%s\" de l'entité \"%s\" n'est pas une entité",
+                targetEntityClass.getName(), fieldName, entityClassName
             ));
 
         if (targetEntityClass == entity.getClazz())
@@ -158,12 +158,11 @@ class Relationship {
             Field f = targetEntityClass.getDeclaredField(mappedBy);
 
             Class<? extends Annotation> expectedAnnotation = null;
-            for (Map.Entry<RelationshipType, Class<? extends Annotation>> entry : RELATION_TYPE_ANNOTATION_MAP.entrySet()) {
+            for (Map.Entry<RelationshipType, Class<? extends Annotation>> entry : RELATION_TYPE_ANNOTATION_MAP.entrySet())
                 if (relationshipType == entry.getKey()) {
                     expectedAnnotation = entry.getValue();
                     break;
                 }
-            }
 
             if (!f.isAnnotationPresent(expectedAnnotation))
                 throw new MappingException(String.format(
@@ -211,7 +210,8 @@ class Relationship {
     }
 
     private Relationship setJoinTable() {
-        if (relationshipType != RelationshipType.MANY_TO_MANY && relationshipType != RelationshipType.ONE_TO_MANY) return this;
+        if ((relationshipType != RelationshipType.MANY_TO_MANY && relationshipType != RelationshipType.ONE_TO_MANY) || mappedBy != null)
+            return this;
 
         mg.matsd.javaframework.orm.annotations.JoinTable j = null;
         if (field.isAnnotationPresent(mg.matsd.javaframework.orm.annotations.JoinTable.class))

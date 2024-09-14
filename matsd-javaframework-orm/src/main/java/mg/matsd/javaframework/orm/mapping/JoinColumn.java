@@ -31,7 +31,11 @@ class JoinColumn {
         String defaultName = String.format("%s_id", StringUtils.toSnakeCase(relationship.getField().getName()));
 
         if (joinColumn == null) name = defaultName;
-        else name = StringUtils.isBlank(joinColumn.name()) ? defaultName : name;
+        else {
+            String joinColumnName = joinColumn.name();
+
+            name = StringUtils.isBlank(joinColumnName) ? defaultName : joinColumnName;
+        }
 
         return this;
     }

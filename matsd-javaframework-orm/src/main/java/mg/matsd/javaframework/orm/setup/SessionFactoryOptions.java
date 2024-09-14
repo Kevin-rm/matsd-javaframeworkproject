@@ -122,6 +122,7 @@ public class SessionFactoryOptions {
             if (!UtilFunctions.isEntity(clazz)) return;
             entities.add(new Entity(clazz, this));
         });
+        entities.forEach(Entity::setRelationships);
 
         return this;
     }

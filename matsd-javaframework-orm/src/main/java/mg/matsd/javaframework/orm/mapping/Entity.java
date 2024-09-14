@@ -27,8 +27,7 @@ public class Entity {
         this.setClazz(clazz)
             .setTableName()
             .setColumns()
-            .setPrimaryKey()
-            .setRelationships();
+            .setPrimaryKey();
     }
 
     public SessionFactoryOptions getSessionFactoryOptions() {
@@ -97,13 +96,11 @@ public class Entity {
         return relationships;
     }
 
-    private Entity setRelationships() {
+    public void setRelationships() {
         relationships = new ArrayList<>();
         Arrays.stream(clazz.getDeclaredFields())
             .filter(UtilFunctions::isRelationshipField)
             .forEachOrdered(field -> relationships.add(new Relationship(this, field)));
-
-        return this;
     }
 
     public Column getColumn(String name, boolean byFieldName) throws NoSuchColumnException {
