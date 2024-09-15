@@ -29,15 +29,21 @@ public final class SQLExecutor {
 
     private SQLExecutor() { }
 
+    public static <T> T query(Connection connection, String sql, ResultSetExtractor<T> resultSetExtractor, int startRow, int maxRows) {
+        return null;
+    }
+
+    public static <T> T query(Connection connection, String sql, ResultSetExtractor<T> resultSetExtractor, int startRow, int maxRows, @Nullable Object... parameters) {
+        return null;
+    }
+
     public static <T> List<T> query(
         Connection connection, String sql, RowMapper<T> rowMapper, int startRow, int maxRows, @Nullable Object... parameters
     ) throws SQLException {
         validateDQLQuery(sql);
 
         List<T> results;
-        try (PreparedStatement preparedStatement = connection.prepareStatement(
-            sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
-        ) {
+        try (PreparedStatement preparedStatement = createScrollablePreparedStatement(connection, sql)) {
             setMaxRows   (preparedStatement, maxRows);
             setParameters(preparedStatement, parameters);
 
@@ -56,7 +62,7 @@ public final class SQLExecutor {
         validateDQLQuery(sql);
 
         List<T> results;
-        try (Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
+        try (Statement statement = createScrollableStatement(connection)) {
             setMaxRows(statement, maxRows);
 
             try (ResultSet resultSet = statement.executeQuery(sql)) {
@@ -73,9 +79,7 @@ public final class SQLExecutor {
     ) throws SQLException, NoResultException, NotSingleResultException {
         validateDQLQuery(sql);
 
-        try (PreparedStatement preparedStatement = connection.prepareStatement(
-            sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
-        ) {
+        try (PreparedStatement preparedStatement = createScrollablePreparedStatement(connection, sql)) {
             setMaxRows(preparedStatement, maxRows);
             setParameters(preparedStatement, parameters);
 
@@ -97,7 +101,7 @@ public final class SQLExecutor {
     ) throws SQLException, NoResultException, NotSingleResultException {
         validateDQLQuery(sql);
 
-        try (Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
+        try (Statement statement = createScrollableStatement(connection)) {
             setMaxRows(statement, maxRows);
 
             try (ResultSet resultSet = statement.executeQuery(sql)) {
@@ -118,9 +122,7 @@ public final class SQLExecutor {
     ) throws SQLException {
         validateDQLQuery(sql);
 
-        try (PreparedStatement preparedStatement = connection.prepareStatement(
-            sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
-        ) {
+        try (PreparedStatement preparedStatement = createScrollablePreparedStatement(connection, sql)) {
             setMaxRows   (preparedStatement, maxRows);
             setParameters(preparedStatement, parameters);
 
@@ -134,7 +136,7 @@ public final class SQLExecutor {
     public static List<Map<String, Object>> queryForMapList(Connection connection, String sql, int startRow, int maxRows) throws SQLException {
         validateDQLQuery(sql);
 
-        try (Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
+        try (Statement statement = createScrollableStatement(connection)) {
             setMaxRows(statement, maxRows);
 
             try (ResultSet resultSet = statement.executeQuery(sql)) {
@@ -149,9 +151,7 @@ public final class SQLExecutor {
     ) throws SQLException, NoResultException, NotSingleResultException {
         validateDQLQuery(sql);
 
-        try (PreparedStatement preparedStatement = connection.prepareStatement(
-            sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
-        ) {
+        try (PreparedStatement preparedStatement = createScrollablePreparedStatement(connection, sql)) {
             setMaxRows(preparedStatement, maxRows);
             setParameters(preparedStatement, parameters);
 
@@ -172,7 +172,7 @@ public final class SQLExecutor {
     ) throws SQLException, NoResultException, NotSingleResultException {
         validateDQLQuery(sql);
 
-        try (Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
+        try (Statement statement = createScrollableStatement(connection)) {
             setMaxRows(statement, maxRows);
 
             try (ResultSet resultSet = statement.executeQuery(sql)) {
@@ -192,9 +192,7 @@ public final class SQLExecutor {
     ) throws SQLException, NonUniqueColumnException {
         validationForUniqueColumn(sql, resultType);
 
-        try (PreparedStatement preparedStatement = connection.prepareStatement(
-            sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
-        ) {
+        try (PreparedStatement preparedStatement = createScrollablePreparedStatement(connection, sql)) {
             setMaxRows   (preparedStatement, maxRows);
             setParameters(preparedStatement, parameters);
 
@@ -209,7 +207,7 @@ public final class SQLExecutor {
         throws SQLException, NonUniqueColumnException {
         validationForUniqueColumn(sql, resultType);
 
-        try (Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
+        try (Statement statement = createScrollableStatement(connection)) {
             setMaxRows(statement, maxRows);
 
             try (ResultSet resultSet = statement.executeQuery(sql)) {
@@ -224,9 +222,7 @@ public final class SQLExecutor {
     ) throws SQLException, NoResultException, NonUniqueColumnException, NotSingleResultException {
         validationForUniqueColumn(sql, resultType);
 
-        try (PreparedStatement preparedStatement = connection.prepareStatement(
-            sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
-        ) {
+        try (PreparedStatement preparedStatement = createScrollablePreparedStatement(connection, sql)) {
             setMaxRows(preparedStatement, maxRows);
             setParameters(preparedStatement, parameters);
 
@@ -247,7 +243,7 @@ public final class SQLExecutor {
     ) throws SQLException, NoResultException, NonUniqueColumnException, NotSingleResultException {
         validationForUniqueColumn(sql, resultType);
 
-        try (Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
+        try (Statement statement = createScrollableStatement(connection)) {
             setMaxRows(statement, maxRows);
 
             try (ResultSet resultSet = statement.executeQuery(sql)) {
@@ -343,6 +339,14 @@ public final class SQLExecutor {
 
     private static void setMaxRows(Statement statement, int maxRows) throws SQLException {
         if (maxRows > -1) statement.setMaxRows(maxRows);
+    }
+
+    private static PreparedStatement createScrollablePreparedStatement(Connection connection, String sql) throws SQLException {
+        return connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+    }
+
+    private static Statement createScrollableStatement(Connection connection) throws SQLException {
+        return connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
     }
 
     private static void setParameters(PreparedStatement preparedStatement, @Nullable Object... parameters) throws SQLException {

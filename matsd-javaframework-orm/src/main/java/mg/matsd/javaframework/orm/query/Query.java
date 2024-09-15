@@ -10,6 +10,7 @@ import mg.matsd.javaframework.orm.exceptions.DatabaseException;
 import mg.matsd.javaframework.orm.exceptions.NoResultException;
 import mg.matsd.javaframework.orm.exceptions.NonUniqueColumnException;
 import mg.matsd.javaframework.orm.exceptions.NotSingleResultException;
+import mg.matsd.javaframework.orm.jdbc.RowMapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -127,7 +128,7 @@ public class Query<T> {
     public List<T> getResultsAsList() throws DatabaseException {
         try {
             return SQLExecutor.query(
-                session.connection(), sql, this::processResultSet, firstResult, maxResults, prepareParameters()
+                session.connection(), sql, (RowMapper<T>) this::processResultSet, firstResult, maxResults, prepareParameters()
             );
         } catch (SQLException e) {
             throw new DatabaseException(e);
