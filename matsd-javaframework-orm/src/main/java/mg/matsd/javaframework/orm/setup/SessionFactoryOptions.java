@@ -132,7 +132,7 @@ public class SessionFactoryOptions {
                 .setShowSql()
                 .setFormatSql();
         } catch (RuntimeException e) {
-            throw new ConfigurationException(String.format("Mal configuration de la \"session factory\" %s", getSuffixExceptionMessage()), e);
+            throw new ConfigurationException(String.format("Mal configuration au niveau de la \"session factory\" %s", getSuffixExceptionMessage()), e);
         }
     }
 
