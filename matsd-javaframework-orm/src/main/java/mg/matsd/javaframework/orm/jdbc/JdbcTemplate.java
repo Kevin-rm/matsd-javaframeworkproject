@@ -38,254 +38,117 @@ public class JdbcTemplate implements JdbcOperations {
     }
 
     @Override
+    public <T> T query(String sql, ResultSetExtractor<T> resultSetExtractor, Object... parameters) throws JdbcException {
+        return executeQuery(connection -> SQLExecutor.query(connection, sql, resultSetExtractor, -1, maxRows, parameters));
+    }
+
+    @Override
+    public <T> T query(String sql, ResultSetExtractor<T> resultSetExtractor) throws JdbcException {
+        return executeQuery(connection -> SQLExecutor.query(connection, sql, resultSetExtractor, -1, maxRows));
+    }
+
+    @Override
     public <T> List<T> query(String sql, RowMapper<T> rowMapper, Object... parameters) throws JdbcException {
-        List<T> results;
-
-        Connection connection = databaseConnector.getConnection();
-        try {
-            results = SQLExecutor.query(connection, sql, rowMapper, -1, maxRows, parameters);
-        } catch (SQLException e) {
-            throw new JdbcException(e);
-        } finally {
-            databaseConnector.releaseConnection(connection);
-        }
-
-        return results;
+        return executeQuery(connection -> SQLExecutor.query(connection, sql, rowMapper, -1, maxRows, parameters));
     }
 
     @Override
     public <T> List<T> query(String sql, RowMapper<T> rowMapper) throws JdbcException {
-        List<T> results;
-
-        Connection connection = databaseConnector.getConnection();
-        try {
-            results = SQLExecutor.query(connection, sql, rowMapper, -1, maxRows);
-        } catch (SQLException e) {
-            throw new JdbcException(e);
-        } finally {
-            databaseConnector.releaseConnection(connection);
-        }
-
-        return results;
+        return executeQuery(connection -> SQLExecutor.query(connection, sql, rowMapper, -1, maxRows));
     }
 
     @Override
     public <T> T queryForObject(String sql, RowMapper<T> rowMapper, Object... parameters)
         throws JdbcException, NoResultException, NotSingleResultException  {
-        T result;
-
-        Connection connection = databaseConnector.getConnection();
-        try {
-            result = SQLExecutor.queryForObject(connection, sql, rowMapper, -1, maxRows, parameters);
-        } catch (SQLException e) {
-            throw new JdbcException(e);
-        } finally {
-            databaseConnector.releaseConnection(connection);
-        }
-
-        return result;
+        return executeQuery(connection -> SQLExecutor.queryForObject(connection, sql, rowMapper, -1, maxRows, parameters));
     }
 
     @Override
     public <T> T queryForObject(String sql, RowMapper<T> rowMapper) throws JdbcException, NoResultException, NotSingleResultException {
-        T result;
-
-        Connection connection = databaseConnector.getConnection();
-        try {
-            result = SQLExecutor.queryForObject(connection, sql, rowMapper, -1, maxRows);
-        } catch (SQLException e) {
-            throw new JdbcException(e);
-        } finally {
-            databaseConnector.releaseConnection(connection);
-        }
-
-        return result;
+        return executeQuery(connection -> SQLExecutor.queryForObject(connection, sql, rowMapper, -1, maxRows));
     }
 
     @Override
     public List<Map<String, Object>> queryForMapList(String sql, Object... parameters) throws JdbcException {
-        List<Map<String, Object>> results;
-
-        Connection connection = databaseConnector.getConnection();
-        try {
-            results = SQLExecutor.queryForMapList(connection, sql, -1, maxRows, parameters);
-        } catch (SQLException e) {
-            throw new JdbcException(e);
-        } finally {
-            databaseConnector.releaseConnection(connection);
-        }
-
-        return results;
+        return executeQuery(connection -> SQLExecutor.queryForMapList(connection, sql, -1, maxRows, parameters));
     }
 
     @Override
     public List<Map<String, Object>> queryForMapList(String sql) throws JdbcException {
-        List<Map<String, Object>> results;
-
-        Connection connection = databaseConnector.getConnection();
-        try {
-            results = SQLExecutor.queryForMapList(connection, sql, -1, maxRows);
-        } catch (SQLException e) {
-            throw new JdbcException(e);
-        } finally {
-            databaseConnector.releaseConnection(connection);
-        }
-
-        return results;
+        return executeQuery(connection -> SQLExecutor.queryForMapList(connection, sql, -1, maxRows));
     }
 
     @Override
     public Map<String, Object> queryForMap(String sql, Object... parameters)
         throws JdbcException, NoResultException, NotSingleResultException {
-        Map<String, Object> result;
-
-        Connection connection = databaseConnector.getConnection();
-        try {
-            result = SQLExecutor.queryForMap(connection, sql, -1, maxRows, parameters);
-        } catch (SQLException e) {
-            throw new JdbcException(e);
-        } finally {
-            databaseConnector.releaseConnection(connection);
-        }
-
-        return result;
+        return executeQuery(connection -> SQLExecutor.queryForMap(connection, sql, -1, maxRows, parameters));
     }
 
     @Override
     public Map<String, Object> queryForMap(String sql) throws JdbcException, NoResultException, NotSingleResultException {
-        Map<String, Object> result;
-
-        Connection connection = databaseConnector.getConnection();
-        try {
-            result = SQLExecutor.queryForMap(connection, sql, -1, maxRows);
-        } catch (SQLException e) {
-            throw new JdbcException(e);
-        } finally {
-            databaseConnector.releaseConnection(connection);
-        }
-
-        return result;
+        return executeQuery(connection -> SQLExecutor.queryForMap(connection, sql, -1, maxRows));
     }
 
     @Override
     public <T> List<T> queryForUniqueColumnList(String sql, Class<T> resultType, Object... parameters)
         throws JdbcException, NonUniqueColumnException {
-        List<T> results;
-
-        Connection connection = databaseConnector.getConnection();
-        try {
-            results = SQLExecutor.queryForUniqueColumnList(connection, sql, resultType, -1, maxRows, parameters);
-        } catch (SQLException e) {
-            throw new JdbcException(e);
-        } finally {
-            databaseConnector.releaseConnection(connection);
-        }
-
-        return results;
+        return executeQuery(connection -> SQLExecutor.queryForUniqueColumnList(connection, sql, resultType, -1, maxRows, parameters));
     }
 
     @Override
     public <T> List<T> queryForUniqueColumnList(String sql, Class<T> resultType) throws JdbcException, NonUniqueColumnException {
-        List<T> results;
-
-        Connection connection = databaseConnector.getConnection();
-        try {
-            results = SQLExecutor.queryForUniqueColumnList(connection, sql, resultType, -1, maxRows);
-        } catch (SQLException e) {
-            throw new JdbcException(e);
-        } finally {
-            databaseConnector.releaseConnection(connection);
-        }
-
-        return results;
+        return executeQuery(connection -> SQLExecutor.queryForUniqueColumnList(connection, sql, resultType, -1, maxRows));
     }
 
     @Override
     public <T> T queryForUniqueColumn(String sql, Class<T> resultType, Object... parameters)
         throws JdbcException, NoResultException, NonUniqueColumnException, NotSingleResultException {
-        T result;
-
-        Connection connection = databaseConnector.getConnection();
-        try {
-            result = SQLExecutor.queryForUniqueColumn(connection, sql, resultType, -1, maxRows, parameters);
-        } catch (SQLException e) {
-            throw new JdbcException(e);
-        } finally {
-            databaseConnector.releaseConnection(connection);
-        }
-
-        return result;
+        return executeQuery(connection -> SQLExecutor.queryForUniqueColumn(connection, sql, resultType, -1, maxRows, parameters));
     }
 
     @Override
     public <T> T queryForUniqueColumn(String sql, Class<T> resultType)
         throws JdbcException, NoResultException, NonUniqueColumnException, NotSingleResultException {
-        T result;
-
-        Connection connection = databaseConnector.getConnection();
-        try {
-            result = SQLExecutor.queryForUniqueColumn(connection, sql, resultType, -1, maxRows);
-        } catch (SQLException e) {
-            throw new JdbcException(e);
-        } finally {
-            databaseConnector.releaseConnection(connection);
-        }
-
-        return result;
+        return executeQuery(connection -> SQLExecutor.queryForUniqueColumn(connection, sql, resultType, -1, maxRows));
     }
 
     @Override
-    public int update(String sql, Object... parameters) throws JdbcException {
-        int rowsAffected;
-
-        Connection connection = databaseConnector.getConnection();
-        try {
-            connection.setAutoCommit(false);
-            rowsAffected = SQLExecutor.update(connection, sql, parameters);
-            connection.commit();
-        } catch (SQLException e) {
-            try {
-                connection.rollback();
-            } catch (SQLException ex) {
-                throw new RollbackException(ex);
-            }
-            throw new JdbcException(e);
-        } finally {
-            databaseConnector.releaseConnection(connection);
-        }
-
-        return rowsAffected;
+    public int update(String sql, Object... parameters) throws JdbcException, RollbackException {
+        return executeUpdate(connection -> SQLExecutor.update(connection, sql, parameters));
     }
 
     @Override
-    public int update(String sql) throws JdbcException {
-        int rowsAffected;
-
-        Connection connection = databaseConnector.getConnection();
-        try {
-            connection.setAutoCommit(false);
-            rowsAffected = SQLExecutor.update(connection, sql);
-            connection.commit();
-        } catch (SQLException e) {
-            try {
-                connection.rollback();
-            } catch (SQLException ex) {
-                throw new RollbackException(ex);
-            }
-            throw new JdbcException(e);
-        } finally {
-            databaseConnector.releaseConnection(connection);
-        }
-
-        return rowsAffected;
+    public int update(String sql) throws JdbcException, RollbackException {
+        return executeUpdate(connection -> SQLExecutor.update(connection, sql));
     }
 
     @Override
-    public void execute(String sql) throws JdbcException {
-        Connection connection = databaseConnector.getConnection();
-        try {
-            connection.setAutoCommit(false);
+    public void execute(String sql) throws JdbcException, RollbackException {
+        executeUpdate(connection -> {
             SQLExecutor.execute(connection, sql);
+
+            return null;
+        });
+    }
+
+    private <T> T executeQuery(QueryExecutor<T> queryExecutor) throws JdbcException {
+        Connection connection = databaseConnector.getConnection();
+        try {
+            return queryExecutor.execute(connection);
+        } catch (SQLException e) {
+            throw new JdbcException(e);
+        } finally {
+            databaseConnector.releaseConnection(connection);
+        }
+    }
+
+    private int executeUpdate(QueryExecutor<Integer> queryExecutor) throws JdbcException, RollbackException {
+        int rowsAffected;
+
+        Connection connection = databaseConnector.getConnection();
+        try {
+            connection.setAutoCommit(false);
+            rowsAffected = queryExecutor.execute(connection);
             connection.commit();
         } catch (SQLException e) {
             try {
@@ -297,5 +160,12 @@ public class JdbcTemplate implements JdbcOperations {
         } finally {
             databaseConnector.releaseConnection(connection);
         }
+
+        return rowsAffected;
+    }
+
+    @FunctionalInterface
+    private interface QueryExecutor<T> {
+        T execute(Connection connection) throws SQLException;
     }
 }

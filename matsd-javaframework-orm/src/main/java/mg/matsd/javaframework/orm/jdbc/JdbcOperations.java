@@ -2,13 +2,18 @@ package mg.matsd.javaframework.orm.jdbc;
 
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.orm.exceptions.NoResultException;
-import mg.matsd.javaframework.orm.exceptions.NotSingleResultException;
 import mg.matsd.javaframework.orm.exceptions.NonUniqueColumnException;
+import mg.matsd.javaframework.orm.exceptions.NotSingleResultException;
+import mg.matsd.javaframework.orm.exceptions.RollbackException;
 
 import java.util.List;
 import java.util.Map;
 
 public interface JdbcOperations {
+    <T> T query(String sql, ResultSetExtractor<T> resultSetExtractor, @Nullable Object... parameters) throws JdbcException;
+
+    <T> T query(String sql, ResultSetExtractor<T> resultSetExtractor) throws JdbcException;
+
     <T> List<T> query(String sql, RowMapper<T> rowMapper, @Nullable Object... parameters) throws JdbcException;
 
     <T> List<T> query(String sql, RowMapper<T> rowMapper) throws JdbcException;
@@ -33,9 +38,9 @@ public interface JdbcOperations {
 
     <T> T queryForUniqueColumn(String sql, Class<T> resultType) throws JdbcException, NonUniqueColumnException, NoResultException, NotSingleResultException;
 
-    int update(String sql, @Nullable Object... parameters) throws JdbcException;
+    int update(String sql, @Nullable Object... parameters) throws JdbcException, RollbackException;
 
-    int update(String sql) throws JdbcException;
+    int update(String sql) throws JdbcException, RollbackException;
 
-    void execute(String sql) throws JdbcException;
+    void execute(String sql) throws JdbcException, RollbackException;
 }
