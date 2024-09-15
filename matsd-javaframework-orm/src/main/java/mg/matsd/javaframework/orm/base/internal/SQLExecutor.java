@@ -29,12 +29,34 @@ public final class SQLExecutor {
 
     private SQLExecutor() { }
 
-    public static <T> T query(Connection connection, String sql, ResultSetExtractor<T> resultSetExtractor, int startRow, int maxRows) {
-        return null;
+    public static <T> T query(
+        Connection connection, String sql, ResultSetExtractor<T> resultSetExtractor, int startRow, int maxRows, @Nullable Object... parameters
+    ) throws SQLException {
+        validateDQLQuery(sql);
+
+        try (PreparedStatement preparedStatement = createScrollablePreparedStatement(connection, sql)) {
+            setMaxRows(preparedStatement, maxRows);
+            setParameters(preparedStatement, parameters);
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                setStartRow(resultSet, startRow);
+                return resultSetExtractor.extractData(resultSet);
+            }
+        }
     }
 
-    public static <T> T query(Connection connection, String sql, ResultSetExtractor<T> resultSetExtractor, int startRow, int maxRows, @Nullable Object... parameters) {
-        return null;
+    public static <T> T query(Connection connection, String sql, ResultSetExtractor<T> resultSetExtractor, int startRow, int maxRows)
+        throws SQLException {
+        validateDQLQuery(sql);
+
+        try (Statement statement = createScrollableStatement(connection)) {
+            setMaxRows(statement, maxRows);
+
+            try (ResultSet resultSet = statement.executeQuery(sql)) {
+                setStartRow(resultSet, startRow);
+                return resultSetExtractor.extractData(resultSet);
+            }
+        }
     }
 
     public static <T> List<T> query(
