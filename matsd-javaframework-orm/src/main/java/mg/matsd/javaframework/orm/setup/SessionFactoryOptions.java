@@ -13,7 +13,7 @@ import mg.matsd.javaframework.orm.mapping.Entity;
 import java.util.*;
 
 public class SessionFactoryOptions {
-    private static final Set<String> VALID_PROPERTY_NAMES = new HashSet<>(Arrays.asList(
+    static final Set<String> VALID_PROPERTY_NAMES = new HashSet<>(Arrays.asList(
         "connection.url", "connection.user", "connection.password", "connection.driver-class", "connection.pool-size",
         "show-sql", "format-sql"
     ));
@@ -92,11 +92,9 @@ public class SessionFactoryOptions {
     void setEntityScanPackage(String entityScanPackage) {
         if (this.entityScanPackage != null) return;
 
-        Assert.notBlank(entityScanPackage, false, String.format("Le nom de package des entités à scanner ne peut pas être vide ou \"null\" " +
-            "pour la \"session factory\" à l'indice %d", index));
+        Assert.notBlank(entityScanPackage, false, "Le nom de package des entités à scanner ne peut pas être vide ou \"null\"");
         Assert.state(StringUtils.isValidPackageName(entityScanPackage),
-            () -> new ConfigurationException(String.format("Le nom de package des entités à scanner fourni \"%s\" n'est pas valide " +
-                "pour la \"session factory\" à l'indice %d", entityScanPackage, index))
+            () -> new IllegalArgumentException(String.format("Le nom de package des entités à scanner fourni \"%s\" n'est pas valide", entityScanPackage))
         );
 
         this.entityScanPackage = entityScanPackage;
@@ -128,10 +126,14 @@ public class SessionFactoryOptions {
     }
 
     SessionFactoryOptions configure() {
-        return setDatabaseConnector()
-            .setEntities()
-            .setShowSql()
-            .setFormatSql();
+        try {
+            return setDatabaseConnector()
+                .setEntities()
+                .setShowSql()
+                .setFormatSql();
+        } catch (RuntimeException e) {
+            throw new ConfigurationException(String.format("Mal configuration de la \"session factory\" %s", getSuffixExceptionMessage()), e);
+        }
     }
 
     private boolean getBooleanProperty(String key) {
@@ -141,7 +143,7 @@ public class SessionFactoryOptions {
         try {
             return StringConverter.convert(value, boolean.class);
         } catch (TypeMismatchException e) {
-            throw new ConfigurationException(String.format("La valeur de la propriété \"%s\" fournie " +
+            throw new TypeMismatchException(String.format("La valeur de la propriété \"%s\" fournie " +
                 "n'est pas de type boolean : \"%s\"", key, value));
         }
     }
@@ -153,12 +155,14 @@ public class SessionFactoryOptions {
 
         if (!properties.containsKey(key)) return;
 
-        String message = String.format("La propriété \"%s\" de la \"session factory\"", key);
-        if (name == null)
-             message += String.format(" à l'indice %d", index);
-        else message += String.format(" avec le nom \"%s\"", name);
-        message += " a déjà été définie";
+        String message = String.format("La propriété \"%s\" de la \"session factory\" ", key);
+        message += getSuffixExceptionMessage() + " a déjà été définie";
 
         throw new ConfigurationException(message);
+    }
+
+    private String getSuffixExceptionMessage() {
+        if (name == null) return String.format("à l'indice %d", index);
+        else return String.format("avec le nom \"%s\"", name);
     }
 }

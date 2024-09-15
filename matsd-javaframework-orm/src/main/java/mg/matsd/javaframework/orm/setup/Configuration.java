@@ -9,6 +9,7 @@ import mg.matsd.javaframework.orm.base.SessionFactory;
 import org.w3c.dom.Element;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
@@ -16,7 +17,7 @@ import static mg.matsd.javaframework.core.utils.XMLUtils.*;
 
 public final class Configuration {
     public static final String DEFAULT_CFG_FILENAME  = "database.cfg.xml";
-    public static final String PROPERTIES_KEY_PREFIX = "orm.session_factory_";
+    public static final String PROPERTIES_KEY_PREFIX = "orm.session-factory.";
 
     private final SessionFactoryOptionsRegistry sessionFactoryOptionsRegistry;
 
@@ -65,24 +66,39 @@ public final class Configuration {
                 .map(String::strip)
                 .filter(propertyName -> propertyName.startsWith(PROPERTIES_KEY_PREFIX))
                 .forEachOrdered(propertyName -> {
-                    String[] propertyNameParts = propertyName.substring(PROPERTIES_KEY_PREFIX.length()).split("\\.", 2);
-                    Assert.state(propertyNameParts.length >= 2,
+                    String[] propertyNameParts = propertyName.substring(PROPERTIES_KEY_PREFIX.length()).split("\\.");
+                    Assert.state(propertyNameParts.length >= 1,
                         () -> new ConfigurationException(String.format("La déclaration des informations dans un fichier .properties " +
-                            "doit être de la forme : %s[session_factory_name].[property_name]", PROPERTIES_KEY_PREFIX))
+                            "doit être de la forme : %s.[session_factory_name] (optionnel).[property_name]", PROPERTIES_KEY_PREFIX))
                     );
 
+                    String sessionFactoryOptionsName = null;
+                    String actualPropertyName;
+
+                    propertyNameParts[0] = propertyNameParts[0].strip();
+                    if (propertyNameParts.length >= 2) {
+                        boolean isSessionFactoryOptionsNameAbsent = SessionFactoryOptions.VALID_PROPERTY_NAMES.stream()
+                            .anyMatch(validPropertyName ->
+                                validPropertyName.startsWith(propertyNameParts[0]) || propertyNameParts[0].equals("entity-scan"));
+
+                        if (isSessionFactoryOptionsNameAbsent)
+                            actualPropertyName = String.join(".", propertyNameParts);
+                        else {
+                            sessionFactoryOptionsName = propertyNameParts[0];
+                            actualPropertyName = String.join(".", Arrays.copyOfRange(propertyNameParts, 1, propertyNameParts.length));
+                        }
+                    } else actualPropertyName = propertyNameParts[0];
+
                     SessionFactoryOptions sessionFactoryOptions = sessionFactoryOptionsRegistry
-                        .getSessionFactoryOptionsOrRegisterIfAbsent(propertyNameParts[0].strip());
+                        .getSessionFactoryOptionsOrRegisterIfAbsent(sessionFactoryOptionsName);
 
-                    String actualPropertyName = propertyNameParts[1].strip();
-                    String propertyValue      = properties.getProperty(propertyName);
-
+                    String propertyValue = properties.getProperty(propertyName);
                     if ("entity-scan.package".equals(actualPropertyName))
                          sessionFactoryOptions.setEntityScanPackage(propertyValue);
                     else sessionFactoryOptions.setProperty(actualPropertyName, propertyValue);
                 });
         } catch (IOException e) {
-            throw new ConfigurationException(String.format("Erreur lors de la lecture du fichier de configuration : \"%s\"", resource.getName()), e);
+            throw new ConfigurationException(String.format("Erreur lors de la lecture du fichier : \"%s\"", resource.getName()), e);
         }
     }
 

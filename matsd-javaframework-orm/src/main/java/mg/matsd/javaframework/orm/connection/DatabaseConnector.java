@@ -63,7 +63,7 @@ public class DatabaseConnector {
     }
 
     private DatabaseConnector setUrl(String url) {
-        Assert.notBlank(url, false, "L'URL de la base de données ne peut pas être vide ou \"null\"");
+        Assert.notBlank(url, false, "L'URL de connexion à la base de données ne peut pas être vide ou \"null\"");
 
         this.url = url.strip();
         return this;
