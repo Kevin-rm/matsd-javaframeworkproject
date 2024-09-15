@@ -1,6 +1,6 @@
 package mg.matsd.javaframework.orm.base;
 
-import mg.matsd.javaframework.orm.query.RawQuery;
+import mg.matsd.javaframework.orm.query.Query;
 
 import java.sql.Connection;
 
@@ -13,9 +13,9 @@ public interface Session extends AutoCloseable {
 
     boolean isOpen();
 
-    RawQuery<?> createRawQuery(String sql);
+    Query<?> createQuery(String sql);
 
-    <T> RawQuery<T> createRawQuery(String sql, Class<T> entityResultClass);
+    <T> Query<T> createQuery(String sql, Class<T> entityResultClass);
 
     @Override
     void close();

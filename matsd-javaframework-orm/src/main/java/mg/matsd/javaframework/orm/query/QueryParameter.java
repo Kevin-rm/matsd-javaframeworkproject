@@ -4,23 +4,23 @@ import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 
 class QueryParameter {
-    private final RawQuery<?> rawQuery;
+    private final Query<?> query;
     private int    index;
     @Nullable
     private String name;
     @Nullable
     private final Object value;
 
-    QueryParameter(RawQuery<?> rawQuery, String name, @Nullable Object value) {
-        this.rawQuery = rawQuery;
+    QueryParameter(Query<?> query, String name, @Nullable Object value) {
+        this.query = query;
         this.value    = value;
         this.setName(name);
 
         convertNameToPlaceholder();
     }
 
-    QueryParameter(RawQuery<?> rawQuery, int index, @Nullable Object value) {
-        this.rawQuery = rawQuery;
+    QueryParameter(Query<?> query, int index, @Nullable Object value) {
+        this.query = query;
         this.value    = value;
         this.setIndex(index);
 
@@ -34,7 +34,7 @@ class QueryParameter {
     private void setIndex(int index) {
         Assert.positive(index, "L'indice d'un paramètre ne peut pas être négatif ou nul");
 
-        int placeholdersCount = countParameterPlaceholders(rawQuery.getSql());
+        int placeholdersCount = countParameterPlaceholders(query.getSql());
         if (index > placeholdersCount)
             throw new QueryParameterException(
                 String.format("L'indice spécifié (=%d) dépasse le nombre de paramètres dans la requête (=%d)", index, placeholdersCount)
@@ -44,7 +44,7 @@ class QueryParameter {
     }
 
     private void setName(String name) {
-        String sql = rawQuery.getSql();
+        String sql = query.getSql();
 
         Assert.notBlank(name, false, "Le nom d'un paramètre ne peut pas être vide ou \"null\"");
         Assert.state(!name.contains(":") && !name.contains("?"),
@@ -62,7 +62,7 @@ class QueryParameter {
     }
 
     private void convertNameToPlaceholder() {
-        String sql = rawQuery.getSql();
+        String sql = query.getSql();
 
         String formattedName  = String.format(":%s", name);
         int nameLastWordIndex = sql.indexOf(formattedName) + formattedName.length();
@@ -72,7 +72,7 @@ class QueryParameter {
             .replace  (formattedName, "?");
 
         index = countParameterPlaceholders(sqlSubString);
-        rawQuery.setSql(sqlSubString + sql.substring(nameLastWordIndex));
+        query.setSql(sqlSubString + sql.substring(nameLastWordIndex));
     }
 
     private static int countParameterPlaceholders(String sql) {

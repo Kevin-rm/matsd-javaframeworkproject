@@ -2,7 +2,7 @@ package mg.matsd.javaframework.orm.base;
 
 import mg.matsd.javaframework.orm.connection.DatabaseConnector;
 import mg.matsd.javaframework.orm.exceptions.DatabaseException;
-import mg.matsd.javaframework.orm.query.RawQuery;
+import mg.matsd.javaframework.orm.query.Query;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -47,13 +47,13 @@ public class EntityManager implements Session {
     }
 
     @Override
-    public RawQuery<?> createRawQuery(String sql) {
-        return new RawQuery<>(this, sql);
+    public Query<?> createQuery(String sql) {
+        return new Query<>(this, sql);
     }
 
     @Override
-    public <T> RawQuery<T> createRawQuery(String sql, Class<T> entityResultClass) {
-        return new RawQuery<>(this, sql, entityResultClass);
+    public <T> Query<T> createQuery(String sql, Class<T> entityResultClass) {
+        return new Query<>(this, sql, entityResultClass);
     }
 
     public void findAll(Class<?> entityClass) {

@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-public class RawQuery<T> {
+public class Query<T> {
     private final Session session;
     private final String originalSql;
     private String sql;
@@ -27,7 +27,7 @@ public class RawQuery<T> {
     private int maxResults  = -1;
     private final List<QueryParameter> parameters;
 
-    public RawQuery(Session session, String sql, @Nullable Class<T> resultClass) {
+    public Query(Session session, String sql, @Nullable Class<T> resultClass) {
         Assert.notNull(session, "La session ne peut pas être \"null\"");
 
         this.setSql(sql)
@@ -38,7 +38,7 @@ public class RawQuery<T> {
         parameters   = new ArrayList<>();
     }
 
-    public RawQuery(Session session, String sql) {
+    public Query(Session session, String sql) {
         this(session, sql, null);
     }
 
@@ -50,7 +50,7 @@ public class RawQuery<T> {
         return sql;
     }
 
-    RawQuery<T> setSql(String sql) {
+    Query<T> setSql(String sql) {
         Assert.notBlank(sql, false, "La requête SQL ne peut pas être vide ou \"null\"");
 
         this.sql = sql.strip();
@@ -61,7 +61,7 @@ public class RawQuery<T> {
         return resultClass;
     }
 
-    private RawQuery<T> setResultClass(@Nullable Class<T> resultClass) {
+    private Query<T> setResultClass(@Nullable Class<T> resultClass) {
         if (resultClass == null) return this;
         if (
             resultClass.isArray()              ||
@@ -85,13 +85,13 @@ public class RawQuery<T> {
         return parameters;
     }
 
-    public RawQuery<T> setParameter(String name, Object value) {
+    public Query<T> setParameter(String name, Object value) {
         parameters.add(new QueryParameter(this, name, value));
 
         return this;
     }
 
-    public RawQuery<T> setParameter(int position, Object value) {
+    public Query<T> setParameter(int position, Object value) {
         parameters.add(new QueryParameter(this, position, value));
 
         return this;
@@ -101,7 +101,7 @@ public class RawQuery<T> {
         return firstResult;
     }
 
-    public RawQuery<T> setFirstResult(int firstResult) {
+    public Query<T> setFirstResult(int firstResult) {
         Assert.positive(firstResult, "L'argument firstResult ne peut pas être négatif ou nul");
 
         this.firstResult = firstResult;
@@ -112,7 +112,7 @@ public class RawQuery<T> {
         return maxResults;
     }
 
-    public RawQuery<T> setMaxResults(int maxResults) {
+    public Query<T> setMaxResults(int maxResults) {
         Assert.positiveOrZero(maxResults, "L'argument de maxResults ne peut pas être négatif");
 
         if (firstResult >= maxResults)
