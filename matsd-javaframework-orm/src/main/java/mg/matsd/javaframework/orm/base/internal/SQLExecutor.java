@@ -157,12 +157,7 @@ public final class SQLExecutor {
 
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 setStartRow(resultSet, startRow);
-
-                if (!resultSet.next()) throw new NoResultException(sql);
-                Map<String, Object> result = resultSetToMap(resultSet);
-                if (resultSet.next())  throw new NotSingleResultException(sql);
-
-                return result;
+                return resultSetToMap(resultSet, sql);
             }
         }
     }
@@ -177,12 +172,7 @@ public final class SQLExecutor {
 
             try (ResultSet resultSet = statement.executeQuery(sql)) {
                 setStartRow(resultSet, startRow);
-
-                if (!resultSet.next()) throw new NoResultException(sql);
-                Map<String, Object> result = resultSetToMap(resultSet);
-                if (resultSet.next())  throw new NotSingleResultException(sql);
-
-                return result;
+                return resultSetToMap(resultSet, sql);
             }
         }
     }
@@ -374,14 +364,26 @@ public final class SQLExecutor {
         return results;
     }
 
-    private static Map<String, Object> resultSetToMap(ResultSet resultSet) throws SQLException {
-        Map<String, Object> map = new LinkedHashMap<>();
+    private static Map<String, Object> convertResultSetRowToMap(
+        ResultSet resultSet, @Nullable ResultSetMetaData resultSetMetaData, @Nullable Integer columnCount
+    ) throws SQLException {
+        if (resultSetMetaData == null) resultSetMetaData = resultSet.getMetaData();
+        if (columnCount == null)       columnCount = resultSetMetaData.getColumnCount();
 
-        ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
-        for (int i = 1; i <= resultSetMetaData.getColumnCount(); i++)
+        Map<String, Object> map = new LinkedHashMap<>();
+        for (int i = 1; i <= columnCount; i++)
             map.put(resultSetMetaData.getColumnName(i), resultSet.getObject(i));
 
         return map;
+    }
+
+    private static Map<String, Object> resultSetToMap(ResultSet resultSet, String sql)
+        throws SQLException, NoResultException, NotSingleResultException {
+        if (!resultSet.next()) throw new NoResultException(sql);
+        Map<String, Object> result = convertResultSetRowToMap(resultSet, null, null);
+        if (resultSet.next())  throw new NotSingleResultException(sql);
+
+        return result;
     }
 
     private static List<Map<String, Object>> resultSetToMapList(ResultSet resultSet) throws SQLException {
@@ -390,13 +392,8 @@ public final class SQLExecutor {
         ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
         int columnCount = resultSetMetaData.getColumnCount();
 
-        while (resultSet.next()) {
-            Map<String, Object> row = new LinkedHashMap<>();
-            for (int i = 1; i <= columnCount; i++)
-                row.put(resultSetMetaData.getColumnName(i), resultSet.getObject(i));
-
-            results.add(row);
-        }
+        while (resultSet.next())
+            results.add(convertResultSetRowToMap(resultSet, resultSetMetaData, columnCount));
 
         return results;
     }
@@ -414,18 +411,11 @@ public final class SQLExecutor {
         return result;
     }
 
-    @SuppressWarnings("unchecked")
-    private static <T> List<T> resultSetToUniqueColumnList(ResultSet resultSet, Class<T> resultType, String sql) throws SQLException, NonUniqueColumnException {
+    private static <T> List<T> resultSetToUniqueColumnList(ResultSet resultSet, Class<T> resultType, String sql)
+        throws SQLException, NonUniqueColumnException {
         List<T> results = new ArrayList<>();
-
-        while (resultSet.next()) {
-            if (resultSet.getMetaData().getColumnCount() != 1)
-                throw new NonUniqueColumnException(sql);
-
-            if (resultType == Object.class)
-                 results.add((T) resultSet.getObject(1));
-            else results.add(resultSet.getObject(1, resultType));
-        }
+        while (resultSet.next())
+            results.add(resultSetToUniqueColumn(resultSet, resultType, sql));
 
         return results;
     }
