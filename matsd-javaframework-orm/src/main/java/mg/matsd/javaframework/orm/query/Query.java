@@ -127,9 +127,10 @@ public class Query<T> {
 
     public List<T> getResultsAsList() throws DatabaseException {
         try {
-            return SQLExecutor.query(
-                session.connection(), sql, (RowMapper<T>) this::processResultSet, firstResult, maxResults, prepareParameters()
-            );
+            if (session.isEntity(resultClass))
+                return null;
+
+            return SQLExecutor.query(session.connection(), sql, new SimpleObjectRowMapper(), firstResult, maxResults, prepareParameters());
         } catch (SQLException e) {
             throw new DatabaseException(e);
         }
@@ -137,9 +138,10 @@ public class Query<T> {
 
     public T getSingleResult() throws DatabaseException, NoResultException, NotSingleResultException {
         try {
-            return SQLExecutor.queryForObject(
-                session.connection(), sql, this::processResultSet, firstResult, maxResults, prepareParameters()
-            );
+            if (session.isEntity(resultClass))
+                return null;
+
+            return SQLExecutor.queryForObject(session.connection(), sql, new SimpleObjectRowMapper(), firstResult, maxResults, prepareParameters());
         } catch (SQLException e) {
             throw new DatabaseException(e);
         }
@@ -149,9 +151,7 @@ public class Query<T> {
         throws DatabaseException, NoResultException, NonUniqueColumnException, NotSingleResultException {
         try {
             Class<?> resultType = resultClass == null ? Object.class : resultClass;
-            return SQLExecutor.queryForUniqueColumn(
-                session.connection(), sql, resultType, firstResult, maxResults, prepareParameters()
-            );
+            return SQLExecutor.queryForUniqueColumn(session.connection(), sql, resultType, firstResult, maxResults, prepareParameters());
         } catch (SQLException e) {
             throw new DatabaseException(e);
         }
@@ -175,17 +175,20 @@ public class Query<T> {
         return params;
     }
 
-    @SuppressWarnings("unchecked")
-    private T processResultSet(ResultSet resultSet) throws SQLException {
-        if (resultClass != null)
-            return UtilFunctions.resultSetToObject(resultClass, resultSet);
+    private class SimpleObjectRowMapper implements RowMapper<T> {
+        @Override
+        @SuppressWarnings("unchecked")
+        public T mapRow(ResultSet resultSet) throws SQLException {
+            if (resultClass != null)
+                return UtilFunctions.resultSetToObject(resultClass, resultSet);
 
-        int columnCount = resultSet.getMetaData().getColumnCount();
+            int columnCount = resultSet.getMetaData().getColumnCount();
 
-        Object[] objects = new Object[columnCount];
-        for (int i = 1; i <= columnCount; i++)
-            objects[i - 1] = resultSet.getObject(i);
+            Object[] objects = new Object[columnCount];
+            for (int i = 1; i <= columnCount; i++)
+                objects[i - 1] = resultSet.getObject(i);
 
-        return (T) objects;
+            return (T) objects;
+        }
     }
  }

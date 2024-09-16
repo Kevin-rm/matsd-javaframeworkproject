@@ -22,7 +22,7 @@ public class EntityManagerFactory implements SessionFactory {
     }
 
     public EntityManager createEntityManager() {
-        return new EntityManager(databaseConnector);
+        return new EntityManager(this);
     }
 
     @Override

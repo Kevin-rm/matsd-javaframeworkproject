@@ -13,16 +13,16 @@ import java.sql.SQLException;
 public final class UtilFunctions {
     private UtilFunctions() { }
 
-    public static boolean isEntity(@Nullable Class<?> clazz) {
+    public static boolean isNotEntity(@Nullable Class<?> clazz) {
         if (
             clazz == null || clazz.isAnnotation() || !ClassUtils.isPublic(clazz)
-        ) return false;
+        ) return true;
 
-        return clazz.isAnnotationPresent(Entity.class);
+        return !clazz.isAnnotationPresent(Entity.class);
     }
 
     public static void assertIsEntity(@Nullable Class<?> clazz) {
-        if (!isEntity(clazz))
+        if (isNotEntity(clazz))
             throw new IllegalArgumentException(
                 String.format("La classe \"%s\" n'est pas une entité", clazz.getName()));
     }
@@ -62,24 +62,21 @@ public final class UtilFunctions {
         for (int i = 1; i <= columnCount; i++) {
             String columnLabel = resultSetMetaData.getColumnLabel(i);
 
-            Field field = null;
-            if (isEntity(clazz)) { }
-            //    field = new Relation(clazz).getColumn(columnLabel).getField();
-            else {
-                try {
-                    field = clazz.getDeclaredField(columnLabel);
-                } catch (NoSuchFieldException e) {
-                    throw new MappingException(
-                        String.format("La classe \"%s\" n'a pas de champ nommé \"%s\"", clazz.getName(), columnLabel)
-                    );
-                }
-
-                if (!ClassUtils.isStandardClass(field.getType())) continue;
+            Field field;
+            try {
+                field = clazz.getDeclaredField(columnLabel);
+            } catch (NoSuchFieldException e) {
+                throw new MappingException(
+                    String.format("La classe \"%s\" n'a pas de champ nommé \"%s\"", clazz.getName(), columnLabel)
+                );
             }
+
+            Class<?> fieldType = field.getType();
+            if (!ClassUtils.isStandardClass(fieldType)) continue;
 
             field.setAccessible(true);
             try {
-                field.set(result, resultSet.getObject(i, field.getType()));
+                field.set(result, resultSet.getObject(i, fieldType));
             } catch (IllegalAccessException ignored) { }
         }
 

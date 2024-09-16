@@ -1,20 +1,35 @@
 package mg.matsd.javaframework.orm.base;
 
+import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.orm.connection.DatabaseConnector;
 import mg.matsd.javaframework.orm.exceptions.DatabaseException;
+import mg.matsd.javaframework.orm.mapping.Entity;
 import mg.matsd.javaframework.orm.query.Query;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
 
 public class EntityManager implements Session {
+    private final EntityManagerFactory entityManagerFactory;
     private final DatabaseConnector databaseConnector;
     private Connection  connection;
     private Transaction transaction;
 
-    EntityManager(final DatabaseConnector databaseConnector) {
-        this.databaseConnector = databaseConnector;
+    EntityManager(final EntityManagerFactory entityManagerFactory) {
+        this.entityManagerFactory = entityManagerFactory;
+        databaseConnector = entityManagerFactory.getDatabaseConnector();
         connection = databaseConnector.getConnection();
+    }
+
+    @Override
+    public List<Entity> getEntities() {
+        return entityManagerFactory.getSessionFactoryOptions().getEntities();
+    }
+
+    @Override
+    public boolean isEntity(@Nullable Class<?> clazz) {
+        return entityManagerFactory.getSessionFactoryOptions().isEntity(clazz);
     }
 
     @Override

@@ -131,10 +131,10 @@ public class JdbcTemplate implements JdbcOperations {
         });
     }
 
-    private <T> T executeQuery(QueryExecutor<T> queryExecutor) throws JdbcException {
+    private <T> T executeQuery(QueryProcessor<T> queryProcessor) throws JdbcException {
         Connection connection = databaseConnector.getConnection();
         try {
-            return queryExecutor.execute(connection);
+            return queryProcessor.process(connection);
         } catch (SQLException e) {
             throw new JdbcException(e);
         } finally {
@@ -142,13 +142,13 @@ public class JdbcTemplate implements JdbcOperations {
         }
     }
 
-    private int executeUpdate(QueryExecutor<Integer> queryExecutor) throws JdbcException, RollbackException {
+    private int executeUpdate(QueryProcessor<Integer> queryProcessor) throws JdbcException, RollbackException {
         int rowsAffected;
 
         Connection connection = databaseConnector.getConnection();
         try {
             connection.setAutoCommit(false);
-            rowsAffected = queryExecutor.execute(connection);
+            rowsAffected = queryProcessor.process(connection);
             connection.commit();
         } catch (SQLException e) {
             try {
@@ -165,7 +165,7 @@ public class JdbcTemplate implements JdbcOperations {
     }
 
     @FunctionalInterface
-    private interface QueryExecutor<T> {
-        T execute(Connection connection) throws SQLException;
+    private interface QueryProcessor<T> {
+        T process(Connection connection) throws SQLException;
     }
 }

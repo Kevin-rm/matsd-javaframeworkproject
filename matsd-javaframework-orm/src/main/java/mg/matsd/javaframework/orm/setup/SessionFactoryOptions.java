@@ -112,12 +112,16 @@ public class SessionFactoryOptions {
             .orElse(null);
     }
 
+    public boolean isEntity(@Nullable Class<?> clazz) {
+        return clazz != null && getEntity(clazz) != null;
+    }
+
     private SessionFactoryOptions setEntities() {
         Assert.state(entityScanPackage != null, "Le nom de package des entités à scanner n'a pas été défini");
 
         entities = new ArrayList<>();
         ClassScanner.doScan(entityScanPackage, clazz -> {
-            if (!UtilFunctions.isEntity(clazz)) return;
+            if (UtilFunctions.isNotEntity(clazz)) return;
             entities.add(new Entity(clazz, this));
         });
         entities.forEach(Entity::setRelationships);
