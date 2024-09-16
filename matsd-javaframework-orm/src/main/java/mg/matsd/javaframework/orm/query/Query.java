@@ -10,7 +10,9 @@ import mg.matsd.javaframework.orm.exceptions.DatabaseException;
 import mg.matsd.javaframework.orm.exceptions.NoResultException;
 import mg.matsd.javaframework.orm.exceptions.NonUniqueColumnException;
 import mg.matsd.javaframework.orm.exceptions.NotSingleResultException;
+import mg.matsd.javaframework.orm.jdbc.ResultSetExtractor;
 import mg.matsd.javaframework.orm.jdbc.RowMapper;
+import mg.matsd.javaframework.orm.mapping.Entity;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -189,6 +191,18 @@ public class Query<T> {
                 objects[i - 1] = resultSet.getObject(i);
 
             return (T) objects;
+        }
+    }
+
+    private class EntityResultSetExtractor implements ResultSetExtractor<T> {
+        @Override
+        @SuppressWarnings("unchecked")
+        public T extractData(ResultSet resultSet) throws SQLException {
+            T result = (T) UtilFunctions.instantiate(resultClass);
+
+
+
+            return result;
         }
     }
  }

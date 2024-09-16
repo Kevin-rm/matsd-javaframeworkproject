@@ -1,9 +1,11 @@
 package mg.matsd.javaframework.orm.base;
 
 import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.orm.connection.DatabaseConnector;
 import mg.matsd.javaframework.orm.exceptions.DatabaseException;
 import mg.matsd.javaframework.orm.mapping.Entity;
+import mg.matsd.javaframework.orm.mapping.EntityNotFoundException;
 import mg.matsd.javaframework.orm.query.Query;
 
 import java.sql.Connection;
@@ -25,6 +27,17 @@ public class EntityManager implements Session {
     @Override
     public List<Entity> getEntities() {
         return entityManagerFactory.getSessionFactoryOptions().getEntities();
+    }
+
+    @Override
+    public Entity getEntity(Class<?> entityClass) throws EntityNotFoundException {
+        Assert.notNull(entityClass, "La classe de l'entité à récupérer ne peut pas être \"null\"");
+
+        Entity entity = entityManagerFactory.getSessionFactoryOptions().getEntity(entityClass);
+        if (entity == null)
+            throw new EntityNotFoundException(entityClass);
+
+        return entity;
     }
 
     @Override

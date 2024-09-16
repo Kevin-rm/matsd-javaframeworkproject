@@ -36,6 +36,18 @@ public final class UtilFunctions {
                field.isAnnotationPresent(OneToOne.class);
     }
 
+    public static Object instantiate(Class<?> clazz) throws MappingException {
+        try {
+            return clazz.getConstructor().newInstance();
+        } catch (Exception e) {
+            throw new MappingException(String.format(
+                "Pour effectuer correctement le mapping : " +
+                    "La classe \"%s\" doit absolument avoir un constructeur sans arguments, " +
+                    "non privé et qui ne jette aucune exception", clazz.getName())
+            );
+        }
+    }
+
     @SuppressWarnings("unchecked")
     public static <T> T resultSetToObject(Class<T> clazz, ResultSet resultSet) throws SQLException {
         T result;
@@ -46,15 +58,7 @@ public final class UtilFunctions {
         if (ClassUtils.isStandardClass(clazz))
             return resultSet.getObject(1, clazz);
 
-        try {
-            result = clazz.getConstructor().newInstance();
-        } catch (Exception e) {
-            throw new MappingException(String.format(
-                "Pour effectuer correctement le mapping : " +
-                "La classe \"%s\" doit absolument avoir un constructeur sans arguments, " +
-                "non privé et qui ne jette aucune exception", clazz.getName())
-            );
-        }
+        result = (T) instantiate(clazz);
 
         ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
         int columnCount = resultSetMetaData.getColumnCount();
