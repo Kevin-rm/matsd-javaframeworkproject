@@ -64,14 +64,14 @@ public final class UtilFunctions {
         int columnCount = resultSetMetaData.getColumnCount();
 
         for (int i = 1; i <= columnCount; i++) {
-            String columnLabel = resultSetMetaData.getColumnLabel(i);
+            String columnName = resultSetMetaData.getColumnName(i);
 
             Field field;
             try {
-                field = clazz.getDeclaredField(columnLabel);
+                field = clazz.getDeclaredField(resultSetMetaData.getColumnName(i));
             } catch (NoSuchFieldException e) {
                 throw new MappingException(
-                    String.format("La classe \"%s\" n'a pas de champ nommé \"%s\"", clazz.getName(), columnLabel)
+                    String.format("La classe \"%s\" n'a pas de champ nommé \"%s\"", clazz.getName(), columnName)
                 );
             }
 

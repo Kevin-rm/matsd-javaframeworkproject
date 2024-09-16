@@ -13,7 +13,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
 
-class Relationship {
+public class Relationship {
     private static final Map<RelationshipType, Class<? extends Annotation>> RELATION_TYPE_ANNOTATION_MAP = Map.of(
         RelationshipType.MANY_TO_MANY, ManyToMany.class,
         RelationshipType.MANY_TO_ONE,  ManyToOne.class,
@@ -56,7 +56,7 @@ class Relationship {
         return field;
     }
 
-    RelationshipType getRelationshipType() {
+    public RelationshipType getRelationshipType() {
         return relationshipType;
     }
 
@@ -72,7 +72,7 @@ class Relationship {
         return this;
     }
 
-    Entity getTargetEntity() {
+    public Entity getTargetEntity() {
         return targetEntity;
     }
 
@@ -136,7 +136,8 @@ class Relationship {
         return this;
     }
 
-    Field getMappedBy() {
+    @Nullable
+    public Field getMappedBy() {
         return mappedBy;
     }
 
@@ -181,7 +182,8 @@ class Relationship {
         return this;
     }
 
-    List<JoinColumn> getJoinColumns() {
+    @Nullable
+    public List<JoinColumn> getJoinColumns() {
         return joinColumns;
     }
 
@@ -205,7 +207,8 @@ class Relationship {
         return this;
     }
 
-    JoinTable getJoinTable() {
+    @Nullable
+    public JoinTable getJoinTable() {
         return joinTable;
     }
 
@@ -221,7 +224,7 @@ class Relationship {
         return this;
     }
 
-    boolean isOptional() {
+    public boolean isOptional() {
         return optional;
     }
 
@@ -234,7 +237,7 @@ class Relationship {
         return this;
     }
 
-    boolean isOrphanRemoval() {
+    public boolean isOrphanRemoval() {
         return orphanRemoval;
     }
 
@@ -247,7 +250,7 @@ class Relationship {
         return this;
     }
 
-    FetchType getFetchType() {
+    public FetchType getFetchType() {
         return fetchType;
     }
 

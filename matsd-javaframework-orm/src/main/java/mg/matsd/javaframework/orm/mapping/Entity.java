@@ -136,4 +136,8 @@ public class Entity {
     public boolean hasColumn(String columnName) {
         return hasColumn(columnName, false);
     }
+
+    public boolean isJoinColumn(String columnName) {
+        return false;
+    }
 }

@@ -12,9 +12,13 @@ import mg.matsd.javaframework.orm.exceptions.NonUniqueColumnException;
 import mg.matsd.javaframework.orm.exceptions.NotSingleResultException;
 import mg.matsd.javaframework.orm.jdbc.ResultSetExtractor;
 import mg.matsd.javaframework.orm.jdbc.RowMapper;
+import mg.matsd.javaframework.orm.mapping.Column;
 import mg.matsd.javaframework.orm.mapping.Entity;
+import mg.matsd.javaframework.orm.mapping.Relationship;
 
+import java.lang.reflect.Field;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -199,6 +203,22 @@ public class Query<T> {
         @SuppressWarnings("unchecked")
         public T extractData(ResultSet resultSet) throws SQLException {
             T result = (T) UtilFunctions.instantiate(resultClass);
+
+            Entity entity = session.getEntity(resultClass);
+
+            ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
+            int columnCount = resultSetMetaData.getColumnCount();
+
+            for (int i = 1; i <= columnCount; i++) {
+                String columnName = resultSetMetaData.getColumnName(i);
+
+                Field field = entity.getColumn(columnName).getField();
+                field.setAccessible(true);
+                try {
+                    field.set(resultSet, resultSet.getObject(i, field.getType()));
+                } catch (IllegalAccessException ignored) { }
+            }
+
 
 
 
