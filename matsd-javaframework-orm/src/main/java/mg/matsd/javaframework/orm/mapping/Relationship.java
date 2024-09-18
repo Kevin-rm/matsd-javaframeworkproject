@@ -52,7 +52,7 @@ public class Relationship {
         return entity;
     }
 
-    Field getField() {
+    public Field getField() {
         return field;
     }
 
@@ -265,5 +265,13 @@ public class Relationship {
         return this;
     }
 
-    private enum RelationshipType { MANY_TO_MANY, MANY_TO_ONE, ONE_TO_MANY, ONE_TO_ONE }
+    public boolean isToOne() {
+        return relationshipType == RelationshipType.MANY_TO_ONE || relationshipType == RelationshipType.ONE_TO_ONE;
+    }
+
+    public boolean isToMany() {
+        return !isToOne();
+    }
+
+    public enum RelationshipType { MANY_TO_MANY, MANY_TO_ONE, ONE_TO_MANY, ONE_TO_ONE }
 }

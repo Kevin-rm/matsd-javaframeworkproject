@@ -9,6 +9,7 @@ import java.lang.reflect.Field;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.SQLOutput;
 
 public final class UtilFunctions {
     private UtilFunctions() { }
@@ -48,8 +49,21 @@ public final class UtilFunctions {
         }
     }
 
+    public static void setFieldValue(
+        Object instance, Field field, ResultSet resultSet, int columnIndex, @Nullable Class<?> fieldType
+    ) throws SQLException {
+        field.setAccessible(true);
+        try {
+            fieldType = fieldType == null ? field.getType() : fieldType;
+
+            Object value = resultSet.getObject(columnIndex, fieldType);
+            value = value == null && fieldType.isPrimitive() ? ClassUtils.getPrimitiveDefaultValue(fieldType) : value;
+            field.set(instance, value);
+        } catch (IllegalAccessException ignored) { }
+    }
+
     @SuppressWarnings("unchecked")
-    public static <T> T resultSetToObject(Class<T> clazz, ResultSet resultSet) throws SQLException {
+    public static <T> T resultSetRowToObject(Class<T> clazz, ResultSet resultSet) throws SQLException {
         T result;
 
         if (clazz == Object.class)
@@ -68,7 +82,7 @@ public final class UtilFunctions {
 
             Field field;
             try {
-                field = clazz.getDeclaredField(resultSetMetaData.getColumnName(i));
+                field = clazz.getDeclaredField(columnName);
             } catch (NoSuchFieldException e) {
                 throw new MappingException(
                     String.format("La classe \"%s\" n'a pas de champ nommé \"%s\"", clazz.getName(), columnName)
@@ -78,10 +92,7 @@ public final class UtilFunctions {
             Class<?> fieldType = field.getType();
             if (!ClassUtils.isStandardClass(fieldType)) continue;
 
-            field.setAccessible(true);
-            try {
-                field.set(result, resultSet.getObject(i, fieldType));
-            } catch (IllegalAccessException ignored) { }
+            setFieldValue(result, field, resultSet, i, fieldType);
         }
 
         return result;

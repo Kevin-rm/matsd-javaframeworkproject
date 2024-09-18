@@ -6,23 +6,19 @@ import mg.matsd.javaframework.core.utils.ClassUtils;
 import mg.matsd.javaframework.orm.base.Session;
 import mg.matsd.javaframework.orm.base.internal.SQLExecutor;
 import mg.matsd.javaframework.orm.base.internal.UtilFunctions;
-import mg.matsd.javaframework.orm.exceptions.DatabaseException;
-import mg.matsd.javaframework.orm.exceptions.NoResultException;
-import mg.matsd.javaframework.orm.exceptions.NonUniqueColumnException;
-import mg.matsd.javaframework.orm.exceptions.NotSingleResultException;
+import mg.matsd.javaframework.orm.exceptions.*;
 import mg.matsd.javaframework.orm.jdbc.ResultSetExtractor;
 import mg.matsd.javaframework.orm.jdbc.RowMapper;
-import mg.matsd.javaframework.orm.mapping.Column;
 import mg.matsd.javaframework.orm.mapping.Entity;
+import mg.matsd.javaframework.orm.mapping.FetchType;
 import mg.matsd.javaframework.orm.mapping.Relationship;
 
 import java.lang.reflect.Field;
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 public class Query<T> {
     private final Session session;
@@ -30,6 +26,10 @@ public class Query<T> {
     private String sql;
     @Nullable
     private Class<T> resultClass;
+    @Nullable
+    private RowMapper<T> rowMapper;
+    @Nullable
+    private ResultSetExtractor<T> resultSetExtractor;
     private int firstResult = -1;
     private int maxResults  = -1;
     private final List<QueryParameter> parameters;
@@ -37,10 +37,10 @@ public class Query<T> {
     public Query(Session session, String sql, @Nullable Class<T> resultClass) {
         Assert.notNull(session, "La session ne peut pas être \"null\"");
 
+        this.session = session;
         this.setSql(sql)
             .setResultClass(resultClass);
 
-        this.session = session;
         originalSql  = this.sql;
         parameters   = new ArrayList<>();
     }
@@ -85,6 +85,10 @@ public class Query<T> {
             );
 
         this.resultClass = resultClass;
+        if (session.isEntity(this.resultClass))
+             resultSetExtractor = new EntityResultSetExtractor();
+        else rowMapper          = new SimpleObjectRowMapper();
+
         return this;
     }
 
@@ -131,12 +135,16 @@ public class Query<T> {
         return this;
     }
 
+    @SuppressWarnings("unchecked")
     public List<T> getResultsAsList() throws DatabaseException {
         try {
-            if (session.isEntity(resultClass))
-                return null;
+            Connection connection = session.connection();
+            Object[] parameters   = prepareParameters();
 
-            return SQLExecutor.query(session.connection(), sql, new SimpleObjectRowMapper(), firstResult, maxResults, prepareParameters());
+            if (session.isEntity(resultClass))
+                return (List<T>) SQLExecutor.query(connection, sql, new MultipleEntitiesResultSetExtractor(), firstResult, maxResults, parameters);
+
+            return SQLExecutor.query(connection, sql, rowMapper, firstResult, maxResults, parameters);
         } catch (SQLException e) {
             throw new DatabaseException(e);
         }
@@ -147,7 +155,7 @@ public class Query<T> {
             if (session.isEntity(resultClass))
                 return null;
 
-            return SQLExecutor.queryForObject(session.connection(), sql, new SimpleObjectRowMapper(), firstResult, maxResults, prepareParameters());
+            return SQLExecutor.queryForObject(session.connection(), sql, rowMapper, firstResult, maxResults, prepareParameters());
         } catch (SQLException e) {
             throw new DatabaseException(e);
         }
@@ -186,7 +194,7 @@ public class Query<T> {
         @SuppressWarnings("unchecked")
         public T mapRow(ResultSet resultSet) throws SQLException {
             if (resultClass != null)
-                return UtilFunctions.resultSetToObject(resultClass, resultSet);
+                return UtilFunctions.resultSetRowToObject(resultClass, resultSet);
 
             int columnCount = resultSet.getMetaData().getColumnCount();
 
@@ -198,31 +206,120 @@ public class Query<T> {
         }
     }
 
+    private class MultipleEntitiesResultSetExtractor implements ResultSetExtractor<T> {
+        @Override
+        @SuppressWarnings("unchecked")
+        public T extractData(ResultSet resultSet) throws SQLException {
+            Map<Object, Object> entityInstances = new HashMap<>();
+
+            Entity entity = session.getEntity(resultClass);
+            String pkColumnName = entity.getPrimaryKey().get(0).getName();
+            while (resultSet.next()) {
+                Object pk = getPrimaryKeyValue(pkColumnName, resultSet);
+
+                Object instance = entityInstances.get(pk);
+                if (instance == null) {
+                    instance = hydrateSingleEntity(entity, resultSet);
+                    entityInstances.put(pk, instance);
+                }
+
+                for (Relationship relationship : entity.getRelationships()) {
+                    if (relationship.isToOne()) continue;
+
+                    ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
+                    Field f = relationship.getField();
+                    f.setAccessible(true);
+                    try {
+                        Collection collection = (Collection) f.get(instance);
+                        if (collection == null) {
+                            collection = new ArrayList();
+                            f.set(instance, collection);
+                        }
+                    } catch (IllegalAccessException ignored) { }
+                    Entity targetEntity = relationship.getTargetEntity();
+                    Object relatedInstance = UtilFunctions.instantiate(targetEntity.getClazz());
+                    for (int i = 1; i <= resultSetMetaData.getColumnCount(); i++) {
+                        if (!resultSetMetaData.getTableName(i).equals(targetEntity.getTableName())) continue;
+
+                        if (!targetEntity.hasColumn(resultSetMetaData.getColumnName(i))) continue;
+                        Field field = targetEntity.getColumn(resultSetMetaData.getColumnName(i)).getField();
+
+                        field.setAccessible(true);
+                        try {
+                            f.set(relatedInstance, resultSet.getObject(i));
+                        } catch (IllegalAccessException ignored) { }
+                    }
+                }
+            }
+
+            return (T) new ArrayList<>(entityInstances.values());
+        }
+    }
+
     private class EntityResultSetExtractor implements ResultSetExtractor<T> {
         @Override
         @SuppressWarnings("unchecked")
         public T extractData(ResultSet resultSet) throws SQLException {
-            T result = (T) UtilFunctions.instantiate(resultClass);
-
             Entity entity = session.getEntity(resultClass);
 
-            ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
-            int columnCount = resultSetMetaData.getColumnCount();
-
-            for (int i = 1; i <= columnCount; i++) {
-                String columnName = resultSetMetaData.getColumnName(i);
-
-                Field field = entity.getColumn(columnName).getField();
-                field.setAccessible(true);
-                try {
-                    field.set(resultSet, resultSet.getObject(i, field.getType()));
-                } catch (IllegalAccessException ignored) { }
-            }
-
-
-
-
-            return result;
+            return (T) hydrateSingleEntity(entity, resultSet);
         }
     }
- }
+
+    private Object getPrimaryKeyValue(String primaryKeyColumnName, ResultSet resultSet) throws SQLException {
+        ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
+
+        for (int i = 1; i <= resultSetMetaData.getColumnCount(); i++)
+            if (resultSetMetaData.getColumnName(i).equals(primaryKeyColumnName))
+                return resultSet.getObject(i);
+
+        throw new BadQueryException("");
+    }
+
+    private Object hydrateSingleEntity(Entity entity, ResultSet resultSet) throws SQLException {
+        Object result = UtilFunctions.instantiate(entity.getClazz());
+
+        ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
+        hydrateSingleEntity(result, null, entity, resultSet, resultSetMetaData, new int[]{1}, resultSetMetaData.getColumnCount());
+
+        return result;
+    }
+
+    private void hydrateSingleEntity(
+        Object instance,
+        @Nullable Entity previous,
+        Entity current,
+        ResultSet resultSet,
+        ResultSetMetaData resultSetMetaData,
+        int[] index,
+        int   columnCount
+    ) throws SQLException {
+        for (; index[0] <= columnCount; index[0]++) {
+            String columnName = resultSetMetaData.getColumnName(index[0]);
+            String tableName  = resultSetMetaData.getTableName(index[0]);
+
+            if (current.getTableName().equals(tableName) && current.hasColumn(columnName)) {
+                UtilFunctions.setFieldValue(instance, current.getColumn(columnName).getField(), resultSet, index[0], null);
+            } else {
+                Relationship relationship = current.getRelationshipByTableName(tableName);
+                if (relationship == null) continue;
+
+                Entity targetEntity = relationship.getTargetEntity();
+                if (
+                    targetEntity == previous ||
+                    relationship.getFetchType() != FetchType.EAGER ||
+                    relationship.isToMany()
+                ) continue;
+
+                Object obj = UtilFunctions.instantiate(targetEntity.getClazz());
+                hydrateSingleEntity(obj, current, targetEntity, resultSet, resultSetMetaData, index, columnCount);
+
+                Field relationshipField = relationship.getField();
+                relationshipField.setAccessible(true);
+                try {
+                    relationshipField.set(instance, obj);
+                } catch (IllegalAccessException ignored) { }
+            }
+        }
+    }
+}

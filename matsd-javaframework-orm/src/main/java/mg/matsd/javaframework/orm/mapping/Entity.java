@@ -1,5 +1,6 @@
 package mg.matsd.javaframework.orm.mapping;
 
+import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.core.utils.StringUtils;
 import mg.matsd.javaframework.orm.annotations.PrimaryKey;
@@ -137,7 +138,13 @@ public class Entity {
         return hasColumn(columnName, false);
     }
 
-    public boolean isJoinColumn(String columnName) {
-        return false;
+    @Nullable
+    public Relationship getRelationshipByTableName(String relationshipTableName) {
+        Assert.notBlank(relationshipTableName, false, "Le nom de table de la relation ne peut pas être vide ou \"null\"");
+
+        return relationships.stream()
+            .filter(relationship -> relationship.getTargetEntity().getTableName().equals(relationshipTableName))
+            .findFirst()
+            .orElse(null);
     }
 }
