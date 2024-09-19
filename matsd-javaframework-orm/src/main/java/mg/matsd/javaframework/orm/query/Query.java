@@ -280,7 +280,8 @@ public class Query<T> {
         Object result = UtilFunctions.instantiate(entity.getClazz());
 
         ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
-        hydrateSingleEntity(result, null, entity, resultSet, resultSetMetaData, new int[]{1}, resultSetMetaData.getColumnCount());
+        hydrateSingleEntity(
+            result, null, entity, resultSet, resultSetMetaData, new int[]{1}, resultSetMetaData.getColumnCount(), new HashMap<>());
 
         return result;
     }
@@ -292,7 +293,8 @@ public class Query<T> {
         ResultSet resultSet,
         ResultSetMetaData resultSetMetaData,
         int[] index,
-        int   columnCount
+        int   columnCount,
+        Map<String, Relationship> visitedRelationships
     ) throws SQLException {
         for (; index[0] <= columnCount; index[0]++) {
             String columnName = resultSetMetaData.getColumnName(index[0]);
@@ -301,25 +303,38 @@ public class Query<T> {
             if (current.getTableName().equals(tableName) && current.hasColumn(columnName)) {
                 UtilFunctions.setFieldValue(instance, current.getColumn(columnName).getField(), resultSet, index[0], null);
             } else {
-                Relationship relationship = current.getRelationshipByTableName(tableName);
+                Relationship relationship = getRelationshipByTableName(current, tableName, visitedRelationships);
                 if (relationship == null) continue;
 
                 Entity targetEntity = relationship.getTargetEntity();
-                if (
-                    targetEntity == previous ||
-                    relationship.getFetchType() != FetchType.EAGER ||
-                    relationship.isToMany()
-                ) continue;
+                if (previous == targetEntity) {
+                    index[0] --;
+                    return;
+                }
 
-                Object obj = UtilFunctions.instantiate(targetEntity.getClazz());
-                hydrateSingleEntity(obj, current, targetEntity, resultSet, resultSetMetaData, index, columnCount);
+                if (relationship.getFetchType() != FetchType.EAGER || relationship.isToMany()) continue;
 
                 Field relationshipField = relationship.getField();
                 relationshipField.setAccessible(true);
                 try {
+                    Object obj = relationshipField.get(instance);
+                    obj = obj == null ? UtilFunctions.instantiate(targetEntity.getClazz()) : obj;
+                    hydrateSingleEntity(obj, current, targetEntity, resultSet, resultSetMetaData, index, columnCount, visitedRelationships);
+
                     relationshipField.set(instance, obj);
                 } catch (IllegalAccessException ignored) { }
+
+                visitedRelationships.put(tableName, relationship);
             }
         }
+    }
+
+    private static Relationship getRelationshipByTableName(Entity current, String tableName, Map<String, Relationship> visitedRelationships) {
+        if (visitedRelationships.containsKey(tableName)) return visitedRelationships.get(tableName);
+
+        return current.getRelationships().stream()
+            .filter(relationship -> relationship.getTargetEntity().getTableName().equals(tableName))
+            .findFirst()
+            .orElse(null);
     }
 }
