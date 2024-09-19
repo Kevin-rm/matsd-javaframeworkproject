@@ -1,9 +1,9 @@
-package mg.matsd.javaframework.orm.mapping;
+package mg.matsd.javaframework.orm.base;
 
 import mg.matsd.javaframework.core.exceptions.BaseException;
 
-public class EntityNotFoundException extends BaseException {
-    public EntityNotFoundException(Class<?> clazz) {
+class EntityNotFoundException extends BaseException {
+    EntityNotFoundException(Class<?> clazz) {
         super(String.format("Aucune entité trouvée ayant comme nom de classe : \"%s\"", clazz.getName()));
     }
 }

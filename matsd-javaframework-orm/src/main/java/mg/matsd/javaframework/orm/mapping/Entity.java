@@ -145,13 +145,4 @@ public class Entity {
     public List<Relationship> getToOneRelationships() {
         return relationships.stream().filter(Relationship::isToOne).collect(Collectors.toList());
     }
-
-    public boolean hasRelationship(String tableName) {
-        Assert.notBlank(tableName, false, "Le nom de table ne peut pas être vide ou \"null\"");
-
-        return relationships.stream()
-            .anyMatch(relationship ->
-                relationship.getTargetEntity().getTableName().equals(tableName)
-            );
-    }
 }

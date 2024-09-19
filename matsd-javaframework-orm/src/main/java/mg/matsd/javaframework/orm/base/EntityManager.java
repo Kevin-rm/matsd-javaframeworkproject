@@ -5,7 +5,6 @@ import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.orm.connection.DatabaseConnector;
 import mg.matsd.javaframework.orm.exceptions.DatabaseException;
 import mg.matsd.javaframework.orm.mapping.Entity;
-import mg.matsd.javaframework.orm.mapping.EntityNotFoundException;
 import mg.matsd.javaframework.orm.query.Query;
 
 import java.sql.Connection;
@@ -34,8 +33,7 @@ public class EntityManager implements Session {
         Assert.notNull(entityClass, "La classe de l'entité à récupérer ne peut pas être \"null\"");
 
         Entity entity = entityManagerFactory.getSessionFactoryOptions().getEntity(entityClass);
-        if (entity == null)
-            throw new EntityNotFoundException(entityClass);
+        if (entity == null) throw new EntityNotFoundException(entityClass);
 
         return entity;
     }

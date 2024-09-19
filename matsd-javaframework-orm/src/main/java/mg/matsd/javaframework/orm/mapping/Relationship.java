@@ -13,12 +13,14 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
 
+import static mg.matsd.javaframework.orm.mapping.RelationshipType.*;
+
 public class Relationship {
     private static final Map<RelationshipType, Class<? extends Annotation>> RELATION_TYPE_ANNOTATION_MAP = Map.of(
-        RelationshipType.MANY_TO_MANY, ManyToMany.class,
-        RelationshipType.MANY_TO_ONE,  ManyToOne.class,
-        RelationshipType.ONE_TO_MANY,  OneToMany.class,
-        RelationshipType.ONE_TO_ONE,   OneToOne.class
+        MANY_TO_MANY, ManyToMany.class,
+        MANY_TO_ONE,  ManyToOne.class,
+        ONE_TO_MANY,  OneToMany.class,
+        ONE_TO_ONE,   OneToOne.class
     );
 
     private final Entity entity;
@@ -83,7 +85,7 @@ public class Relationship {
         final String fieldName       = field.getName();
         final String entityClassName = entity.getClazz().getName();
 
-        if (relationshipType == RelationshipType.MANY_TO_ONE || relationshipType == RelationshipType.ONE_TO_ONE) {
+        if (relationshipType == MANY_TO_ONE || relationshipType == ONE_TO_ONE) {
             if (field.isAnnotationPresent(ManyToOne.class))
                 targetEntityClass = field.getAnnotation(ManyToOne.class).targetEntity();
             else if (field.isAnnotationPresent(OneToOne.class))
@@ -99,7 +101,7 @@ public class Relationship {
             if (!Collection.class.isAssignableFrom(fieldType))
                 throw new MappingException(String.format("Les colonnes de type relation (%s et %s) " +
                     "doivent être des collections, mais le champ \"%s\" de l'entité \"%s\" est de type \"%s\"",
-                    RelationshipType.MANY_TO_MANY, RelationshipType.ONE_TO_MANY, fieldName, entityClassName, fieldType)
+                    MANY_TO_MANY, ONE_TO_MANY, fieldName, entityClassName, fieldType)
                 );
 
             if (field.isAnnotationPresent(ManyToMany.class))
@@ -144,11 +146,11 @@ public class Relationship {
     @SuppressWarnings("all")
     private Relationship setMappedBy() {
         String mappedBy = null;
-        if (relationshipType == RelationshipType.MANY_TO_MANY)
+        if (relationshipType == MANY_TO_MANY)
             mappedBy = field.getAnnotation(ManyToMany.class).mappedBy();
-        else if (relationshipType == RelationshipType.ONE_TO_MANY)
+        else if (relationshipType == ONE_TO_MANY)
             mappedBy = field.getAnnotation(OneToMany.class).mappedBy();
-        else if (relationshipType == RelationshipType.ONE_TO_ONE)
+        else if (relationshipType == ONE_TO_ONE)
             mappedBy = field.getAnnotation(OneToOne.class).mappedBy();
 
         if (mappedBy == null || StringUtils.isBlank(mappedBy)) return this;
@@ -188,8 +190,8 @@ public class Relationship {
     }
 
     private Relationship setJoinColumns() {
-        if (relationshipType  != RelationshipType.MANY_TO_ONE &&
-            (relationshipType != RelationshipType.ONE_TO_ONE || mappedBy != null)
+        if (relationshipType  != MANY_TO_ONE &&
+            (relationshipType != ONE_TO_ONE || mappedBy != null)
         ) return this;
 
         mg.matsd.javaframework.orm.annotations.JoinColumn[] joinColumns = null;
@@ -213,7 +215,7 @@ public class Relationship {
     }
 
     private Relationship setJoinTable() {
-        if ((relationshipType != RelationshipType.MANY_TO_MANY && relationshipType != RelationshipType.ONE_TO_MANY) || mappedBy != null)
+        if ((relationshipType != MANY_TO_MANY && relationshipType != ONE_TO_MANY) || mappedBy != null)
             return this;
 
         mg.matsd.javaframework.orm.annotations.JoinTable j = null;
@@ -229,9 +231,9 @@ public class Relationship {
     }
 
     private Relationship setOptional() {
-        if (relationshipType == RelationshipType.MANY_TO_ONE)
+        if (relationshipType == MANY_TO_ONE)
             optional = field.getAnnotation(ManyToOne.class).optional();
-        else if (relationshipType == RelationshipType.ONE_TO_ONE)
+        else if (relationshipType == ONE_TO_ONE)
             optional = field.getAnnotation(OneToOne.class).optional();
 
         return this;
@@ -242,9 +244,9 @@ public class Relationship {
     }
 
     private Relationship setOrphanRemoval() {
-        if (relationshipType == RelationshipType.ONE_TO_MANY)
+        if (relationshipType == ONE_TO_MANY)
             orphanRemoval = field.getAnnotation(OneToMany.class).orphanRemoval();
-        else if (relationshipType == RelationshipType.ONE_TO_ONE)
+        else if (relationshipType == ONE_TO_ONE)
             orphanRemoval = field.getAnnotation(OneToOne.class).orphanRemoval();
 
         return this;
@@ -266,12 +268,10 @@ public class Relationship {
     }
 
     public boolean isToOne() {
-        return relationshipType == RelationshipType.MANY_TO_ONE || relationshipType == RelationshipType.ONE_TO_ONE;
+        return relationshipType == MANY_TO_ONE || relationshipType == ONE_TO_ONE;
     }
 
     public boolean isToMany() {
         return !isToOne();
     }
-
-    public enum RelationshipType { MANY_TO_MANY, MANY_TO_ONE, ONE_TO_MANY, ONE_TO_ONE }
 }

@@ -1,25 +1,24 @@
 package mg.matsd.javaframework.orm.query;
 
-import com.sun.jdi.InternalException;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.core.utils.ClassUtils;
 import mg.matsd.javaframework.orm.base.Session;
 import mg.matsd.javaframework.orm.base.internal.SQLExecutor;
-import mg.matsd.javaframework.orm.base.internal.UtilFunctions;
-import mg.matsd.javaframework.orm.exceptions.*;
+import mg.matsd.javaframework.orm.exceptions.DatabaseException;
+import mg.matsd.javaframework.orm.exceptions.NoResultException;
+import mg.matsd.javaframework.orm.exceptions.NonUniqueColumnException;
+import mg.matsd.javaframework.orm.exceptions.NotSingleResultException;
 import mg.matsd.javaframework.orm.jdbc.ResultSetExtractor;
 import mg.matsd.javaframework.orm.jdbc.RowMapper;
 import mg.matsd.javaframework.orm.mapping.Entity;
-import mg.matsd.javaframework.orm.mapping.FetchType;
-import mg.matsd.javaframework.orm.mapping.Relationship;
 
-import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.*;
+
+import static mg.matsd.javaframework.orm.base.internal.UtilFunctions.*;
 
 public class Query<T> {
     private final Session session;
@@ -27,10 +26,6 @@ public class Query<T> {
     private String sql;
     @Nullable
     private Class<T> resultClass;
-    @Nullable
-    private RowMapper<T> rowMapper;
-    @Nullable
-    private ResultSetExtractor<T> resultSetExtractor;
     private int firstResult = -1;
     private int maxResults  = -1;
     private final List<QueryParameter> parameters;
@@ -38,10 +33,10 @@ public class Query<T> {
     public Query(Session session, String sql, @Nullable Class<T> resultClass) {
         Assert.notNull(session, "La session ne peut pas être \"null\"");
 
-        this.session = session;
         this.setSql(sql)
             .setResultClass(resultClass);
 
+        this.session = session;
         originalSql  = this.sql;
         parameters   = new ArrayList<>();
     }
@@ -86,10 +81,6 @@ public class Query<T> {
             );
 
         this.resultClass = resultClass;
-        if (session.isEntity(this.resultClass))
-             resultSetExtractor = new SingleEntityResultSetExtractor();
-        else rowMapper          = new SimpleObjectRowMapper();
-
         return this;
     }
 
@@ -145,7 +136,7 @@ public class Query<T> {
             if (session.isEntity(resultClass))
                 return (List<T>) SQLExecutor.query(connection, sql, new MultipleEntitiesResultSetExtractor(), firstResult, maxResults, parameters);
 
-            return SQLExecutor.query(connection, sql, rowMapper, firstResult, maxResults, parameters);
+            return SQLExecutor.query(connection, sql, new SimpleObjectRowMapper(), firstResult, maxResults, parameters);
         } catch (SQLException e) {
             throw new DatabaseException(e);
         }
@@ -159,7 +150,7 @@ public class Query<T> {
             if (session.isEntity(resultClass))
                 return SQLExecutor.query(connection, sql, new SingleEntityResultSetExtractor(), firstResult, maxResults, parameters);
 
-            return SQLExecutor.queryForObject(connection, sql, rowMapper, firstResult, maxResults, parameters);
+            return SQLExecutor.queryForObject(connection, sql, new SimpleObjectRowMapper(), firstResult, maxResults, parameters);
         } catch (SQLException e) {
             throw new DatabaseException(e);
         }
@@ -198,7 +189,7 @@ public class Query<T> {
         @SuppressWarnings("unchecked")
         public T mapRow(ResultSet resultSet) throws SQLException {
             if (resultClass != null)
-                return UtilFunctions.resultSetRowToObject(resultClass, resultSet);
+                return resultSetRowToObject(resultClass, resultSet);
 
             int columnCount = resultSet.getMetaData().getColumnCount();
 
@@ -210,30 +201,6 @@ public class Query<T> {
         }
     }
 
-    private class MultipleEntitiesResultSetExtractor implements ResultSetExtractor<T> {
-        @Override
-        @SuppressWarnings("unchecked")
-        public T extractData(ResultSet resultSet) throws SQLException {
-            Map<Object, Object> entityInstances = new HashMap<>();
-
-            Entity entity = session.getEntity(resultClass);
-            String pkColumnName = entity.getPrimaryKey().get(0).getName();
-            while (resultSet.next()) {
-                Object pk = getPrimaryKeyValue(pkColumnName, resultSet);
-
-                Object instance = entityInstances.get(pk);
-                if (instance == null) {
-                    instance = hydrateSingleEntity(entity, resultSet);
-                    entityInstances.put(pk, instance);
-                }
-
-                loadEagerToManyRelationships(entity, instance, resultSet);
-            }
-
-            return (T) new ArrayList<>(entityInstances.values());
-        }
-    }
-
     private class SingleEntityResultSetExtractor implements ResultSetExtractor<T> {
         @Override
         @SuppressWarnings("unchecked")
@@ -241,113 +208,45 @@ public class Query<T> {
             Entity entity = session.getEntity(resultClass);
 
             Object instance = null;
+            List<Object> primaryKeyValue = new ArrayList<>();
             while (resultSet.next()) {
-                if (instance == null)
-                    instance = hydrateSingleEntity(entity, resultSet);
+                List<Object> currentPrimaryKeyValue = retrievePrimaryKeyValue(entity, sql, resultSet);
+                if (!primaryKeyValue.isEmpty() && !primaryKeyValue.equals(currentPrimaryKeyValue))
+                    throw new NotSingleResultException(sql, entity);
 
-                loadEagerToManyRelationships(entity, instance, resultSet);
+                if (instance == null) {
+                    primaryKeyValue = retrievePrimaryKeyValue(entity, sql, resultSet);
+                    instance = hydrateSingleEntity(entity, resultSet);
+                }
+
+                fecthEagerToManyRelationships(entity, instance, resultSet);
             }
-            if (instance == null) throw new NoResultException(sql);
+            if (instance == null) throw new NoResultException(sql, entity);
 
             return (T) instance;
         }
     }
 
-    private Object getPrimaryKeyValue(String primaryKeyColumnName, ResultSet resultSet) throws SQLException {
-        ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
+    private class MultipleEntitiesResultSetExtractor implements ResultSetExtractor<T> {
+        @Override
+        @SuppressWarnings("unchecked")
+        public T extractData(ResultSet resultSet) throws SQLException {
+            Map<List<Object>, Object> instances = new HashMap<>();
 
-        for (int i = 1; i <= resultSetMetaData.getColumnCount(); i++)
-            if (resultSetMetaData.getColumnName(i).equals(primaryKeyColumnName))
-                return resultSet.getObject(i);
+            Entity entity = session.getEntity(resultClass);
+            while (resultSet.next()) {
+                List<Object> primaryKeyValue = retrievePrimaryKeyValue(entity, sql, resultSet);
 
-        throw new BadQueryException("");
-    }
-
-    private static Object hydrateSingleEntity(Entity entity, ResultSet resultSet) throws SQLException {
-        ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
-
-        return hydrateSingleEntity(
-            null, null, entity, resultSet, resultSetMetaData, new int[]{1}, resultSetMetaData.getColumnCount(), new HashMap<>());
-    }
-
-    private static Object hydrateSingleEntity(
-        @Nullable Object instance,
-        @Nullable Entity previous,
-        Entity current,
-        ResultSet resultSet,
-        ResultSetMetaData resultSetMetaData,
-        int[] index,
-        int   columnCount,
-        Map<String, Relationship> visitedRelationships
-    ) throws SQLException {
-        for (; index[0] <= columnCount; index[0]++) {
-            String columnName = resultSetMetaData.getColumnName(index[0]);
-            String tableName  = resultSetMetaData.getTableName(index[0]);
-
-            if (current.getTableName().equals(tableName) && current.hasColumn(columnName)) {
-                if (instance == null) instance = UtilFunctions.instantiate(current.getClazz());
-
-                UtilFunctions.setFieldValue(instance, current.getColumn(columnName).getField(), resultSet, index[0], null);
-            } else {
-                if (previous != null && previous.hasRelationship(tableName)) {
-                    index[0]--;
-                    return instance;
+                Object instance = instances.get(primaryKeyValue);
+                if (instance == null) {
+                    instance = hydrateSingleEntity(entity, resultSet);
+                    instances.put(primaryKeyValue, instance);
                 }
 
-                Relationship relationship = getRelationshipByTableName(current, tableName, visitedRelationships);
-                if (relationship == null || relationship.getFetchType() != FetchType.EAGER || relationship.isToMany()) continue;
-
-                Entity targetEntity = relationship.getTargetEntity();
-                if (previous == targetEntity) {
-                    index[0] --;
-                    return instance;
-                }
-
-                Field relationshipField = relationship.getField();
-                relationshipField.setAccessible(true);
-                try {
-                    if (instance == null) throw new BadQueryException(String.format("Aucune colonne de l'entité \"%s\" n'a été trouvée dans la requête, " +
-                        "pourtant des colonnes de relation avec l'entité \"%s\" y sont présentes", current.getClazz(), targetEntity.getClazz()));
-
-                    Object fieldValue = relationshipField.get(instance);
-                    fieldValue = hydrateSingleEntity(fieldValue, current, targetEntity, resultSet, resultSetMetaData, index, columnCount, visitedRelationships);
-
-                    relationshipField.set(instance, fieldValue);
-                } catch (IllegalAccessException ignored) { }
-
-                visitedRelationships.put(tableName, relationship);
+                fecthEagerToManyRelationships(entity, instance, resultSet);
             }
+
+            return (T) new ArrayList<>(instances.values());
         }
-
-        return instance;
-    }
-
-    @SuppressWarnings("all")
-    private static void loadEagerToManyRelationships(Entity entity, Object instance, ResultSet resultSet) throws SQLException {
-        for (Relationship relationship : entity.getToManyRelationships()) {;
-            Field relationshipField = relationship.getField();
-            relationshipField.setAccessible(true);
-
-            try {
-                Collection collection = (Collection) relationshipField.get(instance);
-                if (collection == null) {
-                    collection = new ArrayList<>();
-                    relationshipField.set(instance, collection);
-                }
-
-                collection.add(hydrateSingleEntity(relationship.getTargetEntity(), resultSet));
-            } catch (IllegalAccessException e) {
-                throw new InternalException();
-            }
-        }
-    }
-
-    private static Relationship getRelationshipByTableName(Entity current, String tableName, Map<String, Relationship> visitedRelationships) {
-        if (visitedRelationships.containsKey(tableName)) return visitedRelationships.get(tableName);
-
-        return current.getRelationships().stream()
-            .filter(relationship -> relationship.getTargetEntity().getTableName().equals(tableName))
-            .findFirst()
-            .orElse(null);
     }
 }
