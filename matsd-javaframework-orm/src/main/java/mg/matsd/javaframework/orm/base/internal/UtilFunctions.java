@@ -9,7 +9,6 @@ import java.lang.reflect.Field;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.sql.SQLOutput;
 
 public final class UtilFunctions {
     private UtilFunctions() { }

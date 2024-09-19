@@ -1,5 +1,6 @@
 package mg.matsd.javaframework.orm.query;
 
+import com.sun.jdi.InternalException;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.core.utils.ClassUtils;
@@ -86,7 +87,7 @@ public class Query<T> {
 
         this.resultClass = resultClass;
         if (session.isEntity(this.resultClass))
-             resultSetExtractor = new EntityResultSetExtractor();
+             resultSetExtractor = new SingleEntityResultSetExtractor();
         else rowMapper          = new SimpleObjectRowMapper();
 
         return this;
@@ -152,10 +153,13 @@ public class Query<T> {
 
     public T getSingleResult() throws DatabaseException, NoResultException, NotSingleResultException {
         try {
-            if (session.isEntity(resultClass))
-                return null;
+            Connection connection = session.connection();
+            Object[] parameters   = prepareParameters();
 
-            return SQLExecutor.queryForObject(session.connection(), sql, rowMapper, firstResult, maxResults, prepareParameters());
+            if (session.isEntity(resultClass))
+                return SQLExecutor.query(connection, sql, new SingleEntityResultSetExtractor(), firstResult, maxResults, parameters);
+
+            return SQLExecutor.queryForObject(connection, sql, rowMapper, firstResult, maxResults, parameters);
         } catch (SQLException e) {
             throw new DatabaseException(e);
         }
@@ -223,46 +227,29 @@ public class Query<T> {
                     entityInstances.put(pk, instance);
                 }
 
-                for (Relationship relationship : entity.getRelationships()) {
-                    if (relationship.isToOne()) continue;
-
-                    ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
-                    Field f = relationship.getField();
-                    f.setAccessible(true);
-                    try {
-                        Collection collection = (Collection) f.get(instance);
-                        if (collection == null) {
-                            collection = new ArrayList();
-                            f.set(instance, collection);
-                        }
-                    } catch (IllegalAccessException ignored) { }
-                    Entity targetEntity = relationship.getTargetEntity();
-                    Object relatedInstance = UtilFunctions.instantiate(targetEntity.getClazz());
-                    for (int i = 1; i <= resultSetMetaData.getColumnCount(); i++) {
-                        if (!resultSetMetaData.getTableName(i).equals(targetEntity.getTableName())) continue;
-
-                        if (!targetEntity.hasColumn(resultSetMetaData.getColumnName(i))) continue;
-                        Field field = targetEntity.getColumn(resultSetMetaData.getColumnName(i)).getField();
-
-                        field.setAccessible(true);
-                        try {
-                            f.set(relatedInstance, resultSet.getObject(i));
-                        } catch (IllegalAccessException ignored) { }
-                    }
-                }
+                loadEagerToManyRelationships(entity, instance, resultSet);
             }
 
             return (T) new ArrayList<>(entityInstances.values());
         }
     }
 
-    private class EntityResultSetExtractor implements ResultSetExtractor<T> {
+    private class SingleEntityResultSetExtractor implements ResultSetExtractor<T> {
         @Override
         @SuppressWarnings("unchecked")
         public T extractData(ResultSet resultSet) throws SQLException {
             Entity entity = session.getEntity(resultClass);
 
-            return (T) hydrateSingleEntity(entity, resultSet);
+            Object instance = null;
+            while (resultSet.next()) {
+                if (instance == null)
+                    instance = hydrateSingleEntity(entity, resultSet);
+
+                loadEagerToManyRelationships(entity, instance, resultSet);
+            }
+            if (instance == null) throw new NoResultException(sql);
+
+            return (T) instance;
         }
     }
 
@@ -276,18 +263,15 @@ public class Query<T> {
         throw new BadQueryException("");
     }
 
-    private Object hydrateSingleEntity(Entity entity, ResultSet resultSet) throws SQLException {
-        Object result = UtilFunctions.instantiate(entity.getClazz());
-
+    private static Object hydrateSingleEntity(Entity entity, ResultSet resultSet) throws SQLException {
         ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
-        hydrateSingleEntity(
-            result, null, entity, resultSet, resultSetMetaData, new int[]{1}, resultSetMetaData.getColumnCount(), new HashMap<>());
 
-        return result;
+        return hydrateSingleEntity(
+            null, null, entity, resultSet, resultSetMetaData, new int[]{1}, resultSetMetaData.getColumnCount(), new HashMap<>());
     }
 
-    private void hydrateSingleEntity(
-        Object instance,
+    private static Object hydrateSingleEntity(
+        @Nullable Object instance,
         @Nullable Entity previous,
         Entity current,
         ResultSet resultSet,
@@ -301,30 +285,59 @@ public class Query<T> {
             String tableName  = resultSetMetaData.getTableName(index[0]);
 
             if (current.getTableName().equals(tableName) && current.hasColumn(columnName)) {
+                if (instance == null) instance = UtilFunctions.instantiate(current.getClazz());
+
                 UtilFunctions.setFieldValue(instance, current.getColumn(columnName).getField(), resultSet, index[0], null);
             } else {
+                if (previous != null && previous.hasRelationship(tableName)) {
+                    index[0]--;
+                    return instance;
+                }
+
                 Relationship relationship = getRelationshipByTableName(current, tableName, visitedRelationships);
-                if (relationship == null) continue;
+                if (relationship == null || relationship.getFetchType() != FetchType.EAGER || relationship.isToMany()) continue;
 
                 Entity targetEntity = relationship.getTargetEntity();
                 if (previous == targetEntity) {
                     index[0] --;
-                    return;
+                    return instance;
                 }
-
-                if (relationship.getFetchType() != FetchType.EAGER || relationship.isToMany()) continue;
 
                 Field relationshipField = relationship.getField();
                 relationshipField.setAccessible(true);
                 try {
-                    Object obj = relationshipField.get(instance);
-                    obj = obj == null ? UtilFunctions.instantiate(targetEntity.getClazz()) : obj;
-                    hydrateSingleEntity(obj, current, targetEntity, resultSet, resultSetMetaData, index, columnCount, visitedRelationships);
+                    if (instance == null) throw new BadQueryException(String.format("Aucune colonne de l'entité \"%s\" n'a été trouvée dans la requête, " +
+                        "pourtant des colonnes de relation avec l'entité \"%s\" y sont présentes", current.getClazz(), targetEntity.getClazz()));
 
-                    relationshipField.set(instance, obj);
+                    Object fieldValue = relationshipField.get(instance);
+                    fieldValue = hydrateSingleEntity(fieldValue, current, targetEntity, resultSet, resultSetMetaData, index, columnCount, visitedRelationships);
+
+                    relationshipField.set(instance, fieldValue);
                 } catch (IllegalAccessException ignored) { }
 
                 visitedRelationships.put(tableName, relationship);
+            }
+        }
+
+        return instance;
+    }
+
+    @SuppressWarnings("all")
+    private static void loadEagerToManyRelationships(Entity entity, Object instance, ResultSet resultSet) throws SQLException {
+        for (Relationship relationship : entity.getToManyRelationships()) {;
+            Field relationshipField = relationship.getField();
+            relationshipField.setAccessible(true);
+
+            try {
+                Collection collection = (Collection) relationshipField.get(instance);
+                if (collection == null) {
+                    collection = new ArrayList<>();
+                    relationshipField.set(instance, collection);
+                }
+
+                collection.add(hydrateSingleEntity(relationship.getTargetEntity(), resultSet));
+            } catch (IllegalAccessException e) {
+                throw new InternalException();
             }
         }
     }

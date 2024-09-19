@@ -11,6 +11,7 @@ import mg.matsd.javaframework.orm.setup.SessionFactoryOptions;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Entity {
     private final SessionFactoryOptions sessionFactoryOptions;
@@ -135,5 +136,22 @@ public class Entity {
 
     public boolean hasColumn(String columnName) {
         return hasColumn(columnName, false);
+    }
+
+    public List<Relationship> getToManyRelationships() {
+        return relationships.stream().filter(Relationship::isToMany).collect(Collectors.toList());
+    }
+
+    public List<Relationship> getToOneRelationships() {
+        return relationships.stream().filter(Relationship::isToOne).collect(Collectors.toList());
+    }
+
+    public boolean hasRelationship(String tableName) {
+        Assert.notBlank(tableName, false, "Le nom de table ne peut pas être vide ou \"null\"");
+
+        return relationships.stream()
+            .anyMatch(relationship ->
+                relationship.getTargetEntity().getTableName().equals(tableName)
+            );
     }
 }
