@@ -9,16 +9,15 @@ import mg.matsd.javaframework.orm.exceptions.DatabaseException;
 import mg.matsd.javaframework.orm.exceptions.NoResultException;
 import mg.matsd.javaframework.orm.exceptions.NonUniqueColumnException;
 import mg.matsd.javaframework.orm.exceptions.NotSingleResultException;
-import mg.matsd.javaframework.orm.jdbc.ResultSetExtractor;
-import mg.matsd.javaframework.orm.jdbc.RowMapper;
-import mg.matsd.javaframework.orm.mapping.Entity;
+import mg.matsd.javaframework.orm.query.transformer.MultipleEntitiesResultSetExtractor;
+import mg.matsd.javaframework.orm.query.transformer.SimpleObjectRowMapper;
+import mg.matsd.javaframework.orm.query.transformer.SingleEntityResultSetExtractor;
 
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
-
-import static mg.matsd.javaframework.orm.base.internal.UtilFunctions.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 public class Query<T> {
     private final Session session;
@@ -29,6 +28,9 @@ public class Query<T> {
     private int firstResult = -1;
     private int maxResults  = -1;
     private final List<QueryParameter> parameters;
+    private SimpleObjectRowMapper<T> simpleObjectRowMapper;
+    private SingleEntityResultSetExtractor<T> singleEntityResultSetExtractor;
+    private MultipleEntitiesResultSetExtractor<T> multipleEntitiesResultSetExtractor;
 
     public Query(Session session, String sql, @Nullable Class<T> resultClass) {
         Assert.notNull(session, "La session ne peut pas être \"null\"");
@@ -43,6 +45,10 @@ public class Query<T> {
 
     public Query(Session session, String sql) {
         this(session, sql, null);
+    }
+
+    public Session getSession() {
+        return session;
     }
 
     public String getOriginalSql() {
@@ -133,10 +139,13 @@ public class Query<T> {
             Connection connection = session.connection();
             Object[] parameters   = prepareParameters();
 
-            if (session.isEntity(resultClass))
-                return (List<T>) SQLExecutor.query(connection, sql, new MultipleEntitiesResultSetExtractor(), firstResult, maxResults, parameters);
+            if (session.isEntity(resultClass)) {
+                ensureMultipleEntitiesResultSetExtractor();
+                return (List<T>) SQLExecutor.query(connection, sql, multipleEntitiesResultSetExtractor, firstResult, maxResults, parameters);
+            }
 
-            return SQLExecutor.query(connection, sql, new SimpleObjectRowMapper(), firstResult, maxResults, parameters);
+            ensureSimpleObjectRowMapper();
+            return SQLExecutor.query(connection, sql, simpleObjectRowMapper, firstResult, maxResults, parameters);
         } catch (SQLException e) {
             throw new DatabaseException(e);
         }
@@ -147,10 +156,13 @@ public class Query<T> {
             Connection connection = session.connection();
             Object[] parameters   = prepareParameters();
 
-            if (session.isEntity(resultClass))
-                return SQLExecutor.query(connection, sql, new SingleEntityResultSetExtractor(), firstResult, maxResults, parameters);
+            if (session.isEntity(resultClass)) {
+                ensureSingleEntityResultSetExtractor();
+                return SQLExecutor.query(connection, sql, singleEntityResultSetExtractor, firstResult, maxResults, parameters);
+            }
 
-            return SQLExecutor.queryForObject(connection, sql, new SimpleObjectRowMapper(), firstResult, maxResults, parameters);
+            ensureSimpleObjectRowMapper();
+            return SQLExecutor.queryForObject(connection, sql, simpleObjectRowMapper, firstResult, maxResults, parameters);
         } catch (SQLException e) {
             throw new DatabaseException(e);
         }
@@ -184,69 +196,18 @@ public class Query<T> {
         return params;
     }
 
-    private class SimpleObjectRowMapper implements RowMapper<T> {
-        @Override
-        @SuppressWarnings("unchecked")
-        public T mapRow(ResultSet resultSet) throws SQLException {
-            if (resultClass != null)
-                return resultSetRowToObject(resultClass, resultSet);
-
-            int columnCount = resultSet.getMetaData().getColumnCount();
-
-            Object[] objects = new Object[columnCount];
-            for (int i = 1; i <= columnCount; i++)
-                objects[i - 1] = resultSet.getObject(i);
-
-            return (T) objects;
-        }
+    private void ensureSimpleObjectRowMapper() {
+        if (simpleObjectRowMapper == null)
+            simpleObjectRowMapper = new SimpleObjectRowMapper<>(resultClass);
     }
 
-    private class SingleEntityResultSetExtractor implements ResultSetExtractor<T> {
-        @Override
-        @SuppressWarnings("unchecked")
-        public T extractData(ResultSet resultSet) throws SQLException {
-            Entity entity = session.getEntity(resultClass);
-
-            Object instance = null;
-            List<Object> primaryKeyValue = new ArrayList<>();
-            while (resultSet.next()) {
-                List<Object> currentPrimaryKeyValue = retrievePrimaryKeyValue(entity, sql, resultSet);
-                if (!primaryKeyValue.isEmpty() && !primaryKeyValue.equals(currentPrimaryKeyValue))
-                    throw new NotSingleResultException(sql, entity);
-
-                if (instance == null) {
-                    primaryKeyValue = retrievePrimaryKeyValue(entity, sql, resultSet);
-                    instance = hydrateSingleEntity(entity, resultSet);
-                }
-
-                fecthEagerToManyRelationships(entity, instance, resultSet);
-            }
-            if (instance == null) throw new NoResultException(sql, entity);
-
-            return (T) instance;
-        }
+    private void ensureSingleEntityResultSetExtractor() {
+        if (singleEntityResultSetExtractor == null)
+            singleEntityResultSetExtractor = new SingleEntityResultSetExtractor<>(this);
     }
 
-    private class MultipleEntitiesResultSetExtractor implements ResultSetExtractor<T> {
-        @Override
-        @SuppressWarnings("unchecked")
-        public T extractData(ResultSet resultSet) throws SQLException {
-            Map<List<Object>, Object> instances = new HashMap<>();
-
-            Entity entity = session.getEntity(resultClass);
-            while (resultSet.next()) {
-                List<Object> primaryKeyValue = retrievePrimaryKeyValue(entity, sql, resultSet);
-
-                Object instance = instances.get(primaryKeyValue);
-                if (instance == null) {
-                    instance = hydrateSingleEntity(entity, resultSet);
-                    instances.put(primaryKeyValue, instance);
-                }
-
-                fecthEagerToManyRelationships(entity, instance, resultSet);
-            }
-
-            return (T) new ArrayList<>(instances.values());
-        }
+    private void ensureMultipleEntitiesResultSetExtractor() {
+        if (multipleEntitiesResultSetExtractor == null)
+            multipleEntitiesResultSetExtractor = new MultipleEntitiesResultSetExtractor<>(this);
     }
 }
