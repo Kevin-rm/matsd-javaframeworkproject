@@ -110,7 +110,7 @@ public final class UtilFunctions {
         }
 
         if (!missingColumns.isEmpty())
-            throw new BadQueryException(String.format("Les valeurs des colonnes de la clé primaire (%s) de l'entité \"%s\" " +
+            throw new BadQueryException(String.format("Les valeurs des colonnes clé primaire (%s) de l'entité \"%s\" " +
                 "n'ont pas été précisées ou sont incomplètes dans la requête \"%s\"",
                 String.join(", ", missingColumns), entity.getClazz(), sql));
 
