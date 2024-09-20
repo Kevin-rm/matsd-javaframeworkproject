@@ -27,10 +27,15 @@ class JoinTable {
     }
 
     private JoinTable setName() {
-        String name = joinTable.name();
+        String defaultName = String.format("%s_%s_association", relationship.getEntity().getTableName(), relationship.getTargetEntity().getTableName());
 
-        this.name = StringUtils.isBlank(name) ?
-            String.format("%s_%s_association", relationship.getEntity().getTableName(), relationship.getTargetEntity().getTableName()) : name;
+        if (joinTable == null) name = defaultName;
+        else {
+            String joinTableName = joinTable.name();
+
+            name = StringUtils.isBlank(joinTableName) ? defaultName : joinTableName;
+        }
+
         return this;
     }
 

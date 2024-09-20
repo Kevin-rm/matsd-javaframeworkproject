@@ -157,13 +157,10 @@ public final class UtilFunctions {
         } catch (IllegalAccessException ignored) { }
     }
 
-    private static Relationship getRelationshipByTableName(mg.matsd.javaframework.orm.mapping.Entity current, String tableName, Map<String, Relationship> visitedRelationships) {
-        if (visitedRelationships.containsKey(tableName)) return visitedRelationships.get(tableName);
+    private static Object instantiateIfNull(Object instance, Class<?> clazz) {
+        if (instance != null) return instance;
 
-        return current.getRelationships().stream()
-            .filter(relationship -> relationship.getTargetEntity().getTableName().equals(tableName))
-            .findFirst()
-            .orElse(null);
+        return instantiate(clazz);
     }
 
     private static boolean hasToOneRelationship(mg.matsd.javaframework.orm.mapping.Entity entity, String tableName) {
@@ -171,6 +168,15 @@ public final class UtilFunctions {
             .anyMatch(relationship ->
                 relationship.getTargetEntity().getTableName().equals(tableName)
             );
+    }
+
+    private static Relationship getRelationshipByTableName(mg.matsd.javaframework.orm.mapping.Entity current, String tableName, Map<String, Relationship> visitedRelationships) {
+        if (visitedRelationships.containsKey(tableName)) return visitedRelationships.get(tableName);
+
+        return current.getRelationships().stream()
+            .filter(relationship -> relationship.getTargetEntity().getTableName().equals(tableName))
+            .findFirst()
+            .orElse(null);
     }
 
     private static Object hydrateSingleEntity(
@@ -188,7 +194,7 @@ public final class UtilFunctions {
             String tableName  = resultSetMetaData.getTableName(index[0]);
 
             if (current.getTableName().equals(tableName) && current.hasColumn(columnName)) {
-                if (instance == null) instance = UtilFunctions.instantiate(current.getClazz());
+                instance = instantiateIfNull(instance, current.getClazz());
 
                 setFieldValue(instance, current.getColumn(columnName).getField(), resultSet, index[0], null);
             } else {
@@ -198,7 +204,7 @@ public final class UtilFunctions {
                 }
 
                 Relationship relationship = getRelationshipByTableName(current, tableName, visitedRelationships);
-                if (relationship == null || instance == null || relationship.getFetchType() != FetchType.EAGER || relationship.isToMany()) continue;
+                if (relationship == null || relationship.getFetchType() != FetchType.EAGER || relationship.isToMany()) continue;
 
                 mg.matsd.javaframework.orm.mapping.Entity targetEntity = relationship.getTargetEntity();
                 if (previous == targetEntity) {
@@ -209,6 +215,8 @@ public final class UtilFunctions {
                 Field relationshipField = relationship.getField();
                 relationshipField.setAccessible(true);
                 try {
+                    instance = instantiateIfNull(instance, current.getClazz());
+
                     Object fieldValue = relationshipField.get(instance);
                     fieldValue = hydrateSingleEntity(fieldValue, current, targetEntity, resultSet, resultSetMetaData, index, columnCount, visitedRelationships);
 
