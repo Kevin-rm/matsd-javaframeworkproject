@@ -128,10 +128,11 @@ public final class UtilFunctions {
     @SuppressWarnings("all")
     public static void fecthEagerToManyRelationships(mg.matsd.javaframework.orm.mapping.Entity entity, Object instance, ResultSet resultSet)
         throws SQLException {
-        for (Relationship relationship : entity.getToManyRelationships()) {;
+        for (Relationship relationship : entity.getToManyRelationships()) {
+            if (relationship.getFetchType() != FetchType.EAGER) continue;
+
             Field relationshipField = relationship.getField();
             relationshipField.setAccessible(true);
-
             try {
                 Collection collection = (Collection) relationshipField.get(instance);
                 if (collection == null) {
