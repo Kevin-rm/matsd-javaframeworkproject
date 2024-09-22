@@ -195,26 +195,28 @@ public final class UtilFunctions {
                 if (relationship == null || relationship.getFetchType() != FetchType.EAGER) continue;
 
                 mg.matsd.javaframework.orm.mapping.Entity targetEntity = relationship.getTargetEntity();
+                List<Object> targetEntityPrimaryKeyValue = retrievePrimaryKeyValue(targetEntity, sql, resultSet);
+                RelationshipPrimaryKeyValue relationshipPrimaryKeyValue = new RelationshipPrimaryKeyValue(relationship, targetEntityPrimaryKeyValue);
+
                 Field relationshipField = relationship.getField();
                 relationshipField.setAccessible(true);
-
                 try {
-                    List<Object> targetEntityPrimaryKeyValue = retrievePrimaryKeyValue(targetEntity, sql, resultSet);
-                    RelationshipPrimaryKeyValue relationshipPrimaryKeyValue = new RelationshipPrimaryKeyValue(relationship, targetEntityPrimaryKeyValue);
-
                     Object targetEntityInstance = toOneInstances.get(relationshipPrimaryKeyValue);
+
                     if (previous == targetEntity) {
                         if (targetEntityInstance != null) continue;
 
                         targetEntityInstance = instance;
                         toOneInstances.put(relationshipPrimaryKeyValue, targetEntityInstance);
+
                         instance = instantiate(currentClass);
+                        previous = null;
                     } else {
-                        instance = instantiateIfNull(instance, currentClass);
                         if (targetEntityInstance == null) {
                             targetEntityInstance = hydrateSingleEntity(null, current, targetEntity, sql, resultSet, resultSetMetaData, index, columnCount, visitedRelationships, toOneInstances);
                             toOneInstances.put(relationshipPrimaryKeyValue, targetEntityInstance);
                         }
+                        instance = instantiateIfNull(instance, currentClass);
 
                         visitedRelationships.put(tableName, relationship);
                     }

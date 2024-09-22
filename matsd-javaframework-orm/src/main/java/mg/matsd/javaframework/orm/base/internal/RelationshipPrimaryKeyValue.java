@@ -14,8 +14,14 @@ public record RelationshipPrimaryKeyValue(Relationship relationship, List<Object
 
         RelationshipPrimaryKeyValue that = (RelationshipPrimaryKeyValue) o;
 
-        if (!Objects.equals(primaryKeyValue, that.primaryKeyValue))
-            return false;
-        return Objects.equals(relationship, that.relationship);
+        if (!Objects.equals(relationship, that.relationship)) return false;
+        return Objects.equals(primaryKeyValue, that.primaryKeyValue);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = relationship != null ? relationship.hashCode() : 0;
+        result = 31 * result + (primaryKeyValue != null ? primaryKeyValue.hashCode() : 0);
+        return result;
     }
 }
