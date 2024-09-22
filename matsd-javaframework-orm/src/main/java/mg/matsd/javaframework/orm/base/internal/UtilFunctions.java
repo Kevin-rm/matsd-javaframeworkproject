@@ -88,14 +88,15 @@ public final class UtilFunctions {
         return result;
     }
 
-    public static List<Object> retrievePrimaryKeyValue(mg.matsd.javaframework.orm.mapping.Entity entity, String sql, ResultSet resultSet) throws SQLException {
+    public static List<Object> retrievePrimaryKeyValue(mg.matsd.javaframework.orm.mapping.Entity entity, String sql, ResultSet resultSet)
+        throws SQLException {
         List<Object> results = new ArrayList<>();
         List<String> missingColumns = new ArrayList<>();
 
         ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
         for (mg.matsd.javaframework.orm.mapping.Column primaryKeyColumn : entity.getPrimaryKey()) {
             boolean found = false;
-            for (int i = 1; i <= resultSetMetaData.getColumnCount(); i++) {
+            for (int i = 1; i <= resultSetMetaData.getColumnCount(); i++)
                 if (
                     resultSetMetaData.getColumnName(i).equals(primaryKeyColumn.getName()) &&
                     resultSetMetaData.getTableName(i).equals(entity.getTableName())
@@ -104,30 +105,26 @@ public final class UtilFunctions {
                     found = true;
                     break;
                 }
-            }
 
             if (!found) missingColumns.add(primaryKeyColumn.getName());
         }
 
         if (!missingColumns.isEmpty())
-            throw new BadQueryException(String.format("Les valeurs des colonnes clé primaire (%s) de l'entité \"%s\" " +
-                "n'ont pas été précisées ou sont incomplètes dans la requête \"%s\"",
+            throw new BadQueryException(String.format("Les colonnes (%s) de la clé primaire de l'entité \"%s\" " +
+                "sont soit manquantes, soit incomplètes dans la requête : \"%s\"",
                 String.join(", ", missingColumns), entity.getClazz(), sql));
 
         return results;
     }
 
-    public static Object hydrateSingleEntity(mg.matsd.javaframework.orm.mapping.Entity entity, ResultSet resultSet) throws SQLException {
-        ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
-
-        return hydrateSingleEntity(
-            null, null, entity, resultSet, resultSetMetaData, new int[]{1}, resultSetMetaData.getColumnCount(), new HashMap<>()
-        );
-    }
-
     @SuppressWarnings("all")
-    public static void fecthEagerToManyRelationships(mg.matsd.javaframework.orm.mapping.Entity entity, Object instance, ResultSet resultSet)
-        throws SQLException {
+    public static void fetchEagerToManyRelationships(
+        mg.matsd.javaframework.orm.mapping.Entity entity,
+        Object instance,
+        String sql,
+        ResultSet resultSet,
+        Map<RelationshipPrimaryKeyValue, Object> toOneInstances
+    ) throws SQLException {
         for (Relationship relationship : entity.getToManyRelationships()) {
             if (relationship.getFetchType() != FetchType.EAGER) continue;
 
@@ -140,9 +137,117 @@ public final class UtilFunctions {
                     relationshipField.set(instance, collection);
                 }
 
-                collection.add(hydrateSingleEntity(relationship.getTargetEntity(), resultSet));
+                Object targetEntityInstance = hydrateSingleEntity(instance, entity, relationship.getTargetEntity(), sql, resultSet, toOneInstances);
+                if (targetEntityInstance == null) continue;
+
+                collection.add(targetEntityInstance);
             } catch (IllegalAccessException ignored) { }
         }
+    }
+
+    @Nullable
+    public static Object hydrateSingleEntity(
+        @Nullable Object instance,
+        @Nullable mg.matsd.javaframework.orm.mapping.Entity previous,
+        mg.matsd.javaframework.orm.mapping.Entity entity,
+        String sql,
+        ResultSet resultSet,
+        Map<RelationshipPrimaryKeyValue, Object> toOneInstances
+    ) throws SQLException {
+        ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
+
+        return hydrateSingleEntity(
+            instance, previous, entity, sql, resultSet, resultSetMetaData,
+            new int[]{1}, resultSetMetaData.getColumnCount(), new HashMap<>(), toOneInstances
+        );
+    }
+
+    @Nullable
+    private static Object hydrateSingleEntity(
+        @Nullable Object instance,
+        @Nullable mg.matsd.javaframework.orm.mapping.Entity previous,
+        mg.matsd.javaframework.orm.mapping.Entity current,
+        String sql,
+        ResultSet resultSet,
+        ResultSetMetaData resultSetMetaData,
+        int[] index,
+        int   columnCount,
+        Map<String, Relationship> visitedRelationships,
+        Map<RelationshipPrimaryKeyValue, Object> toOneInstances
+    ) throws SQLException {
+        boolean noFieldSet = true;
+
+        for (; index[0] <= columnCount; index[0]++) {
+            String columnName = resultSetMetaData.getColumnName(index[0]);
+            String tableName  = resultSetMetaData.getTableName(index[0]);
+            Class<?> currentClass = current.getClazz();
+
+            if (current.getTableName().equals(tableName) && current.hasColumn(columnName)) {
+                instance = instantiateIfNull(instance, currentClass);
+
+                setFieldValue(instance, current.getColumn(columnName).getField(), resultSet, index[0], null);
+                noFieldSet = false;
+            } else if (hasToOneRelationship(previous, tableName, visitedRelationships)) {
+                index[0]--;
+                return instance;
+            } else {
+                Relationship relationship = getToOneRelationship(current, tableName, visitedRelationships);
+                if (relationship == null || relationship.getFetchType() != FetchType.EAGER) continue;
+
+                mg.matsd.javaframework.orm.mapping.Entity targetEntity = relationship.getTargetEntity();
+                Field relationshipField = relationship.getField();
+                relationshipField.setAccessible(true);
+
+                try {
+                    List<Object> targetEntityPrimaryKeyValue = retrievePrimaryKeyValue(targetEntity, sql, resultSet);
+                    RelationshipPrimaryKeyValue relationshipPrimaryKeyValue = new RelationshipPrimaryKeyValue(relationship, targetEntityPrimaryKeyValue);
+
+                    Object targetEntityInstance = toOneInstances.get(relationshipPrimaryKeyValue);
+                    if (previous == targetEntity) {
+                        if (targetEntityInstance != null) continue;
+
+                        targetEntityInstance = instance;
+                        toOneInstances.put(relationshipPrimaryKeyValue, targetEntityInstance);
+                        instance = instantiate(currentClass);
+                    } else {
+                        instance = instantiateIfNull(instance, currentClass);
+                        if (targetEntityInstance == null) {
+                            targetEntityInstance = hydrateSingleEntity(null, current, targetEntity, sql, resultSet, resultSetMetaData, index, columnCount, visitedRelationships, toOneInstances);
+                            toOneInstances.put(relationshipPrimaryKeyValue, targetEntityInstance);
+                        }
+
+                        visitedRelationships.put(tableName, relationship);
+                    }
+
+                    relationshipField.set(instance, targetEntityInstance);
+                } catch (IllegalAccessException ignored) { }
+            }
+        }
+
+        return noFieldSet ? null : instance;
+    }
+
+    private static Object instantiateIfNull(Object instance, Class<?> clazz) {
+        if (instance != null) return instance;
+
+        return instantiate(clazz);
+    }
+
+    private static boolean hasToOneRelationship(
+        @Nullable mg.matsd.javaframework.orm.mapping.Entity entity, String tableName, Map<String, Relationship> visitedRelationships
+    ) {
+        return entity != null && getToOneRelationship(entity, tableName, visitedRelationships) != null;
+    }
+
+    @Nullable
+    private static Relationship getToOneRelationship(
+        mg.matsd.javaframework.orm.mapping.Entity entity, String tableName, Map<String, Relationship> visitedRelationships
+    ) {
+        return !visitedRelationships.isEmpty() && visitedRelationships.containsKey(tableName) ? visitedRelationships.get(tableName) :
+            entity.getToOneRelationships().stream()
+                .filter(relationship -> relationship.getTargetEntity().getTableName().equals(tableName))
+                .findFirst()
+                .orElse(null);
     }
 
     private static void setFieldValue(
@@ -156,78 +261,5 @@ public final class UtilFunctions {
             value = value == null && fieldType.isPrimitive() ? ClassUtils.getPrimitiveDefaultValue(fieldType) : value;
             field.set(instance, value);
         } catch (IllegalAccessException ignored) { }
-    }
-
-    private static Object instantiateIfNull(Object instance, Class<?> clazz) {
-        if (instance != null) return instance;
-
-        return instantiate(clazz);
-    }
-
-    private static boolean hasToOneRelationship(mg.matsd.javaframework.orm.mapping.Entity entity, String tableName) {
-        return entity.getToOneRelationships().stream()
-            .anyMatch(relationship ->
-                relationship.getTargetEntity().getTableName().equals(tableName)
-            );
-    }
-
-    private static Relationship getRelationshipByTableName(mg.matsd.javaframework.orm.mapping.Entity current, String tableName, Map<String, Relationship> visitedRelationships) {
-        if (visitedRelationships.containsKey(tableName)) return visitedRelationships.get(tableName);
-
-        return current.getRelationships().stream()
-            .filter(relationship -> relationship.getTargetEntity().getTableName().equals(tableName))
-            .findFirst()
-            .orElse(null);
-    }
-
-    private static Object hydrateSingleEntity(
-        @Nullable Object instance,
-        @Nullable mg.matsd.javaframework.orm.mapping.Entity previous,
-        mg.matsd.javaframework.orm.mapping.Entity current,
-        ResultSet resultSet,
-        ResultSetMetaData resultSetMetaData,
-        int[] index,
-        int   columnCount,
-        Map<String, Relationship> visitedRelationships
-    ) throws SQLException {
-        for (; index[0] <= columnCount; index[0]++) {
-            String columnName = resultSetMetaData.getColumnName(index[0]);
-            String tableName  = resultSetMetaData.getTableName(index[0]);
-
-            if (current.getTableName().equals(tableName) && current.hasColumn(columnName)) {
-                instance = instantiateIfNull(instance, current.getClazz());
-
-                setFieldValue(instance, current.getColumn(columnName).getField(), resultSet, index[0], null);
-            } else {
-                if (previous != null && hasToOneRelationship(previous, tableName)) {
-                    index[0]--;
-                    return instance;
-                }
-
-                Relationship relationship = getRelationshipByTableName(current, tableName, visitedRelationships);
-                if (relationship == null || relationship.getFetchType() != FetchType.EAGER || relationship.isToMany()) continue;
-
-                mg.matsd.javaframework.orm.mapping.Entity targetEntity = relationship.getTargetEntity();
-                if (previous == targetEntity) {
-                    index[0] --;
-                    return instance;
-                }
-
-                Field relationshipField = relationship.getField();
-                relationshipField.setAccessible(true);
-                try {
-                    instance = instantiateIfNull(instance, current.getClazz());
-
-                    Object fieldValue = relationshipField.get(instance);
-                    fieldValue = hydrateSingleEntity(fieldValue, current, targetEntity, resultSet, resultSetMetaData, index, columnCount, visitedRelationships);
-
-                    relationshipField.set(instance, fieldValue);
-                } catch (IllegalAccessException ignored) { }
-
-                visitedRelationships.put(tableName, relationship);
-            }
-        }
-
-        return instance;
     }
 }

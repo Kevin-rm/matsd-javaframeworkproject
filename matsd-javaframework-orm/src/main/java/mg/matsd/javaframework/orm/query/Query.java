@@ -197,17 +197,17 @@ public class Query<T> {
     }
 
     private void ensureSimpleObjectRowMapper() {
-        if (simpleObjectRowMapper == null)
-            simpleObjectRowMapper = new SimpleObjectRowMapper<>(resultClass);
+        if (simpleObjectRowMapper != null) return;
+        simpleObjectRowMapper = new SimpleObjectRowMapper<>(resultClass);
     }
 
     private void ensureSingleEntityResultSetExtractor() {
-        if (singleEntityResultSetExtractor == null)
-            singleEntityResultSetExtractor = new SingleEntityResultSetExtractor<>(this);
+        if (singleEntityResultSetExtractor != null) return;
+        singleEntityResultSetExtractor = new SingleEntityResultSetExtractor<>(this);
     }
 
     private void ensureMultipleEntitiesResultSetExtractor() {
-        if (multipleEntitiesResultSetExtractor == null)
-            multipleEntitiesResultSetExtractor = new MultipleEntitiesResultSetExtractor<>(this);
+        if (multipleEntitiesResultSetExtractor != null) return;
+        multipleEntitiesResultSetExtractor = new MultipleEntitiesResultSetExtractor<>(this);
     }
 }

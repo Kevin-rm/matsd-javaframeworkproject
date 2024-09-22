@@ -6,7 +6,7 @@ import mg.matsd.javaframework.core.utils.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-class JoinTable {
+public class JoinTable {
     private final Relationship relationship;
     @Nullable
     private final mg.matsd.javaframework.orm.annotations.JoinTable joinTable;
@@ -22,7 +22,7 @@ class JoinTable {
             .setInverseJoinColumns();
     }
 
-    String getName() {
+    public String getName() {
         return name;
     }
 

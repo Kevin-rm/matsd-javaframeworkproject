@@ -274,4 +274,28 @@ public class Relationship {
     public boolean isToMany() {
         return !isToOne();
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Relationship that = (Relationship) o;
+
+        if (!Objects.equals(entity, that.entity)) return false;
+        if (!Objects.equals(field, that.field)) return false;
+        if (relationshipType != that.relationshipType) return false;
+        if (!Objects.equals(targetEntity, that.targetEntity)) return false;
+        return fetchType == that.fetchType;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = entity != null ? entity.hashCode() : 0;
+        result = 31 * result + (field != null ? field.hashCode() : 0);
+        result = 31 * result + (relationshipType != null ? relationshipType.hashCode() : 0);
+        result = 31 * result + (targetEntity != null ? targetEntity.hashCode() : 0);
+        result = 31 * result + (fetchType != null ? fetchType.hashCode() : 0);
+        return result;
+    }
 }

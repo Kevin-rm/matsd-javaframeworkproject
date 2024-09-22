@@ -11,6 +11,7 @@ import mg.matsd.javaframework.orm.setup.SessionFactoryOptions;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class Entity {
@@ -144,5 +145,20 @@ public class Entity {
 
     public List<Relationship> getToOneRelationships() {
         return relationships.stream().filter(Relationship::isToOne).collect(Collectors.toList());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Entity entity = (Entity) o;
+
+        return Objects.equals(clazz, entity.clazz);
+    }
+
+    @Override
+    public int hashCode() {
+        return clazz != null ? clazz.hashCode() : 0;
     }
 }
