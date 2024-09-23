@@ -9,7 +9,7 @@ class CollectionNotInitializedException extends BaseException {
     private static final String PREFIX = "Collection non initialisée";
 
     CollectionNotInitializedException(Entity entity, Field relationshipField) {
-        super(String.format("La relation de type \"to many\" sur le champ \"%s\" de l'entité \"%s\" " +
-            "n'a pas été initialisée explicitement", relationshipField.getName(), entity.getClazz()), PREFIX);
+        super(String.format("La relation \"to many\" de type \"%s\" sur le champ \"%s\" de l'entité \"%s\" " +
+            "n'a pas été initialisée explicitement", relationshipField.getType(), relationshipField.getName(), entity.getClazz()), PREFIX);
     }
 }
