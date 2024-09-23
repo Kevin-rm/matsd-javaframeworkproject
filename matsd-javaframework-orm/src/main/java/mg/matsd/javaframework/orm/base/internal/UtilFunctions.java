@@ -4,7 +4,6 @@ import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.ClassUtils;
 import mg.matsd.javaframework.orm.annotations.*;
 import mg.matsd.javaframework.orm.exceptions.BadQueryException;
-import mg.matsd.javaframework.orm.mapping.FetchType;
 import mg.matsd.javaframework.orm.mapping.MappingException;
 import mg.matsd.javaframework.orm.mapping.Relationship;
 
@@ -118,7 +117,7 @@ public final class UtilFunctions {
     }
 
     @SuppressWarnings("all")
-    public static void fetchEagerToManyRelationships(
+    public static void eagerFetchToManyRelationships(
         mg.matsd.javaframework.orm.mapping.Entity entity,
         Object instance,
         String sql,
@@ -126,16 +125,11 @@ public final class UtilFunctions {
         Map<RelationshipPrimaryKeyValue, Object> toOneInstances
     ) throws SQLException {
         for (Relationship relationship : entity.getToManyRelationships()) {
-            if (relationship.getFetchType() != FetchType.EAGER) continue;
-
             Field relationshipField = relationship.getField();
             relationshipField.setAccessible(true);
             try {
                 Collection collection = (Collection) relationshipField.get(instance);
-                if (collection == null) {
-                    collection = new ArrayList<>();
-                    relationshipField.set(instance, collection);
-                }
+                if (collection == null) throw new CollectionNotInitializedException(entity, relationshipField);
 
                 Object targetEntityInstance = hydrateSingleEntity(instance, entity, relationship.getTargetEntity(), sql, resultSet, toOneInstances);
                 if (targetEntityInstance == null) continue;
@@ -192,7 +186,7 @@ public final class UtilFunctions {
                 return instance;
             } else {
                 Relationship relationship = getToOneRelationship(current, tableName, visitedRelationships);
-                if (relationship == null || relationship.getFetchType() != FetchType.EAGER) continue;
+                if (relationship == null) continue;
 
                 mg.matsd.javaframework.orm.mapping.Entity targetEntity = relationship.getTargetEntity();
                 List<Object> targetEntityPrimaryKeyValue = retrievePrimaryKeyValue(targetEntity, sql, resultSet);

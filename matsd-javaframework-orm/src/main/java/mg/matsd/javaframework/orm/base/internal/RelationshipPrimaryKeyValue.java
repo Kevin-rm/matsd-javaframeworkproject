@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Objects;
 
 public record RelationshipPrimaryKeyValue(Relationship relationship, List<Object> primaryKeyValue) {
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

@@ -48,7 +48,7 @@ public class SingleEntityResultSetExtractor<T> implements ResultSetExtractor<T> 
                 instance = hydrateSingleEntity(null, null, entity, sql, resultSet, toOneInstances);
             }
 
-            fetchEagerToManyRelationships(entity, instance, sql, resultSet, toOneInstances);
+            eagerFetchToManyRelationships(entity, instance, sql, resultSet, toOneInstances);
         }
         if (instance == null) throw new NoResultException(sql, entity);
 

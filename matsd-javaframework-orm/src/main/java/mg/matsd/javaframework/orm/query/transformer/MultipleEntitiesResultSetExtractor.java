@@ -44,7 +44,7 @@ public class MultipleEntitiesResultSetExtractor<T> implements ResultSetExtractor
                 instances.put(primaryKeyValue, instance);
             }
 
-            fetchEagerToManyRelationships(entity, instance, sql, resultSet, toOneInstances);
+            eagerFetchToManyRelationships(entity, instance, sql, resultSet, toOneInstances);
         }
 
         return (T) new ArrayList<>(instances.values());
