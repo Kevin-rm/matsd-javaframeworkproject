@@ -110,10 +110,10 @@ public class FrontServlet extends HttpServlet {
             response.setCharacterEncoding("UTF-8");
             if (mappingHandler.isJsonResponse())
                 handleJsonResult(response, mappingHandler.getControllerClass(), controllerMethod, controllerMethodResult);
-            else if (controllerMethodResult instanceof ModelView modelView) {
-                modelView.getData().forEach(request::setAttribute);
+            else if (controllerMethodResult instanceof ModelAndView modelAndView) {
+                modelAndView.getData().forEach(request::setAttribute);
 
-                request.getRequestDispatcher(modelView.getView()).forward(request, response);
+                request.getRequestDispatcher(modelAndView.getView()).forward(request, response);
             } else if (controllerMethodResult instanceof RedirectView redirectView)
                 response.sendRedirect(redirectView.buildCompleteUrl());
             else if (controllerMethodResult instanceof String string)
@@ -150,14 +150,15 @@ public class FrontServlet extends HttpServlet {
         Method   controllerMethod,
         Object   controllerMethodResult
     ) throws IOException {
-        if (controllerMethodResult instanceof ModelView || controllerMethod.getReturnType() == void.class)
+        if (controllerMethod.getReturnType() == void.class)
             throw new InvalidReturnTypeException(String.format("Impossible d'envoyer une réponse sous le format \"JSON\" lorsque " +
-                "le type de retour est \"ModelView\" ou \"void\": méthode \"%s\" du contrôleur \"%s\"", controllerMethod.getName(), controllerClass)
+                "le type de retour est \"void\": méthode \"%s\" du contrôleur \"%s\"", controllerMethod.getName(), controllerClass)
             );
 
         httpServletResponse.setContentType("application/json");
         ObjectMapper objectMapper = (ObjectMapper) webApplicationContainer.getManagedInstance(WebApplicationContainer.JACKSON_OBJECT_MAPPER_ID);
-        objectMapper.writeValue(httpServletResponse.getWriter(), controllerMethodResult);
+        objectMapper.writeValue(httpServletResponse.getWriter(),
+            controllerMethodResult instanceof ModelAndView modelAndView ? modelAndView.getData() : controllerMethodResult);
     }
 
     private void handleStringResult(
