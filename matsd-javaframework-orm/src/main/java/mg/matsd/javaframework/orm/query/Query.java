@@ -13,11 +13,13 @@ import mg.matsd.javaframework.orm.query.transformer.MultipleEntitiesResultSetExt
 import mg.matsd.javaframework.orm.query.transformer.SimpleObjectRowMapper;
 import mg.matsd.javaframework.orm.query.transformer.SingleEntityResultSetExtractor;
 
+import java.lang.reflect.Array;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class Query<T> {
     private final Session session;
@@ -134,6 +136,13 @@ public class Query<T> {
     }
 
     @SuppressWarnings("unchecked")
+    public T[] getResults() throws DatabaseException {
+        List<T> results = getResultsAsList();
+
+        return results.toArray((T[]) Array.newInstance(resultClass, results.size()));
+    }
+
+    @SuppressWarnings("unchecked")
     public List<T> getResultsAsList() throws DatabaseException {
         try {
             Connection connection = session.connection();
@@ -149,6 +158,10 @@ public class Query<T> {
         } catch (SQLException e) {
             throw new DatabaseException(e);
         }
+    }
+
+    public Stream<T> getResultsAsStream() throws DatabaseException {
+        return getResultsAsList().stream();
     }
 
     public T getSingleResult() throws DatabaseException, NoResultException, NotSingleResultException {
