@@ -199,7 +199,6 @@ public final class UtilFunctions {
 
                     if (previous == targetEntity) {
                         if (targetEntityInstance != null) continue;
-
                         targetEntityInstance = instance;
                         toOneInstances.put(relationshipPrimaryKeyValue, targetEntityInstance);
 
