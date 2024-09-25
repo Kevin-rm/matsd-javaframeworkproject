@@ -139,6 +139,10 @@ public class Entity {
         return hasColumn(columnName, false);
     }
 
+    public boolean hasLazyRelationship() {
+        return relationships.stream().anyMatch(relationship -> relationship.getFetchType() == FetchType.LAZY);
+    }
+
     public List<Relationship> getToManyRelationships() {
         return relationships.stream().filter(Relationship::isToMany).collect(Collectors.toList());
     }

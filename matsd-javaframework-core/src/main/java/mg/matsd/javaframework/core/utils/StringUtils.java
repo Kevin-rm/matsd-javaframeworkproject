@@ -23,10 +23,16 @@ public final class StringUtils {
         return string.length() == length;
     }
 
-    public static String firstLetterToUpper(@Nullable String string) {
+    public static String firstLetterToUpper(String string) {
         Assert.notBlank(string, false, "L'argument de la fonction firstLetterToUpper ne peut pas être vide ou \"null\"");
 
         return string.substring(0, 1).toUpperCase() + string.substring(1);
+    }
+
+    public static String firstLetterToLower(String string) {
+        Assert.notBlank(string, false, "L'argument de la fonction firstLetterToLower ne peut pas être vide ou \"null\"");
+
+        return string.substring(0, 1).toLowerCase() + string.substring(1);
     }
 
     public static String toSnakeCase(String string) {
