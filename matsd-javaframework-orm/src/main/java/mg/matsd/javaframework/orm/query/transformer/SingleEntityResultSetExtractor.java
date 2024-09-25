@@ -39,7 +39,7 @@ public class SingleEntityResultSetExtractor<T> implements ResultSetExtractor<T> 
         Map<RelationshipPrimaryKeyValue, Object> toOneInstances = new HashMap<>();
 
         while (resultSet.next()) {
-            List<Object> currentPrimaryKeyValue = retrievePrimaryKeyValue(entity, sql, resultSet);
+            List<Object> currentPrimaryKeyValue = retrievePrimaryKeyValueFromResultSet(entity, sql, resultSet);
             if (!primaryKeyValue.isEmpty() && !primaryKeyValue.equals(currentPrimaryKeyValue))
                 throw new NotSingleResultException(sql, entity);
 

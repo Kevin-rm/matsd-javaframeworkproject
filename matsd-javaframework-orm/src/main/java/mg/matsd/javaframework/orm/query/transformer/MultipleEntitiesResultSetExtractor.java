@@ -36,7 +36,7 @@ public class MultipleEntitiesResultSetExtractor<T> implements ResultSetExtractor
         Map<RelationshipPrimaryKeyValue, Object> toOneInstances = new HashMap<>();
 
         while (resultSet.next()) {
-            List<Object> primaryKeyValue = retrievePrimaryKeyValue(entity, sql, resultSet);
+            List<Object> primaryKeyValue = retrievePrimaryKeyValueFromResultSet(entity, sql, resultSet);
 
             Object instance = instances.get(primaryKeyValue);
             if (instance == null) {

@@ -87,8 +87,9 @@ public final class UtilFunctions {
         return result;
     }
 
-    public static List<Object> retrievePrimaryKeyValue(mg.matsd.javaframework.orm.mapping.Entity entity, String sql, ResultSet resultSet)
-        throws SQLException {
+    public static List<Object> retrievePrimaryKeyValueFromResultSet(
+        mg.matsd.javaframework.orm.mapping.Entity entity, String sql, ResultSet resultSet
+    ) throws SQLException {
         List<Object> results = new ArrayList<>();
         List<String> missingColumns = new ArrayList<>();
 
@@ -189,7 +190,7 @@ public final class UtilFunctions {
                 if (relationship == null) continue;
 
                 mg.matsd.javaframework.orm.mapping.Entity targetEntity = relationship.getTargetEntity();
-                List<Object> targetEntityPrimaryKeyValue = retrievePrimaryKeyValue(targetEntity, sql, resultSet);
+                List<Object> targetEntityPrimaryKeyValue = retrievePrimaryKeyValueFromResultSet(targetEntity, sql, resultSet);
                 RelationshipPrimaryKeyValue relationshipPrimaryKeyValue = new RelationshipPrimaryKeyValue(relationship, targetEntityPrimaryKeyValue);
 
                 Field relationshipField = relationship.getField();

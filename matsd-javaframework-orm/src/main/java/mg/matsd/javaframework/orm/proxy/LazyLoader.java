@@ -52,6 +52,6 @@ public class LazyLoader implements InvocationHandler {
     }
 
     private void loadLazyRelationship(Relationship relationship) {
-        
+
     }
 }
