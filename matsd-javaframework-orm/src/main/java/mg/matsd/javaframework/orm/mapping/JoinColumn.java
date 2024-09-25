@@ -3,7 +3,7 @@ package mg.matsd.javaframework.orm.mapping;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.StringUtils;
 
-class JoinColumn {
+public class JoinColumn {
     private final Relationship relationship;
     @Nullable
     private final mg.matsd.javaframework.orm.annotations.JoinColumn joinColumn;
