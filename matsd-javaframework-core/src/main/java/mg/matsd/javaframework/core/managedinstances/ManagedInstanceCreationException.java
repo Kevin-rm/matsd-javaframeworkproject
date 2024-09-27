@@ -8,4 +8,8 @@ class ManagedInstanceCreationException extends BaseException {
     ManagedInstanceCreationException(String message) {
         super(message, PREFIX);
     }
+
+    ManagedInstanceCreationException(Throwable cause) {
+        super(PREFIX, cause);
+    }
 }

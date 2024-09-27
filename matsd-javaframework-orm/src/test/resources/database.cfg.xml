@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<orm-configuration xmlns="http://www.matsd.mg/javaframework/schema/orm-configuration">
+    <session-factory>
+        <property name="connection.url" value="jdbc:mysql://localhost:3306/db_name"/>
+        <property name="connection.user" value="user"/>
+        <property name="connection.password" value="secret"/>
+        <property name="connection.driver-class" value="db_driver_class"/>
+        
+        <entity-scan package="com.example.entity"/>
+    </session-factory>
+</orm-configuration>

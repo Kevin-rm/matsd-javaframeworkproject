@@ -17,9 +17,10 @@ public final class StringConverter {
 
     private StringConverter() { }
 
+    @SuppressWarnings("unchecked")
     public static <T> T convert(String value, Class<T> type) throws TypeMismatchException {
         Assert.notNull(type, "L'argument type ne peut pas être \"null\"");
-        validateArgument(value);
+        Assert.notBlank(value, false, "La chaîne de caractère à convertir ne peut pas être vide ou \"null\"");
 
         value = value.strip();
         T result;
@@ -49,7 +50,7 @@ public final class StringConverter {
             else throw new UnsupportedTypeConversionException(type);
         } catch (IllegalArgumentException e) {
             throw new TypeMismatchException(String.format(
-                "La chaîne de caratères \"%s\" ne peut pas être convertie en \"%s\"", value, type.getName()
+                "La chaîne de caractères \"%s\" ne peut pas être convertie en \"%s\"", value, type.getName()
             ));
         }
 
@@ -64,9 +65,5 @@ public final class StringConverter {
             return Boolean.FALSE;
 
         throw new IllegalArgumentException();
-    }
-
-    private static void validateArgument(String value) {
-        Assert.notBlank(value, false, "La chaîne de caractère à convertir ne peut pas être vide ou \"null\"");
     }
 }

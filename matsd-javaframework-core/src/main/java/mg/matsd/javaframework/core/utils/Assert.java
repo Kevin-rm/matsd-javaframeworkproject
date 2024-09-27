@@ -80,9 +80,14 @@ public final class Assert {
             );
     }
 
-    private static RuntimeException nullSafeGet(
-        @Nullable Supplier<? extends RuntimeException> runtimeExceptionSupplier
-    ) {
+    public static void noNullElements(@Nullable Object[] array, @Nullable String exceptionMessage) {
+        if (array == null) return;
+
+        for (Object element : array)
+            if (element == null) throw new IllegalArgumentException(exceptionMessage);
+    }
+
+    private static RuntimeException nullSafeGet(Supplier<? extends RuntimeException> runtimeExceptionSupplier) {
         if (runtimeExceptionSupplier == null)
             return new IllegalStateException();
 

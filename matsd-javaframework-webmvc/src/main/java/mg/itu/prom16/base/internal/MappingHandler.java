@@ -9,8 +9,8 @@ import mg.itu.prom16.annotations.RequestParameter;
 import mg.itu.prom16.annotations.SessionAttribute;
 import mg.itu.prom16.exceptions.UnexpectedParameterException;
 import mg.itu.prom16.http.Session;
-import mg.itu.prom16.http.SessionImpl;
 import mg.itu.prom16.support.WebApplicationContainer;
+import mg.matsd.javaframework.core.managedinstances.NoSuchManagedInstanceException;
 import mg.matsd.javaframework.core.utils.Assert;
 
 import java.lang.reflect.InvocationTargetException;
@@ -20,10 +20,13 @@ import java.lang.reflect.Parameter;
 public class MappingHandler {
     private Class<?> controllerClass;
     private Method   method;
+    private final boolean jsonResponse;
 
-    public MappingHandler(Class<?> controllerClass, Method method) {
+    public MappingHandler(Class<?> controllerClass, Method method, boolean jsonResponse) {
         this.setControllerClass(controllerClass)
             .setMethod(method);
+
+        this.jsonResponse = jsonResponse;
     }
 
     public Class<?> getControllerClass() {
@@ -45,7 +48,7 @@ public class MappingHandler {
     }
 
     private MappingHandler setMethod(Method method) {
-        Assert.notNull(method, "La méthode associée au path ne peut pas être \"null\"");
+        Assert.notNull(method, "La méthode ne peut pas être \"null\"");
         Assert.state(method.getDeclaringClass() == controllerClass,
             () -> new IllegalArgumentException(
                 String.format("Le contrôleur \"%s\" ne dispose pas d'une méthode nommée \"%s\"", controllerClass.getName(), method.getName())
@@ -55,11 +58,16 @@ public class MappingHandler {
         return this;
     }
 
+    public boolean isJsonResponse() {
+        return jsonResponse;
+    }
+
     public Object invokeMethod(
         WebApplicationContainer webApplicationContainer,
         HttpServletRequest  httpServletRequest,
         HttpServletResponse httpServletResponse,
-        RequestMappingInfo  requestMappingInfo
+        Session session,
+        RequestMappingInfo requestMappingInfo
     ) {
         try {
             Object[] args = new Object[method.getParameterCount()];
@@ -74,7 +82,7 @@ public class MappingHandler {
                 else if (parameterType == HttpServletResponse.class)
                     args[i] = httpServletResponse;
                 else if (Session.class.isAssignableFrom(parameterType))
-                    args[i] = new SessionImpl(httpServletRequest.getSession());
+                    args[i] = session;
                 else if (parameter.isAnnotationPresent(RequestParameter.class))
                     args[i] = UtilFunctions.getRequestParameterValue(parameterType, parameter, httpServletRequest);
                 else if (parameter.isAnnotationPresent(PathVariable.class))
@@ -83,7 +91,11 @@ public class MappingHandler {
                     args[i] = UtilFunctions.bindRequestParameters(parameterType, parameter, httpServletRequest);
                 else if (parameter.isAnnotationPresent(SessionAttribute.class))
                     args[i] = UtilFunctions.getSessionAttributeValue(parameterType, parameter, httpServletRequest.getSession());
-                else throw new UnexpectedParameterException(parameter);
+                else try {
+                        args[i] = webApplicationContainer.getManagedInstance(parameterType);
+                     } catch (NoSuchManagedInstanceException ignored) {
+                        throw new UnexpectedParameterException(parameter);
+                     }
             }
 
             return method.invoke(webApplicationContainer.getManagedInstance(controllerClass), args);
@@ -99,6 +111,7 @@ public class MappingHandler {
         return "MappingHandler{" +
             "controllerClass=" + controllerClass +
             ", method=" + method +
+            ", jsonResponse=" + jsonResponse +
             '}';
     }
 }

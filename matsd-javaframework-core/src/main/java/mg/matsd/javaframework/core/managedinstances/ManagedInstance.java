@@ -5,39 +5,49 @@ import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.core.utils.ClassUtils;
 import mg.matsd.javaframework.core.utils.StringUtils;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ManagedInstance {
-    public enum Scope { SINGLETON, PROTOTYPE }
+    private String   id;
+    private Class<?> clazz;
+    private Scope    scope;
+    @Nullable
+    private ManagedInstance parent;
+    @Nullable
+    private Method factoryMethod;
+    private List<Property> properties;
+    private List<ConstructorArgument> constructorArguments;
 
-    private String         id;
-    private Class<?>       clazz;
-    private Scope          scope;
-    private final List<Property> properties;
+    public ManagedInstance(
+        @Nullable String id,
+        Class<?> clazz,
+        @Nullable String scope,
+        @Nullable ManagedInstance parent,
+        @Nullable Method factoryMethod
+    ) {
+        this.setClazz(clazz)
+            .setParent(parent)
+            .setFactoryMethod(factoryMethod)
+            .setId(id)
+            .setScope(scope);
+
+        initPropertiesAndConstructorArguments();
+    }
 
     public ManagedInstance(@Nullable String id, String clazz, @Nullable String scope) {
         this.setClazz(clazz)
             .setId(id)
             .setScope(scope);
 
-        properties = new ArrayList<>();
+        initPropertiesAndConstructorArguments();
     }
 
-    public ManagedInstance(@Nullable String id, Class<?> clazz, @Nullable Scope scope) {
-        this.setClazz(clazz)
-            .setId(id)
-            .setScope(scope);
-
+    private void initPropertiesAndConstructorArguments() {
         properties = new ArrayList<>();
-    }
-
-    public ManagedInstance(@Nullable String id, Class<?> clazz, @Nullable String scope) {
-        this.setClazz(clazz)
-            .setId(id)
-            .setScope(scope);
-
-        properties = new ArrayList<>();
+        constructorArguments = new ArrayList<>();
     }
 
     public String getId() {
@@ -48,7 +58,10 @@ public class ManagedInstance {
         Assert.notBlank(id, true, "L'identifiant d'une \"ManagedInstance\" ne peut pas être vide");
 
         if (id == null) {
-            this.id = clazz.getName();
+            if (factoryMethod != null)
+                 this.id = parent.getId() + "." + factoryMethod.getName();
+            else this.id = clazz.getName();
+
             return this;
         }
 
@@ -96,13 +109,57 @@ public class ManagedInstance {
     }
 
     private ManagedInstance setScope(@Nullable String scope) {
-        if (scope == null)              scope = "singleton";
-        if (StringUtils.isBlank(scope)) scope = "singleton";
+        if (scope == null || StringUtils.isBlank(scope))
+            scope = "singleton";
 
         try {
             return setScope(Scope.valueOf(scope.strip().toUpperCase()));
         } catch (IllegalArgumentException e) {
             throw new ManagedInstanceCreationException(String.format("Scope non valide : %s", scope));
+        }
+    }
+
+    @Nullable
+    public ManagedInstance getParent() {
+        return parent;
+    }
+
+    private ManagedInstance setParent(@Nullable ManagedInstance parent) {
+        this.parent = parent;
+        return this;
+    }
+
+    @Nullable
+    public Method getFactoryMethod() {
+        return factoryMethod;
+    }
+
+    private ManagedInstance setFactoryMethod(@Nullable Method factoryMethod) {
+        if (factoryMethod == null) return this;
+
+        Assert.state(parent != null, "Tentative de définition d'une \"factoryMethod\" à une \"ManagedInstance\" " +
+            "alors que celle-ci n'a pas de parent");
+        Assert.state(parent.getClazz() == factoryMethod.getDeclaringClass(), String.format(
+            "Le parent de la \"ManagedInstance\" avec l'identifiant \"%s\" (\"%s\") ne dispose pas d'une méthode nommée \"%s\"",
+            id, parent.getId(), factoryMethod
+        ));
+        Assert.state(ClassUtils.isAssignable(clazz, factoryMethod.getReturnType()), String.format(
+            "Le type de retour de la \"factoryMethod\" \"%s\" doit être assignable " +
+            "à la classe associée à la \"ManagedInstance\"", factoryMethod
+        ));
+
+        this.factoryMethod = factoryMethod;
+        return this;
+    }
+
+    private ManagedInstance setFactoryMethod(@Nullable String factoryMethod) {
+        if (factoryMethod == null || StringUtils.isBlank(factoryMethod))
+            return this;
+
+        try {
+            return setFactoryMethod(ClassUtils.findMethod(clazz, factoryMethod));
+        } catch (NoSuchMethodException e) {
+            throw new ManagedInstanceCreationException(e);
         }
     }
 
@@ -116,9 +173,48 @@ public class ManagedInstance {
         for (Property p : properties)
             if (property.getField() == p.getField())
                 throw new ManagedInstanceCreationException(
-                    String.format("La propriété \"%s\" est redondante pour la \"ManagedInstance\" avec l'ID \"%s\"", property.getField().getName(), getId())
+                    String.format("La propriété \"%s\" est redondante pour la \"ManagedInstance\" avec l'ID \"%s\"", property.getField().getName(), id)
                 );
 
         properties.add(property);
+    }
+
+    public List<ConstructorArgument> getConstructorArguments() {
+        return constructorArguments;
+    }
+
+    public void addConstructorArgument(int index, Class<?> type, @Nullable String reference) {
+        addConstructorArgument(new ConstructorArgument(index, type, reference, this));
+    }
+
+    public void addConstructorArgument(
+        @Nullable String index,
+        @Nullable String value,
+        @Nullable String reference,
+        Constructor<?> constructor
+    ) {
+        addConstructorArgument(new ConstructorArgument(
+            index, value, reference, constructor, this
+        ));
+    }
+
+    int generateConstructorArgumentIndex() {
+        return constructorArguments.stream()
+            .mapToInt(ConstructorArgument::getIndex)
+            .filter(constructorArgument -> constructorArgument >= 0)
+            .max()
+            .orElse(0) + 1;
+    }
+
+    private void addConstructorArgument(ConstructorArgument constructorArgument) {
+        final int i = constructorArgument.getIndex();
+        constructorArguments.stream().filter(c -> i == c.getIndex()).forEachOrdered(c -> {
+            throw new ManagedInstanceCreationException(
+                String.format("L'argument de constructeur avec l'indice %d " +
+                    "est redondant pour la \"ManagedInstance\" avec l'ID \"%s\"", i, id)
+            );
+        });
+
+        constructorArguments.add(constructorArgument);
     }
 }

@@ -6,11 +6,11 @@ import mg.matsd.javaframework.core.utils.Assert;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ModelView {
+public class ModelAndView {
     private String view;
     private final Map<String, Object> data;
 
-    public ModelView(String view) {
+    public ModelAndView(String view) {
         setView(view);
         data = new HashMap<>();
     }
@@ -36,9 +36,9 @@ public class ModelView {
         return data;
     }
 
-    public ModelView addData(String key, @Nullable Object value) {
+    public ModelAndView addData(String key, @Nullable Object value) {
         Assert.notBlank(key, false, "La clé de la donnée à ajouter ne peut pas être vide ou \"null\"");
-        Assert.state(!(value instanceof ModelView), "La donnée ne peut pas être une instance de \"ModelView\"");
+        Assert.state(!(value instanceof ModelAndView), "La donnée ne peut pas être une instance de \"ModelView\"");
 
         data.put(key, value);
         return this;

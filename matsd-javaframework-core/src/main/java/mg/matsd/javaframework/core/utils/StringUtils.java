@@ -3,13 +3,14 @@ package mg.matsd.javaframework.core.utils;
 import mg.matsd.javaframework.core.annotations.Nullable;
 
 public final class StringUtils {
+    private static final String PACKAGE_NAME_REGEX = "^[a-zA-Z_][a-zA-Z0-9_]*(\\.[a-zA-Z_][a-zA-Z0-9_]*)*$";
+
     private StringUtils() { }
 
     public static boolean hasText(String string) {
         Assert.notNull(string, "L'argument de la fonction hasText ne peut pas être \"null\"");
 
-        if (string.strip().isEmpty()) return false;
-        return true;
+        return !string.isBlank();
     }
 
     public static boolean isBlank(@Nullable String string) {
@@ -22,10 +23,16 @@ public final class StringUtils {
         return string.length() == length;
     }
 
-    public static String firstLetterToUpper(@Nullable String string) {
+    public static String firstLetterToUpper(String string) {
         Assert.notBlank(string, false, "L'argument de la fonction firstLetterToUpper ne peut pas être vide ou \"null\"");
 
         return string.substring(0, 1).toUpperCase() + string.substring(1);
+    }
+
+    public static String firstLetterToLower(String string) {
+        Assert.notBlank(string, false, "L'argument de la fonction firstLetterToLower ne peut pas être vide ou \"null\"");
+
+        return string.substring(0, 1).toLowerCase() + string.substring(1);
     }
 
     public static String toSnakeCase(String string) {
@@ -44,5 +51,9 @@ public final class StringUtils {
         }
 
         return stringBuilder.toString();
+    }
+
+    public static boolean isValidPackageName(@Nullable String packageName) {
+        return packageName != null && StringUtils.hasText(packageName) && packageName.matches(PACKAGE_NAME_REGEX);
     }
 }

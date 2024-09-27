@@ -1,105 +1,68 @@
 package mg.matsd.javaframework.core.container;
 
-import mg.matsd.javaframework.core.annotations.Nullable;
-import mg.matsd.javaframework.core.exceptions.XmlParseException;
 import mg.matsd.javaframework.core.io.Resource;
 import mg.matsd.javaframework.core.managedinstances.ManagedInstance;
+import mg.matsd.javaframework.core.managedinstances.ManagedInstanceUtils;
 import mg.matsd.javaframework.core.managedinstances.factory.ManagedInstanceFactory;
-import mg.matsd.javaframework.core.utils.Assert;
-import org.w3c.dom.*;
-import org.xml.sax.SAXException;
+import org.w3c.dom.Element;
 
-import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Source;
-import javax.xml.transform.stream.StreamSource;
-import javax.xml.validation.SchemaFactory;
-import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.util.List;
+
+import static mg.matsd.javaframework.core.utils.XMLUtils.*;
 
 class XMLConfigurationLoader {
-    private final ManagedInstanceFactory managedInstanceFactory;
+    private XMLConfigurationLoader() { }
 
-    XMLConfigurationLoader(ManagedInstanceFactory managedInstanceFactory) {
-        Assert.notNull(managedInstanceFactory, "\"ManagedInstanceFactory\" ne doit pas être \"null\"");
+    static void doLoadManagedInstances(ManagedInstanceFactory managedInstanceFactory, Resource resource) {
+        Element documentElement = buildDocumentElement(XMLConfigurationLoader.class.getClassLoader(), resource,
+            "container.xsd", "managedinstances.xsd");
 
-        this.managedInstanceFactory = managedInstanceFactory;
-    }
+        scanComponents(managedInstanceFactory, documentElement);
 
-    void doLoadManagedInstances(Resource resource) {
-        Document document;
-        ClassLoader classLoader = getClass().getClassLoader();
+        List<Element> elements = getChildElementsByTagName(documentElement, "managed-instance");
+        if (elements.isEmpty()) return;
 
-        try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setNamespaceAware(true);
-            factory.setSchema(
-                SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(new Source[] {
-                    new StreamSource(classLoader.getResourceAsStream("container.xsd")),
-                    new StreamSource(classLoader.getResourceAsStream("managedinstances.xsd"))
-                })
+        for (Element element : elements) {
+            ManagedInstance managedInstance = new ManagedInstance(
+                getAttributeValue(element, "id"),
+                getAttributeValue(element, "class"),
+                getAttributeValue(element, "scope")
             );
+            managedInstanceFactory.registerManagedInstance(managedInstance);
 
-            document = factory
-                .newDocumentBuilder()
-                .parse(resource.getInputStream());
-        } catch (ParserConfigurationException | SAXException | IOException e) {
-            throw new XmlParseException(e);
-        }
-        document.getDocumentElement().normalize();
-
-        scanComponents(document);
-
-        NodeList managedInstanceNodeList = document.getElementsByTagName("managed-instance");
-        if (managedInstanceNodeList.getLength() == 0) return;
-
-        for (int i = 0; i < managedInstanceNodeList.getLength(); i++) {
-            Node managedInstanceNode = managedInstanceNodeList.item(i);
-
-            if (managedInstanceNode.getNodeType() == Node.ELEMENT_NODE) {
-                Element managedInstanceElement = (Element) managedInstanceNode;
-
-                ManagedInstance managedInstance = new ManagedInstance(
-                    getElementAttributeValue(managedInstanceElement, "id"),
-                    getElementAttributeValue(managedInstanceElement, "class"),
-                    getElementAttributeValue(managedInstanceElement, "scope")
-                );
-                managedInstanceFactory.registerManagedInstance(managedInstance);
-
-                NodeList propertyNodeList = managedInstanceElement.getElementsByTagName("property");
-                if (propertyNodeList.getLength() == 0) return;
-
-                for (int j = 0; j < propertyNodeList.getLength(); j++) {
-                    Node propertyNode = propertyNodeList.item(j);
-
-                    if (propertyNode.getNodeType() == Node.ELEMENT_NODE) {
-                        Element propertyElement = (Element) propertyNode;
-
-                        String propertyValue = getElementAttributeValue(propertyElement, "value");
-                        managedInstance.addProperty(
-                            getElementAttributeValue(propertyElement, "name"),
-                            propertyValue == null ? propertyElement.getTextContent() : propertyValue,
-                            getElementAttributeValue(propertyElement, "ref")
-                        );
-                    }
-                }
+            for (Element childElement : getChildElements(element)) {
+                String childElementTagName = childElement.getTagName();
+                if (childElementTagName.equals("constructor-arg")) addConstructorArguments(managedInstance, childElement);
+                else if (childElementTagName.equals("property"))   addProperties(managedInstance, childElement);
             }
         }
     }
 
-    private void scanComponents(Document document) {
-        NodeList nodeList = document.getElementsByTagName("container:component-scan");
-        if (nodeList.getLength() == 0) return;
+    private static void scanComponents(ManagedInstanceFactory managedInstanceFactory, Element documentElement) {
+        Element firstChildElementByTagName = getFirstChildElementByTagName(documentElement, "container:component-scan");
+        if (firstChildElementByTagName == null) return;
 
-        managedInstanceFactory.setComponentScanBasePackage(
-            getElementAttributeValue((Element) nodeList.item(0), "base-package")
-        ).scanComponents();
+        managedInstanceFactory.setComponentScanBasePackage(getAttributeValue(firstChildElementByTagName, "base-package"))
+            .scanComponents();
     }
 
-    @Nullable
-    private static String getElementAttributeValue(Element element, String name) {
-        Attr attribute = element.getAttributeNode(name);
+    private static void addConstructorArguments(ManagedInstance managedInstance, Element element) {
+        Constructor<?> constructor = ManagedInstanceUtils.constructorToUse(managedInstance);
 
-        return attribute == null ? null : attribute.getValue();
+        String constructorArgValue = getAttributeValue(element, "value");
+        managedInstance.addConstructorArgument(
+            getAttributeValue(element, "index"),
+            constructorArgValue == null ? element.getTextContent() : constructorArgValue,
+            getAttributeValue(element, "ref"), constructor);
+    }
+
+    private static void addProperties(ManagedInstance managedInstance, Element element) {
+        String propertyValue = getAttributeValue(element, "value");
+        managedInstance.addProperty(
+            getAttributeValue(element, "name"),
+            propertyValue == null ? element.getTextContent() : propertyValue,
+            getAttributeValue(element, "ref")
+        );
     }
 }

@@ -1,26 +1,23 @@
 package mg.matsd.javaframework.core.managedinstances.factory;
 
-import mg.matsd.javaframework.core.annotations.Component;
-import mg.matsd.javaframework.core.annotations.Nullable;
-import mg.matsd.javaframework.core.annotations.Scope;
-import mg.matsd.javaframework.core.exceptions.PackageNotFoundException;
+import mg.matsd.javaframework.core.managedinstances.ConstructorArgument;
 import mg.matsd.javaframework.core.managedinstances.ManagedInstance;
 import mg.matsd.javaframework.core.managedinstances.NoSuchManagedInstanceException;
-import mg.matsd.javaframework.core.utils.AnnotationUtils;
-import mg.matsd.javaframework.core.utils.StringUtils;
 
-import java.io.File;
-import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ManagedInstanceDefinitionRegistry {
     private final List<ManagedInstance>  managedInstances;
     private final ManagedInstanceFactory managedInstanceFactory;
+    private final Set<String> managedInstancesCurrentlyInCreation;
 
     ManagedInstanceDefinitionRegistry(ManagedInstanceFactory managedInstanceFactory) {
         managedInstances = new ArrayList<>();
         this.managedInstanceFactory = managedInstanceFactory;
+        managedInstancesCurrentlyInCreation = new HashSet<>();
     }
 
     public List<ManagedInstance> getManagedInstances() {
@@ -45,53 +42,18 @@ public class ManagedInstanceDefinitionRegistry {
 
     ManagedInstance getManagedInstanceByClass(Class<?> clazz) throws NoSuchManagedInstanceException {
         for (ManagedInstance managedInstance : managedInstances)
-            if (managedInstance.getClazz() == clazz) return managedInstance;
+            if (clazz.isAssignableFrom(managedInstance.getClazz())) return managedInstance;
 
         throw new NoSuchManagedInstanceException(String.format(
             "Aucune \"ManagedInstance\" trouvée ayant comme nom de classe : %s", clazz.getName())
         );
     }
 
-    void doScanComponents(String packageName) {
-        URL url = Thread.currentThread()
-            .getContextClassLoader()
-            .getResource(packageName.replace('.', '/'));
-
-        if (url == null) throw new PackageNotFoundException(packageName);
-
-        File[] files = new File(url.getPath()).listFiles();
-        if (files == null) return;
-
-        for (File file : files) {
-            String fileName = file.getName();
-
-            if (file.isDirectory()) doScanComponents(String.format("%s.%s", packageName, fileName));
-
-            try {
-                Class<?> clazz = Class.forName(
-                    String.format("%s.%s", packageName, fileName.replaceAll("\\.class$", ""))
-                );
-
-                if (!isComponent(clazz)) continue;
-
-                Component component = (Component) AnnotationUtils.getAnnotation(Component.class, clazz);
-                String scope = null;
-                if (AnnotationUtils.hasAnnotation(Scope.class, clazz))
-                    scope = ((Scope) AnnotationUtils.getAnnotation(Scope.class, clazz)).value();
-
-                registerManagedInstance(new ManagedInstance(
-                    StringUtils.isBlank(component.value()) ? null : component.value(),
-                    clazz, scope
-                ));
-            } catch (ClassNotFoundException ignored) { }
-        }
-    }
-
     void registerManagedInstance(ManagedInstance managedInstance) {
         for (ManagedInstance m : this.managedInstances)
             if (managedInstance.getId().equals(m.getId()))
                 throw new ManagedInstanceDefinitionException(
-                    String.format("L'indetifiant d'une \"ManagedInstance\" doit être unique, \"%s\" est redondant", managedInstance.getId())
+                    String.format("L'identifiant d'une \"ManagedInstance\" doit être unique, \"%s\" est redondant", managedInstance.getId())
                 );
 
         managedInstances.add(managedInstance);
@@ -101,27 +63,65 @@ public class ManagedInstanceDefinitionRegistry {
         registerManagedInstance(new ManagedInstance(id, clazz, scope));
     }
 
-    void configureDependencies() {
-        managedInstances.stream()
-            .flatMap(managedInstance -> managedInstance.getProperties().stream())
-            .filter(property -> property.getRef() != null)
-            .forEach(property -> {
-                String ref = property.getRef();
+    boolean isCurrentlyInCreation(String id) {
+        return managedInstancesCurrentlyInCreation.contains(id);
+    }
 
-                if (!containsManagedInstance(ref))
-                    throw new ManagedInstanceDefinitionException(
-                        new NoSuchManagedInstanceException(
-                            String.format("Aucune \"ManagedInstance\" trouvée avec la référence : \"%s\"", ref)
-                        )
-                    );
+    void resolveDependencies(ManagedInstance managedInstance) {
+        resolveConstructorArgumentDependencies(managedInstance);
+        resolvePropertyDependencies(managedInstance);
+    }
 
-                property.setValue(managedInstanceFactory.getManagedInstance(ref));
+    private void resolvePropertyDependencies(ManagedInstance managedInstance) {
+        managedInstance.getProperties().stream()
+            .filter(property -> property.getReference() != null)
+            .forEachOrdered(property -> {
+                String reference = property.getReference();
+                if (!containsManagedInstance(reference))
+                    throw new ManagedInstanceDefinitionException(new NoSuchManagedInstanceException(
+                        String.format("Aucune \"ManagedInstance\" trouvée avec la référence : \"%s\"", reference)
+                    ));
+
+                property.setValue(managedInstanceFactory.getManagedInstance(reference));
             });
     }
 
-    private boolean isComponent(@Nullable Class<?> clazz) {
-        if (clazz == null) return false;
+    private void resolveConstructorArgumentDependencies(ManagedInstance managedInstance) {
+        String managedInstanceId = managedInstance.getId();
+        try {
+            managedInstancesCurrentlyInCreation.add(managedInstanceId);
 
-        return AnnotationUtils.hasAnnotation(Component.class, clazz);
+            for (ConstructorArgument constructorArgument : managedInstance.getConstructorArguments()) {
+                if (constructorArgument.getValue() != null) continue;
+
+                String reference = constructorArgument.getReference();
+                Class<?> constructorArgumentType = constructorArgument.getType();
+
+                Object value;
+                if (reference == null)
+                    try {
+                        value = managedInstanceFactory.getManagedInstance(constructorArgumentType);
+                    } catch (NoSuchManagedInstanceException e) {
+                        throw new ManagedInstanceDefinitionException(new NoSuchManagedInstanceException(
+                            String.format(
+                                "Erreur de résolution de dépendance pour la \"ManagedInstance\" avec l'identifiant \"%s\" car " +
+                                    "aucune \"ManagedInstance\" n'a été trouvée pour le type \"%s\"",
+                                managedInstanceId, constructorArgumentType)
+                        ));
+                    }
+                else
+                    try {
+                        value = managedInstanceFactory.getManagedInstance(reference);
+                    } catch (NoSuchManagedInstanceException e) {
+                        throw new ManagedInstanceDefinitionException(new NoSuchManagedInstanceException(
+                            String.format("Aucune \"ManagedInstance\" trouvée avec la référence : \"%s\"", reference)
+                        ));
+                    }
+
+                constructorArgument.setValue(value);
+            }
+        } finally {
+            managedInstancesCurrentlyInCreation.remove(managedInstanceId);
+        }
     }
 }

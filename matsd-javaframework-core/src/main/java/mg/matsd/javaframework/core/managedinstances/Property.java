@@ -10,24 +10,23 @@ import mg.matsd.javaframework.core.utils.converter.StringConverter;
 import java.lang.reflect.Field;
 
 public class Property {
-    private Field field;
-    @Nullable
+    private Field  field;
     private Object value;
     @Nullable
-    private String ref;
+    private String reference;
     private final ManagedInstance managedInstance;
 
-    public Property(String field, String value, String ref, ManagedInstance managedInstance) {
-        if (value == null && ref == null)
+    Property(String field, String value, String reference, ManagedInstance managedInstance) {
+        if (value == null && reference == null)
             throw new InvalidPropertyException(String.format("Ni valeur ni référence n'a été spécifié pour la propriété \"%s\"", field));
 
-        if (value != null && ref != null)
+        if (value != null && reference != null)
             throw new InvalidPropertyException("Une propriété doit avoir soit une valeur, soit une référence, mais pas les deux en même temps");
 
         this.managedInstance = managedInstance;
         this.setField(field)
             .setValue(value)
-            .setRef  (ref);
+            .setReference(reference);
     }
 
     public Field getField() {
@@ -88,17 +87,17 @@ public class Property {
         return setValue(obj);
     }
 
-    public String getRef() {
-        return ref;
+    public String getReference() {
+        return reference;
     }
 
-    private Property setRef(@Nullable String ref) {
-        if (ref != null) {
-            Assert.notBlank("La référence d'une propriété ne peut pas être vide", true);
-            ref = ref.strip();
+    private Property setReference(@Nullable String reference) {
+        if (reference != null) {
+            Assert.notBlank(reference, true, "La référence d'une propriété ne peut pas être vide");
+            reference = reference.strip();
         }
 
-        this.ref = ref;
+        this.reference = reference;
         return this;
     }
 }

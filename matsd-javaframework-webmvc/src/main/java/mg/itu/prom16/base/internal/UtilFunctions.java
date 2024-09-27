@@ -22,11 +22,11 @@ public final class UtilFunctions {
     public static boolean isController(@Nullable Class<?> clazz) {
         if (clazz == null) return false;
 
-        return clazz.isAnnotationPresent(Controller.class);
+        return AnnotationUtils.hasAnnotation(Controller.class, clazz);
     }
 
     public static boolean isAbsoluteUrl(@Nullable String url) {
-        return url != null && url.startsWith("http://") || url.startsWith("https://");
+        return url != null && (url.startsWith("http://") || url.startsWith("https://"));
     }
 
     public static Map<String, Object> getRequestMappingInfoAttributes(Method method) {

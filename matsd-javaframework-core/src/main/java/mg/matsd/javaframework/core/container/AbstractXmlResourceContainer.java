@@ -26,17 +26,14 @@ public abstract class AbstractXmlResourceContainer extends ManagedInstanceFactor
         this.xmlResourceName = xmlResourceName;
     }
 
-    protected abstract Resource buildResource();
-
     protected void loadManagedInstances() {
         try (Resource resource = buildResource()) {
-            Assert.state(resource != null, "La ressource à utiliser pour charger les \"ManagedInstances\" " +
-                "est \"null\"");
+            Assert.state(resource != null && !resource.isClosed(), "La ressource à utiliser pour charger les \"ManagedInstances\" " +
+                "ne peut pas être \"null\" et doit être disponible (non fermée)");
 
-            new XMLConfigurationLoader(this)
-                .doLoadManagedInstances(resource);
+            XMLConfigurationLoader.doLoadManagedInstances(this, resource);
         }
-
-        refresh();
     }
+
+    protected abstract Resource buildResource();
 }

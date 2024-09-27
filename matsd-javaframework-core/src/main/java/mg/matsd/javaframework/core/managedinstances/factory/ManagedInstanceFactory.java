@@ -2,18 +2,15 @@ package mg.matsd.javaframework.core.managedinstances.factory;
 
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.exceptions.InvalidPackageException;
-import mg.matsd.javaframework.core.managedinstances.ManagedInstance;
-import mg.matsd.javaframework.core.managedinstances.ManagedInstanceUtils;
-import mg.matsd.javaframework.core.managedinstances.NoSuchManagedInstanceException;
+import mg.matsd.javaframework.core.managedinstances.*;
 import mg.matsd.javaframework.core.utils.Assert;
+import mg.matsd.javaframework.core.utils.StringUtils;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public abstract class ManagedInstanceFactory {
-    private static final String PACKAGE_NAME_REGEX = "^[a-zA-Z_][a-zA-Z0-9_]*(\\.[a-zA-Z_][a-zA-Z0-9_]*)*$";
-
     protected ManagedInstanceDefinitionRegistry managedInstanceDefinitionRegistry;
     @Nullable
     protected String componentScanBasePackage;
@@ -23,12 +20,14 @@ public abstract class ManagedInstanceFactory {
     protected ManagedInstanceFactory() {
         managedInstanceDefinitionRegistry = new ManagedInstanceDefinitionRegistry(this);
         singletonsMap = new HashMap<>();
+
+        defineCustomConfiguration();
     }
 
-    public ManagedInstanceFactory setComponentScanBasePackage(@Nullable String componentScanBasePackage) {
-        Assert.notBlank(componentScanBasePackage, true,
-            "Le nom de package des \"component\" à scanner ne peut pas être vide");
-        Assert.state(isValidPackageName(componentScanBasePackage),
+    public ManagedInstanceFactory setComponentScanBasePackage(String componentScanBasePackage) {
+        Assert.notBlank(componentScanBasePackage, false,
+            "Le nom de package des \"component\" à scanner ne peut pas être vide ou \"null\"");
+        Assert.state(StringUtils.isValidPackageName(componentScanBasePackage),
             () -> new InvalidPackageException(
                 String.format("Le nom de package des \"component\" \"%s\" à scanner n'est pas valide", componentScanBasePackage)
             )
@@ -70,8 +69,11 @@ public abstract class ManagedInstanceFactory {
         return managedInstanceDefinitionRegistry.containsManagedInstance(id);
     }
 
-    public void registerManagedInstance(ManagedInstance managedInstance) {
-        managedInstanceDefinitionRegistry.registerManagedInstance(managedInstance);
+    public void registerManagedInstance(ManagedInstance... managedInstances) {
+        Assert.notNull(managedInstances, "L'argument managedInstances ne peut pas être \"null\"");
+        Assert.noNullElements(managedInstances, "Chaque \"ManagedInstance\" à enregistrer ne peut pas être \"null\"");
+
+        for (ManagedInstance m : managedInstances) managedInstanceDefinitionRegistry.registerManagedInstance(m);
     }
 
     public void registerManagedInstance(String id, String clazz, String scope) {
@@ -81,13 +83,13 @@ public abstract class ManagedInstanceFactory {
     public Boolean isSingleton(String id) throws NoSuchManagedInstanceException {
         validateId(id);
 
-        return managedInstanceDefinitionRegistry.getManagedInstanceById(id).getScope() == ManagedInstance.Scope.SINGLETON;
+        return managedInstanceDefinitionRegistry.getManagedInstanceById(id).getScope() == Scope.SINGLETON;
     }
 
     public Boolean isPrototype(String id) throws NoSuchManagedInstanceException {
         validateId(id);
 
-        return managedInstanceDefinitionRegistry.getManagedInstanceById(id).getScope() == ManagedInstance.Scope.PROTOTYPE;
+        return managedInstanceDefinitionRegistry.getManagedInstanceById(id).getScope() == Scope.PROTOTYPE;
     }
 
     public Class<?> getManagedInstanceClass(String id) throws NoSuchManagedInstanceException {
@@ -96,10 +98,16 @@ public abstract class ManagedInstanceFactory {
         return managedInstanceDefinitionRegistry.getManagedInstanceById(id).getClazz();
     }
 
+    public boolean isCurrentlyInCreation(String id) {
+        validateId(id);
+
+        return managedInstanceDefinitionRegistry.isCurrentlyInCreation(id);
+    }
+
     public void scanComponents() {
         if (componentScanBasePackage == null || componentScanPerformed) return;
 
-        managedInstanceDefinitionRegistry.doScanComponents(componentScanBasePackage);
+        ManagedInstanceDefinitionScanner.doScanComponents(managedInstanceDefinitionRegistry, componentScanBasePackage);
         componentScanPerformed = true;
     }
 
@@ -107,28 +115,35 @@ public abstract class ManagedInstanceFactory {
         return componentScanPerformed;
     }
 
-    public void refresh() {
-        managedInstanceDefinitionRegistry.configureDependencies();
+    protected void defineCustomConfiguration() { }
+
+    protected Object getManagedInstanceForWebScope(ManagedInstance ignoredManagedInstance) {
+        throw new UnsupportedOperationException("La méthode \"getManagedInstanceForWebScope\" n'est disponible que dans un contexte web");
     }
 
     private Object getManagedInstance(ManagedInstance managedInstance) {
-        if (
-            isSingleton(managedInstance.getId()) &&
-            singletonsMap.containsKey(managedInstance.getId())
-        ) return singletonsMap.get(managedInstance.getId());
+        String managedInstanceId = managedInstance.getId();
 
-        Object instance = ManagedInstanceUtils.instantiate(managedInstance);
-        if (isSingleton(managedInstance.getId()))
-            singletonsMap.put(managedInstance.getId(), instance);
+        if (isCurrentlyInCreation(managedInstanceId))
+            throw new ManagedInstanceCurrentlyInCreationException(managedInstanceId);
+        managedInstanceDefinitionRegistry.resolveDependencies(managedInstance);
+
+        if (managedInstance.getScope() == Scope.REQUEST || managedInstance.getScope() == Scope.SESSION)
+            return getManagedInstanceForWebScope(managedInstance);
+
+        if (
+            isSingleton(managedInstanceId) &&
+            singletonsMap.containsKey(managedInstanceId)
+        ) return singletonsMap.get(managedInstanceId);
+
+        Object instance = ManagedInstanceUtils.instantiate(managedInstance, this);
+        if (isSingleton(managedInstanceId))
+            singletonsMap.put(managedInstanceId, instance);
 
         return instance;
     }
 
     private static void validateId(String id) {
         Assert.notNull(id, "L'identifiant ne peut pas être vide ou \"null\"");
-    }
-
-    private static boolean isValidPackageName(@Nullable String packageName) {
-        return packageName != null && packageName.matches(PACKAGE_NAME_REGEX);
     }
 }

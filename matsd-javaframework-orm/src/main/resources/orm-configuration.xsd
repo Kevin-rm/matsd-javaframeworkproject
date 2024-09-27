@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://www.matsd.mg/javaframework/schema/orm-configuration"
+           elementFormDefault="qualified">
+
+    <xs:element name="orm-configuration">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="session-factory" maxOccurs="unbounded">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="property" maxOccurs="7">
+                                <xs:complexType>
+                                    <xs:simpleContent>
+                                        <xs:extension base="xs:string">
+                                            <xs:attribute name="name" use="required">
+                                                <xs:simpleType>
+                                                    <xs:restriction base="xs:string">
+                                                        <xs:enumeration value="connection.url"/>
+                                                        <xs:enumeration value="connection.user"/>
+                                                        <xs:enumeration value="connection.password"/>
+                                                        <xs:enumeration value="connection.driver-class"/>
+                                                        <xs:enumeration value="connection.pool-size"/>
+                                                        <xs:enumeration value="show-sql"/>
+                                                        <xs:enumeration value="format-sql"/>
+                                                    </xs:restriction>
+                                                </xs:simpleType>
+                                            </xs:attribute>
+                                            <xs:attribute name="value" type="xs:string"/>
+                                        </xs:extension>
+                                    </xs:simpleContent>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element name="entity-scan">
+                                <xs:complexType>
+                                    <xs:attribute name="package" type="xs:string" use="required"/>
+                                </xs:complexType>
+                            </xs:element>
+                        </xs:sequence>
+                        <xs:attribute name="name" type="xs:string"/>
+                    </xs:complexType>
+                </xs:element>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>
