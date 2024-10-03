@@ -23,7 +23,7 @@ public class JoinColumn {
             .setUpdatable();
     }
 
-    String getName() {
+    public String getName() {
         return name;
     }
 
@@ -40,7 +40,7 @@ public class JoinColumn {
         return this;
     }
 
-    Column getReferencedColumn() {
+    public Column getReferencedColumn() {
         return referencedColumn;
     }
 
@@ -62,7 +62,7 @@ public class JoinColumn {
         return this;
     }
 
-    boolean isNullable() {
+    public boolean isNullable() {
         return nullable;
     }
 
@@ -73,7 +73,7 @@ public class JoinColumn {
         return this;
     }
 
-    boolean isUnique() {
+    public boolean isUnique() {
         return unique;
     }
 
@@ -84,7 +84,7 @@ public class JoinColumn {
         return this;
     }
 
-    boolean isUpdatable() {
+    public boolean isUpdatable() {
         return updatable;
     }
 

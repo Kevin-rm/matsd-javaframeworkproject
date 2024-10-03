@@ -9,4 +9,4 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @JsonResponse
 @Controller
-public @interface ApiController { }
+public @interface RestController { }

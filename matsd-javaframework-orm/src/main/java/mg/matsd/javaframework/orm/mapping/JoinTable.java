@@ -39,7 +39,7 @@ public class JoinTable {
         return this;
     }
 
-    List<JoinColumn> getJoinColumns() {
+    public List<JoinColumn> getJoinColumns() {
         return joinColumns;
     }
 
@@ -50,7 +50,7 @@ public class JoinTable {
         return this;
     }
 
-    List<JoinColumn> getInverseJoinColumns() {
+    public List<JoinColumn> getInverseJoinColumns() {
         return inverseJoinColumns;
     }
 
