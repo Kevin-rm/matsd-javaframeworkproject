@@ -7,9 +7,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.annotations.JsonResponse;
 import mg.itu.prom16.annotations.RequestMapping;
-import mg.itu.prom16.base.internal.MappingHandler;
+import mg.itu.prom16.base.internal.handler.MappingHandler;
 import mg.itu.prom16.base.internal.RequestMappingInfo;
 import mg.itu.prom16.base.internal.UtilFunctions;
+import mg.itu.prom16.base.internal.handler.ExceptionHandler;
 import mg.itu.prom16.base.internal.request.RequestContextHolder;
 import mg.itu.prom16.base.internal.request.ServletRequestAttributes;
 import mg.itu.prom16.exceptions.DuplicateMappingException;
@@ -31,6 +32,7 @@ import java.util.*;
 public class FrontServlet extends HttpServlet {
     private WebApplicationContainer webApplicationContainer;
     private Map<RequestMappingInfo, MappingHandler> mappingHandlerMap;
+    private List<ExceptionHandler> exceptionHandlers;
 
     @Override
     public void init() {
@@ -38,10 +40,10 @@ public class FrontServlet extends HttpServlet {
             getServletContext(),
             getServletConfig().getInitParameter("containerConfigLocation")
         );
-        setMappingHandlerMap();
+        initHandlers();
     }
 
-    private void setMappingHandlerMap() {
+    private void initHandlers() {
         Assert.state(webApplicationContainer.hasPerformedComponentScan(),
             String.format("Le scan des \"components\" n'a pas été effectué car la balise <container:component-scan> n'a pas été trouvée " +
                 "dans le fichier de configuration \"%s\"", webApplicationContainer.getXmlResourceName())
@@ -61,32 +63,38 @@ public class FrontServlet extends HttpServlet {
             }
 
             for (Method method : controllerClass.getDeclaredMethods()) {
-                if (
-                    !AnnotationUtils.hasAnnotation(RequestMapping.class, method) ||
-                    method.getModifiers() == Modifier.PRIVATE
-                ) continue;
+                if (method.getModifiers() == Modifier.PRIVATE) continue;
 
-                Map<String, Object> requestMappingInfoAttributes = UtilFunctions.getRequestMappingInfoAttributes(method);
-                List<RequestMethod> requestMethods = Arrays.asList(
-                    (RequestMethod[]) requestMappingInfoAttributes.get("methods")
-                );
-                requestMethods.addAll(sharedRequestMethods);
+                if (AnnotationUtils.hasAnnotation(RequestMapping.class, method)) {
+                    Map<String, Object> requestMappingInfoAttributes = UtilFunctions.getRequestMappingInfoAttributes(method);
+                    List<RequestMethod> requestMethods = Arrays.asList(
+                        (RequestMethod[]) requestMappingInfoAttributes.get("methods")
+                    );
+                    requestMethods.addAll(sharedRequestMethods);
 
-                RequestMappingInfo requestMappingInfo = new RequestMappingInfo(
-                    pathPrefix + requestMappingInfoAttributes.get("path"), requestMethods
-                );
-                if (mappingHandlerMap.containsKey(requestMappingInfo))
-                    throw new DuplicateMappingException(requestMappingInfo);
+                    RequestMappingInfo requestMappingInfo = new RequestMappingInfo(
+                        pathPrefix + requestMappingInfoAttributes.get("path"), requestMethods
+                    );
+                    if (mappingHandlerMap.containsKey(requestMappingInfo))
+                        throw new DuplicateMappingException(requestMappingInfo);
 
-                mappingHandlerMap.put(requestMappingInfo,
-                    new MappingHandler(controllerClass, method, jsonResponse || method.isAnnotationPresent(JsonResponse.class))
-                );
+                    mappingHandlerMap.put(requestMappingInfo,
+                        new MappingHandler(controllerClass, method, jsonResponse)
+                    );
+                } else if (method.isAnnotationPresent(mg.itu.prom16.annotations.ExceptionHandler.class)) {
+                    Class<? extends Throwable>[] exceptionClasses = method.getAnnotation(mg.itu.prom16.annotations.ExceptionHandler.class).value();
+                    if (exceptionClasses.length == 0) continue;
+
+                    if (exceptionHandlers.isEmpty()) exceptionHandlers = new ArrayList<>();
+                    exceptionHandlers.add(
+                        new ExceptionHandler(controllerClass, method, jsonResponse, exceptionClasses, false)
+                    );
+                }
             }
         }
     }
 
-    protected final void processRequest(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
+    protected final void processRequest(HttpServletRequest request, HttpServletResponse response) {
         RequestContextHolder.setServletRequestAttributes(new ServletRequestAttributes(request, response));
         Session session = ((Session) webApplicationContainer.getManagedInstance(Session.class))
             .setHttpSession(RequestContextHolder.getServletRequestAttributes().getSession());
@@ -119,6 +127,8 @@ public class FrontServlet extends HttpServlet {
             else if (controllerMethodResult instanceof String string)
                 handleStringResult(request, response, string);
             else throw new InvalidReturnTypeException(controllerMethod);
+        } catch (Throwable throwable) {
+
         } finally {
             RequestContextHolder.clear();
         }
