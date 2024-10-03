@@ -62,14 +62,14 @@ public abstract class AbstractHandler {
 
     protected abstract Object resolveAdditionalParameter(
         Class<?> parameterType, Parameter parameter, HttpServletRequest httpServletRequest, Object additionalParameter
-    ) throws RuntimeException;
+    ) throws UnexpectedParameterException, InternalException;
 
     public Object invokeMethod(
         WebApplicationContainer webApplicationContainer,
         HttpServletRequest httpServletRequest,
         HttpServletResponse httpServletResponse,
         Session session,
-        Object additionParameter
+        Object additionalParameter
     ) {
         try {
             Object[] args = new Object[method.getParameterCount()];
@@ -87,8 +87,8 @@ public abstract class AbstractHandler {
                      args[i] = session;
                 else {
                     try {
-                        args[i] = resolveAdditionalParameter(parameterType, parameter, httpServletRequest, additionParameter);
-                    } catch (RuntimeException e) {
+                        args[i] = resolveAdditionalParameter(parameterType, parameter, httpServletRequest, additionalParameter);
+                    } catch (UnexpectedParameterException | InternalException e) {
                         try {
                             args[i] = webApplicationContainer.getManagedInstance(parameterType);
                         } catch (NoSuchManagedInstanceException ex) {

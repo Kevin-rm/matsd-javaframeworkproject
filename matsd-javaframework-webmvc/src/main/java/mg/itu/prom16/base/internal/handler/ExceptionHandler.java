@@ -1,6 +1,8 @@
 package mg.itu.prom16.base.internal.handler;
 
+import com.sun.jdi.InternalException;
 import jakarta.servlet.http.HttpServletRequest;
+import mg.itu.prom16.exceptions.UnexpectedParameterException;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -30,13 +32,26 @@ public class ExceptionHandler extends AbstractHandler {
         return isGlobal;
     }
 
+    public static void getThrowableTrace(Throwable throwable, List<Throwable> result) {
+        result.add(throwable);
+        if (throwable.getCause() == null) return;
+
+        getThrowableTrace(throwable.getCause(), result);
+    }
+
     @Override
     protected Object resolveAdditionalParameter(
         Class<?> parameterType, Parameter parameter, HttpServletRequest httpServletRequest, Object additionalParameter
-    ) throws RuntimeException {
-        if (!(additionalParameter instanceof Throwable throwable) || parameterType != throwable.getClass())
-            throw new RuntimeException();
+    ) throws UnexpectedParameterException, InternalException {
+        if (!(additionalParameter instanceof List<?> list)) throw new InternalException();
 
-        return additionalParameter;
+        for (Object object : list) {
+            Throwable throwable = (Throwable) object;
+
+            if (parameterType != throwable.getClass()) continue;
+            return throwable;
+        }
+
+        throw new UnexpectedParameterException();
     }
 }

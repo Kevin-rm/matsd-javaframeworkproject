@@ -1,5 +1,6 @@
 package mg.itu.prom16.base.internal.handler;
 
+import com.sun.jdi.InternalException;
 import jakarta.servlet.http.HttpServletRequest;
 import mg.itu.prom16.annotations.FromRequestParameters;
 import mg.itu.prom16.annotations.PathVariable;
@@ -7,6 +8,7 @@ import mg.itu.prom16.annotations.RequestParameter;
 import mg.itu.prom16.annotations.SessionAttribute;
 import mg.itu.prom16.base.internal.RequestMappingInfo;
 import mg.itu.prom16.base.internal.UtilFunctions;
+import mg.itu.prom16.exceptions.UnexpectedParameterException;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -20,8 +22,8 @@ public class MappingHandler extends AbstractHandler {
     @Override
     protected Object resolveAdditionalParameter(
         Class<?> parameterType, Parameter parameter, HttpServletRequest httpServletRequest, Object additionalParameter
-    ) throws RuntimeException {
-        if (!(additionalParameter instanceof RequestMappingInfo requestMappingInfo)) throw new RuntimeException();
+    ) throws UnexpectedParameterException, InternalException {
+        if (!(additionalParameter instanceof RequestMappingInfo requestMappingInfo)) throw new InternalException();
 
         Object result;
         if (parameter.isAnnotationPresent(SessionAttribute.class))
@@ -32,7 +34,7 @@ public class MappingHandler extends AbstractHandler {
             result = UtilFunctions.getPathVariableValue(parameterType, parameter, requestMappingInfo, httpServletRequest);
         else if (parameter.isAnnotationPresent(FromRequestParameters.class))
             result  = UtilFunctions.bindRequestParameters(parameterType, parameter, httpServletRequest);
-        else throw new RuntimeException();
+        else throw new UnexpectedParameterException();
 
         return result;
     }
