@@ -66,14 +66,8 @@ public class FrontServlet extends HttpServlet {
                 if (method.getModifiers() == Modifier.PRIVATE) continue;
 
                 if (AnnotationUtils.hasAnnotation(RequestMapping.class, method)) {
-                    Map<String, Object> requestMappingInfoAttributes = UtilFunctions.getRequestMappingInfoAttributes(method);
-                    List<RequestMethod> requestMethods = Arrays.asList(
-                        (RequestMethod[]) requestMappingInfoAttributes.get("methods")
-                    );
-                    requestMethods.addAll(sharedRequestMethods);
-
                     RequestMappingInfo requestMappingInfo = new RequestMappingInfo(
-                        pathPrefix + requestMappingInfoAttributes.get("path"), requestMethods
+                        pathPrefix, UtilFunctions.getRequestMappingInfoAttributes(method), sharedRequestMethods
                     );
                     if (mappingHandlerMap.containsKey(requestMappingInfo))
                         throw new DuplicateMappingException(requestMappingInfo);

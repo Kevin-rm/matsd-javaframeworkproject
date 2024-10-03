@@ -19,9 +19,16 @@ public class RequestMappingInfo {
     private Map<String, String> pathVariablesAttributes;
     private Pattern pathPattern;
 
-    public RequestMappingInfo(@Nullable String path, @Nullable List<RequestMethod> methods) {
-        this.setPath(path)
-            .setMethods(methods)
+    public RequestMappingInfo(
+        String pathPrefix, Map<String, Object> requestMappingInfoAttributes, List<RequestMethod> sharedRequestMethods
+    ) {
+        List<RequestMethod> requestMethods = Arrays.asList(
+            (RequestMethod[]) requestMappingInfoAttributes.get("methods")
+        );
+        requestMethods.addAll(sharedRequestMethods);
+
+        this.setPath(pathPrefix + requestMappingInfoAttributes.get("path"))
+            .setMethods(requestMethods)
             .setPathVariablesAttributes()
             .setPathPattern();
     }
