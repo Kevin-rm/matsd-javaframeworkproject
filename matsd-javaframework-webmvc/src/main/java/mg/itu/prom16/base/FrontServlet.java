@@ -27,6 +27,7 @@ import java.util.*;
 
 public class FrontServlet extends HttpServlet {
     private WebApplicationContainer webApplicationContainer;
+    private ResponseRenderer responseRenderer;
     private Map<RequestMappingInfo, MappingHandler> mappingHandlerMap;
     private List<ExceptionHandler> exceptionHandlers;
 
@@ -36,6 +37,7 @@ public class FrontServlet extends HttpServlet {
             getServletContext(),
             getServletConfig().getInitParameter("containerConfigLocation")
         );
+        responseRenderer = new ResponseRenderer(webApplicationContainer);
         initHandlers();
     }
 
@@ -90,8 +92,6 @@ public class FrontServlet extends HttpServlet {
         RequestContextHolder.setServletRequestAttributes(new ServletRequestAttributes(request, response));
         Session session = ((Session) webApplicationContainer.getManagedInstance(Session.class))
             .setHttpSession(RequestContextHolder.getServletRequestAttributes().getSession());
-        ResponseRenderer responseRenderer = (ResponseRenderer) webApplicationContainer.getManagedInstance(
-            WebApplicationContainer.RESPONSE_RENDERER_ID);
 
         Map.Entry<RequestMappingInfo, MappingHandler> mappingHandlerEntry = resolveMappingHandler(request);
         if (mappingHandlerEntry == null) {

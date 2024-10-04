@@ -9,18 +9,15 @@ import mg.itu.prom16.base.internal.handler.AbstractHandler;
 import mg.itu.prom16.exceptions.InvalidReturnTypeException;
 import mg.itu.prom16.support.WebApplicationContainer;
 import mg.itu.prom16.utils.WebUtils;
-import mg.matsd.javaframework.core.utils.Assert;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Method;
 
-public class ResponseRenderer {
-    private WebApplicationContainer webApplicationContainer;
+class ResponseRenderer {
+    private final WebApplicationContainer webApplicationContainer;
 
-    public void setWebApplicationContainer(WebApplicationContainer webApplicationContainer) {
-        Assert.notNull(webApplicationContainer, "L'argument webApplicationContainer ne peut pas être \"null\"");
-
+    ResponseRenderer(final WebApplicationContainer webApplicationContainer) {
         this.webApplicationContainer = webApplicationContainer;
     }
 
