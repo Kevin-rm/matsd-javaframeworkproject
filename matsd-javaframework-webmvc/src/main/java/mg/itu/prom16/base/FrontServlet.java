@@ -103,19 +103,14 @@ public class FrontServlet extends HttpServlet {
         }
 
         MappingHandler mappingHandler = mappingHandlerEntry.getValue();
-        Method controllerMethod = mappingHandler.getMethod();
         try {
-            responseRenderer.doRender(request, response, mappingHandler, controllerMethod,
-                mappingHandler.invokeMethod(
-                    webApplicationContainer, request, response, session, mappingHandlerEntry.getKey()
-                ));
+            responseRenderer.doRender(request, response, session, mappingHandler, mappingHandlerEntry.getKey());
         } catch (Throwable throwable) {
             List<Throwable> throwableTrace = ExceptionHandler.getThrowableTrace(throwable, null);
             ExceptionHandler exceptionHandler = resolveExceptionHandler(throwableTrace, mappingHandler.getControllerClass());
             if (exceptionHandler == null) throw throwable;
 
-            responseRenderer.doRender(request, response, exceptionHandler, exceptionHandler.getMethod(),
-                exceptionHandler.invokeMethod(webApplicationContainer, request, response, session, throwableTrace));
+            responseRenderer.doRender(request, response, session, exceptionHandler, throwableTrace);
         } finally {
             RequestContextHolder.clear();
         }

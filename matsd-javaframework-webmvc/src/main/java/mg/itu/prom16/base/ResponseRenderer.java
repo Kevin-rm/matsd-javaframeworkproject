@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.base.internal.UtilFunctions;
 import mg.itu.prom16.base.internal.handler.AbstractHandler;
 import mg.itu.prom16.exceptions.InvalidReturnTypeException;
+import mg.itu.prom16.http.Session;
 import mg.itu.prom16.support.WebApplicationContainer;
 import mg.itu.prom16.utils.WebUtils;
 
@@ -24,39 +25,44 @@ class ResponseRenderer {
     void doRender(
         HttpServletRequest httpServletRequest,
         HttpServletResponse httpServletResponse,
+        Session session,
         AbstractHandler handler,
-        Method controllerMethod,
-        Object controllerMethodResult
+        Object additionalParameter
     ) throws ServletException, IOException {
+        Object handlerMethodResult = handler.invokeMethod(
+            webApplicationContainer, httpServletRequest, httpServletResponse, session, additionalParameter);
+
+        Method handlerMethod = handler.getMethod();
+
         httpServletResponse.setCharacterEncoding("UTF-8");
         if (handler.isJsonResponse())
-            handleJsonResult(httpServletResponse, handler.getControllerClass(), controllerMethod, controllerMethodResult);
-        else if (controllerMethodResult instanceof ModelAndView modelAndView) {
+            handleJsonResult(httpServletResponse, handler.getControllerClass(), handlerMethod, handlerMethodResult);
+        else if (handlerMethodResult instanceof ModelAndView modelAndView) {
             modelAndView.getData().forEach(httpServletRequest::setAttribute);
 
             httpServletRequest.getRequestDispatcher(modelAndView.getView()).forward(httpServletRequest, httpServletResponse);
-        } else if (controllerMethodResult instanceof RedirectView redirectView)
+        } else if (handlerMethodResult instanceof RedirectView redirectView)
             httpServletResponse.sendRedirect(redirectView.buildCompleteUrl());
-        else if (controllerMethodResult instanceof String string)
+        else if (handlerMethodResult instanceof String string)
             handleStringResult(httpServletRequest, httpServletResponse, string);
-        else throw new InvalidReturnTypeException(controllerMethod);
+        else throw new InvalidReturnTypeException(handlerMethod);
     }
 
     private void handleJsonResult(
         HttpServletResponse httpServletResponse,
         Class<?> controllerClass,
-        Method   controllerMethod,
-        Object   controllerMethodResult
+        Method   handlerMethod,
+        Object   handlerMethodResult
     ) throws IOException {
-        if (controllerMethod.getReturnType() == void.class)
+        if (handlerMethod.getReturnType() == void.class)
             throw new InvalidReturnTypeException(String.format("Impossible d'envoyer une réponse sous le format \"JSON\" lorsque " +
-                "le type de retour est \"void\": méthode \"%s\" du contrôleur \"%s\"", controllerMethod.getName(), controllerClass)
+                "le type de retour est \"void\": méthode \"%s\" du contrôleur \"%s\"", handlerMethod.getName(), controllerClass)
             );
 
         httpServletResponse.setContentType("application/json");
         ObjectMapper objectMapper = (ObjectMapper) webApplicationContainer.getManagedInstance(WebApplicationContainer.JACKSON_OBJECT_MAPPER_ID);
         objectMapper.writeValue(httpServletResponse.getWriter(),
-            controllerMethodResult instanceof ModelAndView modelAndView ? modelAndView.getData() : controllerMethodResult);
+            handlerMethodResult instanceof ModelAndView modelAndView ? modelAndView.getData() : handlerMethodResult);
     }
 
     private void handleStringResult(
