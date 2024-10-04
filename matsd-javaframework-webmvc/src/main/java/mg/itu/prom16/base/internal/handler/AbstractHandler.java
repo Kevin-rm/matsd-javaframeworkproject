@@ -4,6 +4,7 @@ import com.sun.jdi.InternalException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.annotations.JsonResponse;
+import mg.itu.prom16.annotations.SessionAttribute;
 import mg.itu.prom16.base.internal.UtilFunctions;
 import mg.itu.prom16.exceptions.UnexpectedParameterException;
 import mg.itu.prom16.http.Session;
@@ -16,9 +17,9 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 
 public abstract class AbstractHandler {
-    private Class<?> controllerClass;
-    private Method method;
-    private final boolean jsonResponse;
+    protected Class<?> controllerClass;
+    protected Method method;
+    protected final boolean jsonResponse;
 
     public AbstractHandler(Class<?> controllerClass, Method method, boolean jsonResponse) {
         this.setControllerClass(controllerClass)
@@ -84,7 +85,9 @@ public abstract class AbstractHandler {
                 else if (parameterType == HttpServletResponse.class)
                     args[i] = httpServletResponse;
                 else if (Session.class.isAssignableFrom(parameterType))
-                     args[i] = session;
+                    args[i] = session;
+                else if (parameter.isAnnotationPresent(SessionAttribute.class))
+                    args[i] = UtilFunctions.getSessionAttributeValue(parameterType, parameter, httpServletRequest.getSession());
                 else {
                     try {
                         args[i] = resolveAdditionalParameter(parameterType, parameter, httpServletRequest, additionalParameter);

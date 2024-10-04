@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.annotations.JsonResponse;
 import mg.itu.prom16.annotations.RequestMapping;
+import mg.itu.prom16.base.internal.handler.AbstractHandler;
 import mg.itu.prom16.base.internal.handler.MappingHandler;
 import mg.itu.prom16.base.internal.RequestMappingInfo;
 import mg.itu.prom16.base.internal.UtilFunctions;
@@ -49,7 +50,6 @@ public class FrontServlet extends HttpServlet {
                 "dans le fichier de configuration \"%s\"", webApplicationContainer.getXmlResourceName())
         );
 
-        mappingHandlerMap = new HashMap<>();
         for (Class<?> controllerClass : webApplicationContainer.retrieveControllerClasses()) {
             String pathPrefix = "";
             List<RequestMethod> sharedRequestMethods = new ArrayList<>();
@@ -69,6 +69,8 @@ public class FrontServlet extends HttpServlet {
                     RequestMappingInfo requestMappingInfo = new RequestMappingInfo(
                         pathPrefix, UtilFunctions.getRequestMappingInfoAttributes(method), sharedRequestMethods
                     );
+
+                    if (mappingHandlerMap == null) mappingHandlerMap = new HashMap<>();
                     if (mappingHandlerMap.containsKey(requestMappingInfo))
                         throw new DuplicateMappingException(requestMappingInfo);
 
@@ -79,7 +81,7 @@ public class FrontServlet extends HttpServlet {
                     Class<? extends Throwable>[] exceptionClasses = method.getAnnotation(mg.itu.prom16.annotations.ExceptionHandler.class).value();
                     if (exceptionClasses.length == 0) continue;
 
-                    if (exceptionHandlers.isEmpty()) exceptionHandlers = new ArrayList<>();
+                    if (exceptionHandlers == null) exceptionHandlers = new ArrayList<>();
                     exceptionHandlers.add(
                         new ExceptionHandler(controllerClass, method, jsonResponse, exceptionClasses, false)
                     );
@@ -88,41 +90,36 @@ public class FrontServlet extends HttpServlet {
         }
     }
 
-    protected final void processRequest(HttpServletRequest request, HttpServletResponse response) {
+    protected final void processRequest(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {
         RequestContextHolder.setServletRequestAttributes(new ServletRequestAttributes(request, response));
         Session session = ((Session) webApplicationContainer.getManagedInstance(Session.class))
             .setHttpSession(RequestContextHolder.getServletRequestAttributes().getSession());
 
-        try {
-            Map.Entry<RequestMappingInfo, MappingHandler> mappingHandlerEntry = resolveMappingHandler(request);
-            if (mappingHandlerEntry == null) {
-                response.sendError(HttpServletResponse.SC_NOT_FOUND,
-                    String.format("Aucun mapping trouvé pour le path : \"%s\" et method : \"%s\"",
-                        request.getServletPath(), request.getMethod())
-                );
-                return;
-            }
-
-            MappingHandler mappingHandler = mappingHandlerEntry.getValue();
-            Method controllerMethod = mappingHandler.getMethod();
-            Object controllerMethodResult = mappingHandler.invokeMethod(
-                webApplicationContainer, request, response, session, mappingHandlerEntry.getKey()
+        Map.Entry<RequestMappingInfo, MappingHandler> mappingHandlerEntry = resolveMappingHandler(request);
+        if (mappingHandlerEntry == null) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND,
+                String.format("Aucun mapping trouvé pour le path : \"%s\" et method : \"%s\"",
+                    request.getServletPath(), request.getMethod())
             );
+            return;
+        }
 
-            response.setCharacterEncoding("UTF-8");
-            if (mappingHandler.isJsonResponse())
-                handleJsonResult(response, mappingHandler.getControllerClass(), controllerMethod, controllerMethodResult);
-            else if (controllerMethodResult instanceof ModelAndView modelAndView) {
-                modelAndView.getData().forEach(request::setAttribute);
-
-                request.getRequestDispatcher(modelAndView.getView()).forward(request, response);
-            } else if (controllerMethodResult instanceof RedirectView redirectView)
-                response.sendRedirect(redirectView.buildCompleteUrl());
-            else if (controllerMethodResult instanceof String string)
-                handleStringResult(request, response, string);
-            else throw new InvalidReturnTypeException(controllerMethod);
+        MappingHandler mappingHandler = mappingHandlerEntry.getValue();
+        Method controllerMethod = mappingHandler.getMethod();
+        try {
+            handleResult(request, response, mappingHandler, controllerMethod,
+                mappingHandler.invokeMethod(
+                    webApplicationContainer, request, response, session, mappingHandlerEntry.getKey()
+                ));
         } catch (Throwable throwable) {
+            ExceptionHandler exceptionHandler = resolveExceptionHandler(throwable, mappingHandler.getControllerClass());
+            if (exceptionHandler == null) throw throwable;
 
+            handleResult(request, response, exceptionHandler, exceptionHandler.getMethod(),
+                exceptionHandler.invokeMethod(
+                    webApplicationContainer, request, response, session, ExceptionHandler.getThrowableTrace(throwable, null)
+                ));
         } finally {
             RequestContextHolder.clear();
         }
@@ -146,6 +143,35 @@ public class FrontServlet extends HttpServlet {
             .filter(entry -> entry.getKey().matches(request))
             .findFirst()
             .orElse(null);
+    }
+
+    @Nullable
+    private ExceptionHandler resolveExceptionHandler(Throwable throwable, Class<?> currentControllerClass) {
+        return exceptionHandlers.stream()
+            .filter(exceptionHandler -> exceptionHandler.canHandle(throwable, currentControllerClass))
+            .findFirst()
+            .orElse(null);
+    }
+
+    private void handleResult(
+        HttpServletRequest httpServletRequest,
+        HttpServletResponse httpServletResponse,
+        AbstractHandler handler,
+        Method controllerMethod,
+        Object controllerMethodResult
+    ) throws ServletException, IOException {
+        httpServletResponse.setCharacterEncoding("UTF-8");
+        if (handler.isJsonResponse())
+            handleJsonResult(httpServletResponse, handler.getControllerClass(), controllerMethod, controllerMethodResult);
+        else if (controllerMethodResult instanceof ModelAndView modelAndView) {
+            modelAndView.getData().forEach(httpServletRequest::setAttribute);
+
+            httpServletRequest.getRequestDispatcher(modelAndView.getView()).forward(httpServletRequest, httpServletResponse);
+        } else if (controllerMethodResult instanceof RedirectView redirectView)
+            httpServletResponse.sendRedirect(redirectView.buildCompleteUrl());
+        else if (controllerMethodResult instanceof String string)
+            handleStringResult(httpServletRequest, httpServletResponse, string);
+        else throw new InvalidReturnTypeException(controllerMethod);
     }
 
     private void handleJsonResult(
