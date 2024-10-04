@@ -113,13 +113,12 @@ public class FrontServlet extends HttpServlet {
                     webApplicationContainer, request, response, session, mappingHandlerEntry.getKey()
                 ));
         } catch (Throwable throwable) {
-            ExceptionHandler exceptionHandler = resolveExceptionHandler(throwable, mappingHandler.getControllerClass());
+            List<Throwable> throwableTrace = ExceptionHandler.getThrowableTrace(throwable, null);
+            ExceptionHandler exceptionHandler = resolveExceptionHandler(throwableTrace, mappingHandler.getControllerClass());
             if (exceptionHandler == null) throw throwable;
 
             handleResult(request, response, exceptionHandler, exceptionHandler.getMethod(),
-                exceptionHandler.invokeMethod(
-                    webApplicationContainer, request, response, session, ExceptionHandler.getThrowableTrace(throwable, null)
-                ));
+                exceptionHandler.invokeMethod(webApplicationContainer, request, response, session, throwableTrace));
         } finally {
             RequestContextHolder.clear();
         }
@@ -146,9 +145,9 @@ public class FrontServlet extends HttpServlet {
     }
 
     @Nullable
-    private ExceptionHandler resolveExceptionHandler(Throwable throwable, Class<?> currentControllerClass) {
+    private ExceptionHandler resolveExceptionHandler(List<Throwable> throwableTrace, Class<?> currentControllerClass) {
         return exceptionHandlers.stream()
-            .filter(exceptionHandler -> exceptionHandler.canHandle(throwable, currentControllerClass))
+            .filter(exceptionHandler -> exceptionHandler.canHandle(throwableTrace, currentControllerClass))
             .findFirst()
             .orElse(null);
     }
