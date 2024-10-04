@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import mg.itu.prom16.base.ResponseRenderer;
 import mg.itu.prom16.base.internal.UtilFunctions;
 import mg.itu.prom16.base.internal.request.RequestContextHolder;
 import mg.itu.prom16.http.SessionImpl;
@@ -21,6 +22,7 @@ import java.util.List;
 public class WebApplicationContainer extends AbstractXmlResourceContainer {
     public static final String WEB_SCOPED_MANAGED_INSTANCES_KEY_PREFIX = "web_scoped_managedinstance";
     public static final String JACKSON_OBJECT_MAPPER_ID = "_jackson_objectmapper";
+    public static final String RESPONSE_RENDERER_ID = "_matsd_response_renderer";
 
     private ServletContext servletContext;
 
@@ -54,11 +56,15 @@ public class WebApplicationContainer extends AbstractXmlResourceContainer {
     protected void defineCustomConfiguration() {
         registerManagedInstance(
             new ManagedInstance(SessionImpl.MANAGED_INSTANCE_ID, SessionImpl.class, "session", null, null),
-            new ManagedInstance(JACKSON_OBJECT_MAPPER_ID, ObjectMapper.class, "singleton", null, null)
+            new ManagedInstance(JACKSON_OBJECT_MAPPER_ID, ObjectMapper.class, "singleton", null, null),
+            new ManagedInstance(RESPONSE_RENDERER_ID, ResponseRenderer.class, "singleton", null, null)
         );
 
         ObjectMapper objectMapper = (ObjectMapper) getManagedInstance(JACKSON_OBJECT_MAPPER_ID);
         objectMapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+
+        ResponseRenderer responseRenderer = (ResponseRenderer) getManagedInstance(RESPONSE_RENDERER_ID);
+        responseRenderer.setWebApplicationContainer(this);
     }
 
     @Override
