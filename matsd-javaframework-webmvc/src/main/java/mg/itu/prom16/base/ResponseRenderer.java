@@ -34,11 +34,14 @@ class ResponseRenderer {
 
         Method handlerMethod = handler.getMethod();
 
+        Model model = ((Model) webApplicationContainer.getManagedInstance(Model.MANAGED_INSTANCE_ID));
+        model.setAttributes(httpServletRequest);
+
         httpServletResponse.setCharacterEncoding("UTF-8");
         if (handler.isJsonResponse())
             handleJsonResult(httpServletResponse, handler.getControllerClass(), handlerMethod, handlerMethodResult);
         else if (handlerMethodResult instanceof ModelAndView modelAndView) {
-            modelAndView.getData().forEach(httpServletRequest::setAttribute);
+            modelAndView.getModel().setAttributes(httpServletRequest);
 
             httpServletRequest.getRequestDispatcher(modelAndView.getView()).forward(httpServletRequest, httpServletResponse);
         } else if (handlerMethodResult instanceof RedirectView redirectView)

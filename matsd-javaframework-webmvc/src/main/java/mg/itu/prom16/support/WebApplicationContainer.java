@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import mg.itu.prom16.base.Model;
 import mg.itu.prom16.base.internal.UtilFunctions;
 import mg.itu.prom16.base.internal.request.RequestContextHolder;
 import mg.itu.prom16.http.SessionImpl;
@@ -54,7 +55,8 @@ public class WebApplicationContainer extends AbstractXmlResourceContainer {
     protected void defineCustomConfiguration() {
         registerManagedInstance(
             new ManagedInstance(SessionImpl.MANAGED_INSTANCE_ID, SessionImpl.class, "session", null, null),
-            new ManagedInstance(JACKSON_OBJECT_MAPPER_ID, ObjectMapper.class, "singleton", null, null)
+            new ManagedInstance(JACKSON_OBJECT_MAPPER_ID, ObjectMapper.class, "singleton", null, null),
+            new ManagedInstance(Model.MANAGED_INSTANCE_ID, Model.class, "request", null, null)
         );
 
         ObjectMapper objectMapper = (ObjectMapper) getManagedInstance(JACKSON_OBJECT_MAPPER_ID);
