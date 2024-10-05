@@ -4,6 +4,7 @@ import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.StringUtils;
 import mg.matsd.javaframework.orm.mapping.Column;
 import mg.matsd.javaframework.orm.mapping.Entity;
+import mg.matsd.javaframework.orm.mapping.JoinColumn;
 import mg.matsd.javaframework.orm.mapping.Relationship;
 
 import java.lang.reflect.InvocationHandler;
@@ -13,7 +14,7 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 public class LazyLoader implements InvocationHandler {
-    private static final String SQL_TEMPLATE = "SELECT %s FROM %s WHERE %s";
+    private static final String SQL_TEMPLATE = "SELECT %s FROM %s %s %s WHERE %s";
 
     private final Object target;
     private final Entity entity;
@@ -58,6 +59,7 @@ public class LazyLoader implements InvocationHandler {
         Entity targetEntity = relationship.getTargetEntity();
 
         String projections = buildProjectionSql(targetEntity);
+        
 
     }
 
@@ -67,9 +69,32 @@ public class LazyLoader implements InvocationHandler {
         List<Column> columns = entity.getColumns();
         int columnsSize = columns.size();
         IntStream.range(0, columnsSize).forEachOrdered(i -> {
-            stringBuilder.append(String.format("`%s`", columns.get(i).getName()));
+            stringBuilder.append(String.format("%s", columns.get(i).getName()));
             if (i != columnsSize - 1) stringBuilder.append(", ");
         });
+
+        return stringBuilder.toString();
+    }
+
+    private static String buildJoinSql(Relationship relationship) {
+        StringBuilder stringBuilder = new StringBuilder();
+
+        if (relationship.isToMany()) {
+            stringBuilder.append("JOIN ").append("%s AS e_2").append(" ON ");
+            List<JoinColumn> joinColumns = relationship.getJoinColumns();
+            for (int i = 0; i < joinColumns.size(); i++) {
+                JoinColumn joinColumn = joinColumns.get(i);
+                stringBuilder.append(joinColumn.getName()).append(" = ").append(joinColumn.getReferencedColumn()).append(" ");
+                if (i < joinColumns.size() - 1)
+                    stringBuilder.append("AND ");
+            }
+        } else {
+            List<JoinColumn> joinColumns = relationship.getJoinColumns();
+            for (JoinColumn joinColumn : joinColumns) {
+                stringBuilder.append("JOIN ").append(relationship.getTargetEntity().getTableName())
+                        .append(" ON ").append(joinColumn.getName()).append(" = ").append(joinColumn.getReferencedColumn()).append(" ");
+            }
+        }
 
         return stringBuilder.toString();
     }

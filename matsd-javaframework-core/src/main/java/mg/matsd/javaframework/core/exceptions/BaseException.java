@@ -4,6 +4,8 @@ import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.StringUtils;
 
 public abstract class BaseException extends RuntimeException {
+    protected BaseException() { super(); }
+
     protected BaseException(@Nullable String message) {
         super(message);
     }

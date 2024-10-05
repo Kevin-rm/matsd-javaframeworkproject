@@ -3,16 +3,15 @@ package mg.itu.prom16.base;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 
-import java.util.HashMap;
 import java.util.Map;
 
 public class ModelAndView {
     private String view;
-    private final Map<String, Object> data;
+    private final Model model;
 
     public ModelAndView(String view) {
         setView(view);
-        data = new HashMap<>();
+        model = new Model();
     }
 
     public String getView() {
@@ -32,23 +31,21 @@ public class ModelAndView {
         this.view = view;
     }
 
+    Model getModel() {
+        return model;
+    }
+
     public Map<String, Object> getData() {
-        return data;
+        return model.getData();
     }
 
     public ModelAndView addData(String key, @Nullable Object value) {
-        Assert.notBlank(key, false, "La clé de la donnée à ajouter ne peut pas être vide ou \"null\"");
-        Assert.state(!(value instanceof ModelAndView), "La donnée ne peut pas être une instance de \"ModelView\"");
-
-        data.put(key, value);
+        model.addData(key, value);
         return this;
     }
 
     @Nullable
     public Object getData(String key) {
-        Assert.notBlank(key, false, "La clé de la donnée à récupérer ne peut pas être vide ou \"null\"");
-
-        if (!data.containsKey(key)) return null;
-        return data.get(key);
+        return model.getData(key);
     }
 }

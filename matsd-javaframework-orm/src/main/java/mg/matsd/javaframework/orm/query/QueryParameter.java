@@ -3,7 +3,7 @@ package mg.matsd.javaframework.orm.query;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 
-class QueryParameter {
+public class QueryParameter {
     private final Query<?> query;
     private int    index;
     @Nullable

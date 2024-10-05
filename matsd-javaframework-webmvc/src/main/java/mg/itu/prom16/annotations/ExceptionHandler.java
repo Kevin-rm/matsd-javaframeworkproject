@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-@JsonResponse
-@Controller
-public @interface ApiController { }
+@Target(ElementType.METHOD)
+public @interface ExceptionHandler {
+    Class<? extends Throwable>[] value();
+}

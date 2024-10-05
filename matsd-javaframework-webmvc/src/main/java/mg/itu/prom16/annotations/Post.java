@@ -12,4 +12,6 @@ import java.lang.annotation.Target;
 @RequestMapping(methods = RequestMethod.POST)
 public @interface Post {
     String value() default "";
+
+    String name() default "";
 }
