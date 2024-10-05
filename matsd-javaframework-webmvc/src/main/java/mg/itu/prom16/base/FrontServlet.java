@@ -16,6 +16,7 @@ import mg.itu.prom16.exceptions.DuplicateMappingException;
 import mg.itu.prom16.http.RequestMethod;
 import mg.itu.prom16.http.Session;
 import mg.itu.prom16.support.WebApplicationContainer;
+import mg.itu.prom16.utils.JspUtils;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.AnnotationUtils;
 import mg.matsd.javaframework.core.utils.Assert;
@@ -28,8 +29,8 @@ import java.util.*;
 public class FrontServlet extends HttpServlet {
     private WebApplicationContainer webApplicationContainer;
     private ResponseRenderer responseRenderer;
-    private Map<RequestMappingInfo, MappingHandler> mappingHandlerMap;
-    private List<ExceptionHandler> exceptionHandlers;
+    private final Map<RequestMappingInfo, MappingHandler> mappingHandlerMap = new HashMap<>();
+    private final List<ExceptionHandler> exceptionHandlers = new ArrayList<>();
 
     @Override
     public void init() {
@@ -39,6 +40,8 @@ public class FrontServlet extends HttpServlet {
         );
         responseRenderer = new ResponseRenderer(webApplicationContainer);
         initHandlers();
+
+        JspUtils.setFrontServlet(this);
     }
 
     private void initHandlers() {
@@ -49,6 +52,7 @@ public class FrontServlet extends HttpServlet {
 
         for (Class<?> controllerClass : webApplicationContainer.retrieveControllerClasses()) {
             String pathPrefix = "";
+            String namePrefix = "";
             List<RequestMethod> sharedRequestMethods = new ArrayList<>();
             boolean jsonResponse = AnnotationUtils.hasAnnotation(JsonResponse.class, controllerClass);
 
@@ -56,6 +60,7 @@ public class FrontServlet extends HttpServlet {
                 RequestMapping requestMapping = controllerClass.getAnnotation(RequestMapping.class);
 
                 pathPrefix = requestMapping.value();
+                namePrefix = requestMapping.name();
                 sharedRequestMethods = Arrays.asList(requestMapping.methods());
             }
 
@@ -64,10 +69,9 @@ public class FrontServlet extends HttpServlet {
 
                 if (AnnotationUtils.hasAnnotation(RequestMapping.class, method)) {
                     RequestMappingInfo requestMappingInfo = new RequestMappingInfo(
-                        pathPrefix, UtilFunctions.getRequestMappingInfoAttributes(method), sharedRequestMethods
+                        pathPrefix, namePrefix, UtilFunctions.getRequestMappingInfoAttributes(method), sharedRequestMethods
                     );
 
-                    if (mappingHandlerMap == null) mappingHandlerMap = new HashMap<>();
                     if (mappingHandlerMap.containsKey(requestMappingInfo))
                         throw new DuplicateMappingException(requestMappingInfo);
 
@@ -78,13 +82,20 @@ public class FrontServlet extends HttpServlet {
                     Class<? extends Throwable>[] exceptionClasses = method.getAnnotation(mg.itu.prom16.annotations.ExceptionHandler.class).value();
                     if (exceptionClasses.length == 0) continue;
 
-                    if (exceptionHandlers == null) exceptionHandlers = new ArrayList<>();
                     exceptionHandlers.add(
                         new ExceptionHandler(controllerClass, method, jsonResponse, exceptionClasses, false)
                     );
                 }
             }
         }
+    }
+
+    @Nullable
+    public RequestMappingInfo getRequestMappingInfoByName(String name) {
+        return mappingHandlerMap.entrySet().stream()
+            .filter(entry -> name.equals(entry.getKey().getName()))
+            .findFirst().map(Map.Entry::getKey)
+            .orElse(null);
     }
 
     protected final void processRequest(HttpServletRequest request, HttpServletResponse response)
@@ -130,7 +141,7 @@ public class FrontServlet extends HttpServlet {
 
     @Nullable
     private Map.Entry<RequestMappingInfo, MappingHandler> resolveMappingHandler(HttpServletRequest request) {
-        return mappingHandlerMap == null ? null : mappingHandlerMap.entrySet().stream()
+        return mappingHandlerMap.isEmpty() ? null : mappingHandlerMap.entrySet().stream()
             .filter(entry -> entry.getKey().matches(request))
             .findFirst()
             .orElse(null);
@@ -138,7 +149,7 @@ public class FrontServlet extends HttpServlet {
 
     @Nullable
     private ExceptionHandler resolveExceptionHandler(List<Throwable> throwableTrace, Class<?> currentControllerClass) {
-        return exceptionHandlers == null ? null : exceptionHandlers.stream()
+        return exceptionHandlers.isEmpty() ? null : exceptionHandlers.stream()
             .filter(exceptionHandler -> exceptionHandler.canHandle(throwableTrace, currentControllerClass))
             .findFirst()
             .orElse(null);

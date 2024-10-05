@@ -12,4 +12,6 @@ import java.lang.annotation.Target;
 @RequestMapping(methods = RequestMethod.GET)
 public @interface Get {
     String value() default "";
+
+    String name() default "";
 }

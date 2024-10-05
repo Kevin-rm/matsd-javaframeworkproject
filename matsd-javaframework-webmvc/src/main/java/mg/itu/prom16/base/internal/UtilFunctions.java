@@ -31,17 +31,27 @@ public final class UtilFunctions {
 
     public static Map<String, Object> getRequestMappingInfoAttributes(Method method) {
         String path = "";
+        String name = "";
 
         RequestMapping requestMapping = (RequestMapping) AnnotationUtils.getAnnotation(RequestMapping.class, method);
-        if (method.isAnnotationPresent(RequestMapping.class))
+        if (method.isAnnotationPresent(RequestMapping.class)) {
             path = requestMapping.value();
-        else if (method.isAnnotationPresent(Get.class))
-            path = method.getAnnotation(Get.class).value();
-        else if (method.isAnnotationPresent(Post.class))
-            path = method.getAnnotation(Post.class).value();
+            name = requestMapping.name();
+        } else if (method.isAnnotationPresent(Get.class)) {
+            Get get = method.getAnnotation(Get.class);
+
+            path = get.value();
+            name = get.name();
+        } else if (method.isAnnotationPresent(Post.class)) {
+            Post post = method.getAnnotation(Post.class);
+
+            path = post.value();
+            name = post.name();
+        }
 
         Map<String, Object> attributes = new HashMap<>();
         attributes.put("path", path);
+        attributes.put("name", name);
         attributes.put("methods", requestMapping.methods());
 
         return attributes;

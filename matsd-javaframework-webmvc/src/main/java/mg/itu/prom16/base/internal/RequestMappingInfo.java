@@ -15,12 +15,16 @@ public class RequestMappingInfo {
     static final String PATH_VARIABLE_DEFAULT_REQUIREMENT = "[^/]+";
 
     private String path;
+    private String name;
     private List<RequestMethod> methods;
     private Map<String, String> pathVariablesAttributes;
     private Pattern pathPattern;
 
     public RequestMappingInfo(
-        String pathPrefix, Map<String, Object> requestMappingInfoAttributes, List<RequestMethod> sharedRequestMethods
+        String pathPrefix,
+        String namePrefix,
+        Map<String, Object> requestMappingInfoAttributes,
+        List<RequestMethod> sharedRequestMethods
     ) {
         List<RequestMethod> requestMethods = Arrays.asList(
             (RequestMethod[]) requestMappingInfoAttributes.get("methods")
@@ -28,6 +32,7 @@ public class RequestMappingInfo {
         requestMethods.addAll(sharedRequestMethods);
 
         this.setPath(pathPrefix + requestMappingInfoAttributes.get("path"))
+            .setName(namePrefix, (String) requestMappingInfoAttributes.get("name"))
             .setMethods(requestMethods)
             .setPathVariablesAttributes()
             .setPathPattern();
@@ -37,7 +42,7 @@ public class RequestMappingInfo {
         return path;
     }
 
-    public RequestMappingInfo setPath(@Nullable String path) {
+    private RequestMappingInfo setPath(@Nullable String path) {
         if (path == null || StringUtils.isBlank(path)) {
             this.path = "/";
 
@@ -55,11 +60,22 @@ public class RequestMappingInfo {
         return this;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    private RequestMappingInfo setName(String namePrefix, @Nullable String name) {
+        if (name == null || StringUtils.isBlank(name)) return this;
+
+        this.name = StringUtils.hasText(namePrefix) ? namePrefix + "." + name : name;
+        return this;
+    }
+
     public List<RequestMethod> getMethods() {
         return methods;
     }
 
-    public RequestMappingInfo setMethods(@Nullable List<RequestMethod> methods) {
+    private RequestMappingInfo setMethods(@Nullable List<RequestMethod> methods) {
         if (methods == null || methods.isEmpty()) {
             methods = new ArrayList<>();
             methods.add(RequestMethod.GET);
@@ -154,6 +170,7 @@ public class RequestMappingInfo {
     public String toString() {
         return "RequestMappingInfo{" +
             "path='" + path + '\'' +
+            ", name='" + name + '\'' +
             ", methods=" + methods +
             '}';
     }
