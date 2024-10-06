@@ -14,7 +14,7 @@ import mg.matsd.javaframework.core.utils.Assert;
 public final class JspUtils {
     private static FrontServlet frontServlet;
 
-    public static void setFrontServlet(FrontServlet frontServlet) {
+    public static void setFrontServlet(final FrontServlet frontServlet) {
         JspUtils.frontServlet = frontServlet;
     }
 
