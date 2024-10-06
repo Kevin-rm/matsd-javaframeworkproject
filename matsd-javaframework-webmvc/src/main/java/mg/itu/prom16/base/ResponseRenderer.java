@@ -31,10 +31,9 @@ class ResponseRenderer {
     ) throws ServletException, IOException {
         Object handlerMethodResult = handler.invokeMethod(
             webApplicationContainer, httpServletRequest, httpServletResponse, session, additionalParameter);
-
         Method handlerMethod = handler.getMethod();
 
-        Model model = ((Model) webApplicationContainer.getManagedInstance(Model.MANAGED_INSTANCE_ID));
+        Model model = (Model) webApplicationContainer.getManagedInstance(Model.MANAGED_INSTANCE_ID);
         model.setAttributes(httpServletRequest);
 
         httpServletResponse.setCharacterEncoding("UTF-8");
