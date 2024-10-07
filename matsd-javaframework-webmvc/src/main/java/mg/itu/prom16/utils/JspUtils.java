@@ -2,7 +2,6 @@ package mg.itu.prom16.utils;
 
 import jakarta.servlet.jsp.JspException;
 import mg.itu.prom16.base.FrontServlet;
-import mg.itu.prom16.base.internal.RequestMappingInfo;
 import mg.itu.prom16.base.internal.request.RequestContextHolder;
 import mg.itu.prom16.http.FlashBag;
 import mg.itu.prom16.http.Session;
@@ -35,11 +34,7 @@ public final class JspUtils {
     public static String routeTo(String name) throws JspException {
         Assert.notBlank(name, false, "Le nom de la route ne peut pas être vide ou \"null\"");
 
-        RequestMappingInfo requestMappingInfo = frontServlet.getRequestMappingInfoByName(name.strip());
-        if (requestMappingInfo == null)
-            throw new JspException(String.format("Aucun \"RequestMapping\" trouvé avec le nom : \"%s\"", name));
-
-        return WebUtils.absolutePath(requestMappingInfo.getPath());
+        return WebUtils.absolutePath(frontServlet.getRequestMappingInfoByName(name.strip()).getPath());
     }
 
     private static FlashBag getFlashBag() {

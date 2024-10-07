@@ -4,6 +4,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.jsp.JspException;
 import mg.itu.prom16.annotations.JsonResponse;
 import mg.itu.prom16.annotations.RequestMapping;
 import mg.itu.prom16.base.internal.RequestMappingInfo;
@@ -90,12 +91,11 @@ public class FrontServlet extends HttpServlet {
         }
     }
 
-    @Nullable
-    public RequestMappingInfo getRequestMappingInfoByName(String name) {
+    public RequestMappingInfo getRequestMappingInfoByName(String name) throws JspException {
         return mappingHandlerMap.entrySet().stream()
             .filter(entry -> name.equals(entry.getKey().getName()))
             .findFirst().map(Map.Entry::getKey)
-            .orElse(null);
+            .orElseThrow(() -> new JspException(String.format("Aucun \"RequestMapping\" trouvé avec le nom : \"%s\"", name)));
     }
 
     protected final void processRequest(HttpServletRequest request, HttpServletResponse response)
