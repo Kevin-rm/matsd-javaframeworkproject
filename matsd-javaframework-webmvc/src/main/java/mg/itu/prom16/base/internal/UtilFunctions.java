@@ -1,5 +1,6 @@
 package mg.itu.prom16.base.internal;
 
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import mg.itu.prom16.annotations.*;
@@ -102,7 +103,8 @@ public final class UtilFunctions {
         return StringConverter.convert(pathVariables.get(pathVariableName), parameterType);
     }
 
-    public static Object bindRequestParameters(Class<?> parameterType, Parameter parameter, HttpServletRequest httpServletRequest) {
+    public static Object bindRequestParameters(Class<?> parameterType, Parameter parameter, HttpServletRequest httpServletRequest)
+        throws ServletException {
         String modelName = null;
         if (parameter.isAnnotationPresent(FromRequestParameters.class))
             modelName = parameter.getAnnotation(FromRequestParameters.class).value();
@@ -136,7 +138,8 @@ public final class UtilFunctions {
         return sessionAttributeValue;
     }
 
-    private static Object instantiateModelFromRequest(Class<?> clazz, String modelName, HttpServletRequest httpServletRequest) {
+    private static Object instantiateModelFromRequest(Class<?> clazz, String modelName, HttpServletRequest httpServletRequest)
+        throws ServletException {
         try {
             Object result = clazz.getConstructor().newInstance();
 
@@ -160,8 +163,8 @@ public final class UtilFunctions {
             }
 
             return result;
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            throw new ServletException(e instanceof InvocationTargetException ? e.getCause() : e);
         }
     }
 

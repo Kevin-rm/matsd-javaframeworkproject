@@ -1,6 +1,7 @@
 package mg.itu.prom16.base.internal.handler;
 
 import com.sun.jdi.InternalException;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.annotations.JsonResponse;
@@ -63,7 +64,7 @@ public abstract class AbstractHandler {
 
     protected abstract Object resolveAdditionalParameter(
         Class<?> parameterType, Parameter parameter, HttpServletRequest httpServletRequest, Object additionalParameter
-    ) throws UnexpectedParameterException, InternalException;
+    ) throws UnexpectedParameterException, InternalException, ServletException;
 
     public Object invokeMethod(
         WebApplicationContainer webApplicationContainer,
@@ -71,7 +72,7 @@ public abstract class AbstractHandler {
         HttpServletResponse httpServletResponse,
         Session session,
         Object additionalParameter
-    ) {
+    ) throws ServletException {
         try {
             Object[] args = new Object[method.getParameterCount()];
 
@@ -105,7 +106,7 @@ public abstract class AbstractHandler {
         } catch (IllegalAccessException e) {
             throw new InternalException();
         } catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
+            throw new ServletException(e.getCause());
         }
     }
 }
