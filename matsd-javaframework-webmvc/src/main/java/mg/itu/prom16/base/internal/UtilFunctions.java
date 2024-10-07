@@ -14,10 +14,20 @@ import mg.matsd.javaframework.core.utils.StringUtils;
 import mg.matsd.javaframework.core.utils.converter.StringConverter;
 
 import java.lang.reflect.*;
+import java.sql.Date;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public final class UtilFunctions {
+    private static final Set<Class<?>> ALLOWED_CLASSES = Set.of(
+        LocalDate.class, LocalDateTime.class, LocalTime.class, Date.class, Timestamp.class, Time.class);
+
     private UtilFunctions() { }
 
     public static boolean isController(@Nullable Class<?> clazz) {
@@ -78,8 +88,10 @@ public final class UtilFunctions {
                 throw new MissingServletRequestParameterException(parameterName);
             else if (parameterType.isPrimitive())
                 return ClassUtils.getPrimitiveDefaultValue(parameterType);
-            else if (!ClassUtils.isPrimitiveWrapper(parameterType) && parameterType != String.class)
-                throw new UnexpectedParameterException(parameter);
+            else if (!ClassUtils.isPrimitiveWrapper(parameterType) &&
+                parameterType != String.class &&
+                !ALLOWED_CLASSES.contains(parameterType)
+            ) throw new UnexpectedParameterException(parameter);
 
             return null;
         }
