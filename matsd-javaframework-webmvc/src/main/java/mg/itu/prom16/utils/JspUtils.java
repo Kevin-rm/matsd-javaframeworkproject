@@ -30,10 +30,6 @@ public final class JspUtils {
         return getFlashBag().get(key, defaultValue);
     }
 
-    public static String resource(String path) {
-        return WebUtils.absolutePath(path);
-    }
-
     public static String routeTo(String name) throws JspException {
         Assert.notBlank(name, false, "Le nom de la route ne peut pas être vide ou \"null\"");
 
