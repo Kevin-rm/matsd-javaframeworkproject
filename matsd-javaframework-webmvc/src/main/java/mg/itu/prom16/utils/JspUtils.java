@@ -15,6 +15,8 @@ public final class JspUtils {
     private static FrontServlet frontServlet;
 
     public static void setFrontServlet(final FrontServlet frontServlet) {
+        Assert.notNull(frontServlet);
+
         JspUtils.frontServlet = frontServlet;
     }
 
