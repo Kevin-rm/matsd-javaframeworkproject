@@ -1,11 +1,19 @@
 package mg.matsd.javaframework.core.container;
 
+import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.io.Resource;
 import mg.matsd.javaframework.core.managedinstances.factory.ManagedInstanceFactory;
 import mg.matsd.javaframework.core.utils.Assert;
+import org.w3c.dom.Element;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public abstract class AbstractXmlResourceContainer extends ManagedInstanceFactory {
     protected String xmlResourceName;
+    private final List<String> schemas = Arrays.asList("container.xsd", "managedinstances.xsd");
 
     protected AbstractXmlResourceContainer(String xmlResourceName) {
         setXmlResourceName(xmlResourceName);
@@ -26,6 +34,22 @@ public abstract class AbstractXmlResourceContainer extends ManagedInstanceFactor
         this.xmlResourceName = xmlResourceName;
     }
 
+    String[] getSchemas() {
+        return schemas.toArray(new String[0]);
+    }
+
+    protected void registerSchemas(@Nullable String... schemas) {
+        if (schemas == null) return;
+
+        for (String schema : schemas) {
+            Assert.notBlank(schema, false, "Chaque schéma ne peut pas être vide ou \"null\"");
+            Assert.state(schema.endsWith(".xsd"), () -> new IllegalArgumentException(
+                String.format("Le schéma donné \"%s\" n'est pas un fichier XSD", schema))
+            );
+        }
+        this.schemas.addAll(List.of(schemas));
+    }
+
     protected void loadManagedInstances() {
         try (Resource resource = buildResource()) {
             Assert.state(resource != null && !resource.isClosed(), "La ressource à utiliser pour charger les \"ManagedInstances\" " +
@@ -34,6 +58,8 @@ public abstract class AbstractXmlResourceContainer extends ManagedInstanceFactor
             XMLConfigurationLoader.doLoadManagedInstances(this, resource);
         }
     }
+
+    protected void additionalXmlConfigLoadingLogic(Element documentElement) { };
 
     protected abstract Resource buildResource();
 }
