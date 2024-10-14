@@ -4,7 +4,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.jsp.JspException;
 import mg.itu.prom16.annotations.JsonResponse;
 import mg.itu.prom16.annotations.RequestMapping;
 import mg.itu.prom16.base.internal.RequestMappingInfo;
@@ -17,7 +16,7 @@ import mg.itu.prom16.exceptions.DuplicateMappingException;
 import mg.itu.prom16.http.RequestMethod;
 import mg.itu.prom16.http.Session;
 import mg.itu.prom16.support.WebApplicationContainer;
-import mg.itu.prom16.utils.JspUtils;
+import mg.itu.prom16.utils.WebUtils;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.AnnotationUtils;
 import mg.matsd.javaframework.core.utils.Assert;
@@ -42,7 +41,7 @@ public class FrontServlet extends HttpServlet {
         responseRenderer = new ResponseRenderer(webApplicationContainer);
         initHandlers();
 
-        JspUtils.setFrontServlet(this);
+        WebUtils.setFrontServlet(this);
     }
 
     private void initHandlers() {
@@ -91,11 +90,11 @@ public class FrontServlet extends HttpServlet {
         }
     }
 
-    public RequestMappingInfo getRequestMappingInfoByName(String name) throws JspException {
+    public RequestMappingInfo getRequestMappingInfoByName(String name) throws ServletException {
         return mappingHandlerMap.entrySet().stream()
             .filter(entry -> name.equals(entry.getKey().getName()))
             .findFirst().map(Map.Entry::getKey)
-            .orElseThrow(() -> new JspException(String.format("Aucun \"RequestMapping\" trouvé avec le nom : \"%s\"", name)));
+            .orElseThrow(() -> new ServletException(String.format("Aucun \"RequestMapping\" trouvé avec le nom : \"%s\"", name)));
     }
 
     protected final void processRequest(HttpServletRequest request, HttpServletResponse response)

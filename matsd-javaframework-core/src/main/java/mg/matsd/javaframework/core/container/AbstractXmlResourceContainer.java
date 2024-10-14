@@ -7,9 +7,7 @@ import mg.matsd.javaframework.core.utils.Assert;
 import org.w3c.dom.Element;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public abstract class AbstractXmlResourceContainer extends ManagedInstanceFactory {
     protected String xmlResourceName;
@@ -59,7 +57,7 @@ public abstract class AbstractXmlResourceContainer extends ManagedInstanceFactor
         }
     }
 
-    protected void additionalXmlConfigLoadingLogic(Element documentElement) { };
+    protected void additionalXmlConfigLoadingLogic(Element documentElement) { }
 
     protected abstract Resource buildResource();
 }
