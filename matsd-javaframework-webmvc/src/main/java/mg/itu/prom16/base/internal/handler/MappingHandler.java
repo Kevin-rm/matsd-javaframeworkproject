@@ -1,6 +1,7 @@
 package mg.itu.prom16.base.internal.handler;
 
 import com.sun.jdi.InternalException;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import mg.itu.prom16.annotations.FromRequestParameters;
 import mg.itu.prom16.annotations.PathVariable;
@@ -20,7 +21,7 @@ public class MappingHandler extends AbstractHandler {
     @Override
     protected Object resolveAdditionalParameter(
         Class<?> parameterType, Parameter parameter, HttpServletRequest httpServletRequest, Object additionalParameter
-    ) throws UnexpectedParameterException, InternalException {
+    ) throws UnexpectedParameterException, InternalException, ServletException {
         if (!(additionalParameter instanceof RequestMappingInfo requestMappingInfo)) throw new InternalException();
 
         Object result;

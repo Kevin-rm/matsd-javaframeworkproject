@@ -14,11 +14,11 @@ import static mg.matsd.javaframework.core.utils.XMLUtils.*;
 class XMLConfigurationLoader {
     private XMLConfigurationLoader() { }
 
-    static void doLoadManagedInstances(ManagedInstanceFactory managedInstanceFactory, Resource resource) {
+    static void doLoadManagedInstances(AbstractXmlResourceContainer abstractXmlResourceContainer, Resource resource) {
         Element documentElement = buildDocumentElement(XMLConfigurationLoader.class.getClassLoader(), resource,
-            "container.xsd", "managedinstances.xsd");
+            abstractXmlResourceContainer.getSchemas());
 
-        scanComponents(managedInstanceFactory, documentElement);
+        scanComponents(abstractXmlResourceContainer, documentElement);
 
         List<Element> elements = getChildElementsByTagName(documentElement, "managed-instance");
         if (elements.isEmpty()) return;
@@ -29,7 +29,7 @@ class XMLConfigurationLoader {
                 getAttributeValue(element, "class"),
                 getAttributeValue(element, "scope")
             );
-            managedInstanceFactory.registerManagedInstance(managedInstance);
+            abstractXmlResourceContainer.registerManagedInstance(managedInstance);
 
             for (Element childElement : getChildElements(element)) {
                 String childElementTagName = childElement.getTagName();
@@ -37,6 +37,8 @@ class XMLConfigurationLoader {
                 else if (childElementTagName.equals("property"))   addProperties(managedInstance, childElement);
             }
         }
+
+        abstractXmlResourceContainer.additionalXmlConfigLoadingLogic(documentElement);
     }
 
     private static void scanComponents(ManagedInstanceFactory managedInstanceFactory, Element documentElement) {

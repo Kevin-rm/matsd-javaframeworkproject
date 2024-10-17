@@ -13,10 +13,11 @@ import mg.itu.prom16.base.internal.handler.MappingHandler;
 import mg.itu.prom16.base.internal.request.RequestContextHolder;
 import mg.itu.prom16.base.internal.request.ServletRequestAttributes;
 import mg.itu.prom16.exceptions.DuplicateMappingException;
+import mg.itu.prom16.exceptions.NotFoundHttpException;
 import mg.itu.prom16.http.RequestMethod;
 import mg.itu.prom16.http.Session;
 import mg.itu.prom16.support.WebApplicationContainer;
-import mg.itu.prom16.utils.JspUtils;
+import mg.itu.prom16.utils.WebUtils;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.AnnotationUtils;
 import mg.matsd.javaframework.core.utils.Assert;
@@ -27,6 +28,7 @@ import java.lang.reflect.Modifier;
 import java.util.*;
 
 public class FrontServlet extends HttpServlet {
+    private static Throwable throwableOnInit;
     private WebApplicationContainer webApplicationContainer;
     private ResponseRenderer responseRenderer;
     private final Map<RequestMappingInfo, MappingHandler> mappingHandlerMap = new HashMap<>();
@@ -34,14 +36,18 @@ public class FrontServlet extends HttpServlet {
 
     @Override
     public void init() {
-        webApplicationContainer = new WebApplicationContainer(
-            getServletContext(),
-            getServletConfig().getInitParameter("containerConfigLocation")
-        );
-        responseRenderer = new ResponseRenderer(webApplicationContainer);
-        initHandlers();
+        try {
+            webApplicationContainer = new WebApplicationContainer(
+                getServletContext(),
+                getServletConfig().getInitParameter("containerConfigLocation")
+            );
+            responseRenderer = new ResponseRenderer(webApplicationContainer);
+            initHandlers();
 
-        JspUtils.setFrontServlet(this);
+            WebUtils.setFrontServlet(this);
+        } catch (Throwable throwable) {
+            throwableOnInit = throwable;
+        }
     }
 
     private void initHandlers() {
@@ -90,38 +96,45 @@ public class FrontServlet extends HttpServlet {
         }
     }
 
-    @Nullable
-    public RequestMappingInfo getRequestMappingInfoByName(String name) {
+    public RequestMappingInfo getRequestMappingInfoByName(String name) throws ServletException {
         return mappingHandlerMap.entrySet().stream()
             .filter(entry -> name.equals(entry.getKey().getName()))
             .findFirst().map(Map.Entry::getKey)
-            .orElse(null);
+            .orElseThrow(() -> new ServletException(String.format("Aucun \"RequestMapping\" trouvé avec le nom : \"%s\"", name)));
     }
 
     protected final void processRequest(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {
+        response.setCharacterEncoding("UTF-8");
+        if (throwableOnInit != null) {
+            ResponseRenderer.doRenderError(throwableOnInit, response);
+            return;
+        }
+
         RequestContextHolder.setServletRequestAttributes(new ServletRequestAttributes(request, response));
         Session session = ((Session) webApplicationContainer.getManagedInstance(Session.class))
             .setHttpSession(RequestContextHolder.getServletRequestAttributes().getSession());
 
-        Map.Entry<RequestMappingInfo, MappingHandler> mappingHandlerEntry = resolveMappingHandler(request);
-        if (mappingHandlerEntry == null) {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND,
-                String.format("Aucun mapping trouvé pour le path : \"%s\" et method : \"%s\"",
-                    request.getServletPath(), request.getMethod())
-            );
-            return;
-        }
-
-        MappingHandler mappingHandler = mappingHandlerEntry.getValue();
+        MappingHandler mappingHandler = null;
         try {
+            Map.Entry<RequestMappingInfo, MappingHandler> mappingHandlerEntry = resolveMappingHandler(request);
+            if (mappingHandlerEntry == null)
+                throw new NotFoundHttpException(String.format("Aucun mapping trouvé pour le path : \"%s\" et method : \"%s\"",
+                    request.getServletPath(), request.getMethod()));
+
+            mappingHandler = mappingHandlerEntry.getValue();
             responseRenderer.doRender(request, response, session, mappingHandler, mappingHandlerEntry.getKey());
         } catch (Throwable throwable) {
+            if (mappingHandler == null) {
+                ResponseRenderer.doRenderError(throwable, response);
+                return;
+            }
             List<Throwable> throwableTrace = ExceptionHandler.getThrowableTrace(throwable, null);
             ExceptionHandler exceptionHandler = resolveExceptionHandler(throwableTrace, mappingHandler.getControllerClass());
-            if (exceptionHandler == null) throw throwable;
 
-            responseRenderer.doRender(request, response, session, exceptionHandler, throwableTrace);
+            if (exceptionHandler == null)
+                 ResponseRenderer.doRenderError(throwable, response);
+            else responseRenderer.doRender(request, response, session, exceptionHandler, throwableTrace);
         } finally {
             RequestContextHolder.clear();
         }

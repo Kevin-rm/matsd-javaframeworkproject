@@ -1,5 +1,6 @@
 package mg.itu.prom16.base.internal;
 
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import mg.itu.prom16.annotations.*;
@@ -13,10 +14,20 @@ import mg.matsd.javaframework.core.utils.StringUtils;
 import mg.matsd.javaframework.core.utils.converter.StringConverter;
 
 import java.lang.reflect.*;
+import java.sql.Date;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public final class UtilFunctions {
+    private static final Set<Class<?>> ALLOWED_CLASSES = Set.of(
+        LocalDate.class, LocalDateTime.class, LocalTime.class, Date.class, Timestamp.class, Time.class);
+
     private UtilFunctions() { }
 
     public static boolean isController(@Nullable Class<?> clazz) {
@@ -77,8 +88,10 @@ public final class UtilFunctions {
                 throw new MissingServletRequestParameterException(parameterName);
             else if (parameterType.isPrimitive())
                 return ClassUtils.getPrimitiveDefaultValue(parameterType);
-            else if (!ClassUtils.isPrimitiveWrapper(parameterType) && parameterType != String.class)
-                throw new UnexpectedParameterException(parameter);
+            else if (!ClassUtils.isPrimitiveWrapper(parameterType) &&
+                parameterType != String.class &&
+                !ALLOWED_CLASSES.contains(parameterType)
+            ) throw new UnexpectedParameterException(parameter);
 
             return null;
         }
@@ -102,7 +115,8 @@ public final class UtilFunctions {
         return StringConverter.convert(pathVariables.get(pathVariableName), parameterType);
     }
 
-    public static Object bindRequestParameters(Class<?> parameterType, Parameter parameter, HttpServletRequest httpServletRequest) {
+    public static Object bindRequestParameters(Class<?> parameterType, Parameter parameter, HttpServletRequest httpServletRequest)
+        throws ServletException {
         String modelName = null;
         if (parameter.isAnnotationPresent(FromRequestParameters.class))
             modelName = parameter.getAnnotation(FromRequestParameters.class).value();
@@ -136,7 +150,8 @@ public final class UtilFunctions {
         return sessionAttributeValue;
     }
 
-    private static Object instantiateModelFromRequest(Class<?> clazz, String modelName, HttpServletRequest httpServletRequest) {
+    private static Object instantiateModelFromRequest(Class<?> clazz, String modelName, HttpServletRequest httpServletRequest)
+        throws ServletException {
         try {
             Object result = clazz.getConstructor().newInstance();
 
@@ -160,8 +175,8 @@ public final class UtilFunctions {
             }
 
             return result;
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            throw new ServletException(e instanceof InvocationTargetException ? e.getCause() : e);
         }
     }
 
