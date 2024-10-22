@@ -17,6 +17,7 @@ import mg.itu.prom16.exceptions.NotFoundHttpException;
 import mg.itu.prom16.http.RequestMethod;
 import mg.itu.prom16.http.Session;
 import mg.itu.prom16.support.WebApplicationContainer;
+import mg.itu.prom16.utils.WebFacade;
 import mg.itu.prom16.utils.WebUtils;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.AnnotationUtils;
@@ -44,7 +45,7 @@ public class FrontServlet extends HttpServlet {
             responseRenderer = new ResponseRenderer(webApplicationContainer);
             initHandlers();
 
-            WebUtils.setFrontServlet(this);
+            WebFacade.setFrontServlet(this);
         } catch (Throwable throwable) {
             throwableOnInit = throwable;
         }
