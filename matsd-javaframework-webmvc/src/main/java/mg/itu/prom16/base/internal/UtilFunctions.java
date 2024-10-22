@@ -3,16 +3,20 @@ package mg.itu.prom16.base.internal;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.Part;
 import mg.itu.prom16.annotations.*;
 import mg.itu.prom16.exceptions.MissingServletRequestParameterException;
 import mg.itu.prom16.exceptions.UndefinedPathVariableException;
 import mg.itu.prom16.exceptions.UnexpectedParameterException;
+import mg.itu.prom16.upload.FileUploadException;
+import mg.itu.prom16.upload.UploadedFile;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.AnnotationUtils;
 import mg.matsd.javaframework.core.utils.ClassUtils;
 import mg.matsd.javaframework.core.utils.StringUtils;
 import mg.matsd.javaframework.core.utils.converter.StringConverter;
 
+import java.io.IOException;
 import java.lang.reflect.*;
 import java.sql.Date;
 import java.sql.Time;
@@ -73,12 +77,30 @@ public final class UtilFunctions {
         Class<?>  parameterType,
         Parameter parameter,
         HttpServletRequest httpServletRequest
-    ) {
+    ) throws ServletException {
         if (Map.class.isAssignableFrom(parameterType))
             return getRequestParameterMap(parameter, httpServletRequest);
 
         RequestParameter requestParameter = parameter.getAnnotation(RequestParameter.class);
         String parameterName = StringUtils.hasText(requestParameter.name()) ? requestParameter.name() : parameter.getName();
+
+        if (UploadedFile.class == parameterType) {
+            String contentType = httpServletRequest.getContentType();
+            if (contentType == null || !contentType.toLowerCase().startsWith("multipart/form-data"))
+                return null;
+
+            try {
+                Part part = httpServletRequest.getPart(parameterName);
+                if (part == null) {
+                    if (requestParameter.required()) throw new MissingServletRequestParameterException(parameterName);
+                    return null;
+                }
+
+                return new UploadedFile(part);
+            } catch (IOException e) {
+                throw new FileUploadException(e);
+            }
+        }
 
         String parameterValue = httpServletRequest.getParameter(parameterName);
         if (parameterValue == null || StringUtils.isBlank(parameterValue)) {
