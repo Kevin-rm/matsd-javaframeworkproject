@@ -1,6 +1,7 @@
 package mg.itu.prom16.base;
 
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -125,10 +126,8 @@ public class FrontServlet extends HttpServlet {
             mappingHandler = mappingHandlerEntry.getValue();
             responseRenderer.doRender(request, response, session, mappingHandler, mappingHandlerEntry.getKey());
         } catch (Throwable throwable) {
-            if (mappingHandler == null) {
-                ResponseRenderer.doRenderError(throwable, response);
-                return;
-            }
+            assert mappingHandler != null;
+
             List<Throwable> throwableTrace = ExceptionHandler.getThrowableTrace(throwable, null);
             ExceptionHandler exceptionHandler = resolveExceptionHandler(throwableTrace, mappingHandler.getControllerClass());
 

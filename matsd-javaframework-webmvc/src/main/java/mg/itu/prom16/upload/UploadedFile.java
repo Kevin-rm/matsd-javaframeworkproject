@@ -52,6 +52,14 @@ public class UploadedFile {
         return part.getSubmittedFileName();
     }
 
+    public String getExtension() {
+        String fileName = (name == null) ? getOriginalClientName() : name;
+        if (fileName.contains("."))
+            return fileName.substring(fileName.lastIndexOf('.') + 1);
+
+        return "";
+    }
+
     public long getSize() {
         return part.getSize();
     }

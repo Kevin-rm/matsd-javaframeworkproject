@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
 import mg.itu.prom16.annotations.*;
 import mg.itu.prom16.exceptions.MissingServletRequestParameterException;
+import mg.itu.prom16.exceptions.ModelBindingException;
 import mg.itu.prom16.exceptions.UndefinedPathVariableException;
 import mg.itu.prom16.exceptions.UnexpectedParameterException;
 import mg.itu.prom16.upload.FileUploadException;
@@ -85,21 +86,11 @@ public final class UtilFunctions {
         String parameterName = StringUtils.hasText(requestParameter.name()) ? requestParameter.name() : parameter.getName();
 
         if (UploadedFile.class == parameterType) {
-            String contentType = httpServletRequest.getContentType();
-            if (contentType == null || !contentType.toLowerCase().startsWith("multipart/form-data"))
-                return null;
+            UploadedFile uploadedFile = getUploadedFile(parameterName, httpServletRequest);
+            if (uploadedFile == null && requestParameter.required())
+                throw new MissingServletRequestParameterException(parameterName);
 
-            try {
-                Part part = httpServletRequest.getPart(parameterName);
-                if (part == null) {
-                    if (requestParameter.required()) throw new MissingServletRequestParameterException(parameterName);
-                    return null;
-                }
-
-                return new UploadedFile(part);
-            } catch (IOException e) {
-                throw new FileUploadException(e);
-            }
+            return uploadedFile;
         }
 
         String parameterValue = httpServletRequest.getParameter(parameterName);
@@ -137,8 +128,7 @@ public final class UtilFunctions {
         return StringConverter.convert(pathVariables.get(pathVariableName), parameterType);
     }
 
-    public static Object bindRequestParameters(Class<?> parameterType, Parameter parameter, HttpServletRequest httpServletRequest)
-        throws ServletException {
+    public static Object bindRequestParameters(Class<?> parameterType, Parameter parameter, HttpServletRequest httpServletRequest) {
         String modelName = null;
         if (parameter.isAnnotationPresent(FromRequestParameters.class))
             modelName = parameter.getAnnotation(FromRequestParameters.class).value();
@@ -172,8 +162,7 @@ public final class UtilFunctions {
         return sessionAttributeValue;
     }
 
-    private static Object instantiateModelFromRequest(Class<?> clazz, String modelName, HttpServletRequest httpServletRequest)
-        throws ServletException {
+    private static Object instantiateModelFromRequest(Class<?> clazz, String modelName, HttpServletRequest httpServletRequest) {
         try {
             Object result = clazz.getConstructor().newInstance();
 
@@ -185,7 +174,15 @@ public final class UtilFunctions {
                 String fieldAlias = bindRequestParameter != null && StringUtils.hasText(bindRequestParameter.value()) ?
                     bindRequestParameter.value() : field.getName();
 
-                String requestParameterValue = httpServletRequest.getParameter(modelName + "." + fieldAlias);
+                String requestParameterName = modelName + "." + fieldAlias;
+                if (fieldType == UploadedFile.class) {
+                    UploadedFile uploadedFile = getUploadedFile(requestParameterName, httpServletRequest);
+                    if (uploadedFile != null) field.set(result, uploadedFile);
+
+                    continue;
+                }
+
+                String requestParameterValue = httpServletRequest.getParameter(requestParameterName);
                 if (requestParameterValue == null || StringUtils.isBlank(requestParameterValue)) continue;
 
                 if (
@@ -198,7 +195,25 @@ public final class UtilFunctions {
 
             return result;
         } catch (Exception e) {
-            throw new ServletException(e instanceof InvocationTargetException ? e.getCause() : e);
+            throw new ModelBindingException(e instanceof InvocationTargetException ? e.getCause() : e);
+        }
+    }
+
+    @Nullable
+    private static UploadedFile getUploadedFile(String parameterName, HttpServletRequest httpServletRequest)
+        throws ServletException {
+        String contentType = httpServletRequest.getContentType();
+        if (contentType == null || !contentType.toLowerCase().startsWith("multipart/form-data"))
+            return null;
+
+        try {
+            Part part = httpServletRequest.getPart(parameterName);
+            if (part == null)
+                return null;
+
+            return new UploadedFile(part);
+        } catch (IOException e) {
+            throw new FileUploadException(e);
         }
     }
 
