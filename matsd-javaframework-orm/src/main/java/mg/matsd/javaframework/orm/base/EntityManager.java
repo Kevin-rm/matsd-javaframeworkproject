@@ -50,9 +50,7 @@ public class EntityManager implements Session {
 
     @Override
     public Transaction getTransaction() {
-        if (transaction == null) transaction = new Transaction(this);
-
-        return transaction;
+        return transaction == null ? new Transaction(this) : transaction;
     }
 
     @Override

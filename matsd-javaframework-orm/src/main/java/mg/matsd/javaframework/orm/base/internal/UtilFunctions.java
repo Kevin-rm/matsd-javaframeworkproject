@@ -224,9 +224,7 @@ public final class UtilFunctions {
     }
 
     private static Object instantiateIfNull(Object instance, Class<?> clazz) {
-        if (instance != null) return instance;
-
-        return instantiate(clazz);
+        return instance != null ? instance : instantiate(clazz);
     }
 
     private static boolean hasToOneRelationship(
