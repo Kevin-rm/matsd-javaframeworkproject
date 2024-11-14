@@ -9,6 +9,12 @@ public class ConstraintViolation<T> {
     private T validatedObject;
     private Object invalidValue;
 
+    ConstraintViolation(String messageTemplate, T validatedObject, Object invalidValue) {
+        this.setMessageTemplate(messageTemplate)
+            .setValidatedObject(validatedObject)
+            .setInvalidValue(invalidValue);
+    }
+
     public String getMessageTemplate() {
         return messageTemplate;
     }

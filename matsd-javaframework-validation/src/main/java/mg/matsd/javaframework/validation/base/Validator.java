@@ -28,7 +28,7 @@ public class Validator {
                     boolean isValid = constraintValidator.isValid(fieldValue);
 
                     if (isValid) continue;
-                    constraintViolationSet.add(new ConstraintViolation<>());
+                    constraintViolationSet.add(new ConstraintViolation<>(null, t, fieldValue));
                 } catch (IllegalAccessException e) {
                     throw new RuntimeException(e);
                 }
