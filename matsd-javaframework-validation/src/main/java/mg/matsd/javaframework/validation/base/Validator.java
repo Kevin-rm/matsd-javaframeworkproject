@@ -38,7 +38,8 @@ public class Validator {
                             continue;
 
                         constraintViolations.add(new ConstraintViolation<>(
-                            getAnnotationMessage(annotation, annotationType), t, fieldValue));
+                            getAnnotationMessage(annotation, annotationType), field.getName(), t, fieldValue)
+                        );
                     }
                 } catch (IllegalAccessException e) {
                     throw new ValidationProcessException(e);
@@ -69,8 +70,8 @@ public class Validator {
             constraintValidators = new ConstraintValidator[constraintValidatorClassesLength];
             for (int i = 0; i < constraintValidatorClassesLength; i++)
                 try {
-                    constraintValidators[i] = (ConstraintValidator<Annotation, Object>) constraintValidatorClasses[i].getConstructor()
-                        .newInstance();
+                    constraintValidators[i] = (ConstraintValidator<Annotation, Object>) constraintValidatorClasses[i]
+                        .getConstructor().newInstance();
                 } catch (InstantiationException | IllegalAccessException | NoSuchMethodException e) {
                     throw new ValidationProcessException(e);
                 } catch (InvocationTargetException e) {

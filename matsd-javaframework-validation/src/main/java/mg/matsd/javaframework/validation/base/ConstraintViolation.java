@@ -11,11 +11,13 @@ public class ConstraintViolation<T> {
     private Map<String, Object> messageParameters;
     @Nullable
     private final String messageTemplate;
+    private final String property;
     private final T validatedObject;
     private final Object invalidValue;
 
-    ConstraintViolation(@Nullable String messageTemplate, T validatedObject, Object invalidValue) {
+    ConstraintViolation(@Nullable String messageTemplate, String property, T validatedObject, Object invalidValue) {
         this.messageTemplate = messageTemplate;
+        this.property        = property;
         this.validatedObject = validatedObject;
         this.invalidValue    = invalidValue;
     }
@@ -26,7 +28,6 @@ public class ConstraintViolation<T> {
     }
 
     private ConstraintViolation<T> setMessage() {
-
         return this;
     }
 
@@ -36,13 +37,16 @@ public class ConstraintViolation<T> {
     }
 
     private ConstraintViolation<T> setMessageParameters() {
-
         return this;
     }
 
     @Nullable
     public String getMessageTemplate() {
         return messageTemplate;
+    }
+
+    public String getProperty() {
+        return property;
     }
 
     public T getValidatedObject() {
