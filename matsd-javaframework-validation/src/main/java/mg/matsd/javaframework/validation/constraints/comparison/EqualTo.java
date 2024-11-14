@@ -1,4 +1,4 @@
-package mg.matsd.javaframework.validation.annotations.comparison;
+package mg.matsd.javaframework.validation.constraints.comparison;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,5 +7,6 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface LessThanOrEqual {
+public @interface EqualTo {
+
 }

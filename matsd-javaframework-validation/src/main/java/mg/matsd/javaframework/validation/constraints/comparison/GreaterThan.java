@@ -1,4 +1,4 @@
-package mg.matsd.javaframework.validation.annotations.file;
+package mg.matsd.javaframework.validation.constraints.comparison;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,5 +7,6 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface Image {
+public @interface GreaterThan {
+
 }

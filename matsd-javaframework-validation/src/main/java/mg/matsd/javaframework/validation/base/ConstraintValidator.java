@@ -6,5 +6,5 @@ public interface ConstraintValidator<A extends Annotation, T> {
 
     void initialize(A constraintAnnotation);
 
-    boolean isValid(T t);
+    boolean isValid(T value);
 }
