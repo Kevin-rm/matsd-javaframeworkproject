@@ -6,9 +6,7 @@ import mg.matsd.javaframework.validation.base.ConstraintValidator;
 public class PositiveConstraintValidator implements ConstraintValidator<Positive, Number> {
 
     @Override
-    public void initialize(Positive constraintAnnotation) {
-
-    }
+    public void initialize(Positive constraintAnnotation) { }
 
     @Override
     public boolean isValid(Number value) {

@@ -1,62 +1,55 @@
 package mg.matsd.javaframework.validation.base;
 
+import mg.matsd.javaframework.core.annotations.Nullable;
+
 import java.util.Map;
 
 public class ConstraintViolation<T> {
-    private String messageTemplate;
-    private Map<String, Object> messageParameters;
+    @Nullable
     private String message;
-    private T validatedObject;
-    private Object invalidValue;
+    @Nullable
+    private Map<String, Object> messageParameters;
+    @Nullable
+    private final String messageTemplate;
+    private final T validatedObject;
+    private final Object invalidValue;
 
-    ConstraintViolation(String messageTemplate, T validatedObject, Object invalidValue) {
-        this.setMessageTemplate(messageTemplate)
-            .setValidatedObject(validatedObject)
-            .setInvalidValue(invalidValue);
-    }
-
-    public String getMessageTemplate() {
-        return messageTemplate;
-    }
-
-    public ConstraintViolation<T> setMessageTemplate(String messageTemplate) {
+    ConstraintViolation(@Nullable String messageTemplate, T validatedObject, Object invalidValue) {
         this.messageTemplate = messageTemplate;
-        return this;
+        this.validatedObject = validatedObject;
+        this.invalidValue    = invalidValue;
     }
 
-    public Map<String, Object> getMessageParameters() {
-        return messageParameters;
-    }
-
-    public ConstraintViolation<T> setMessageParameters(Map<String, Object> messageParameters) {
-        this.messageParameters = messageParameters;
-        return this;
-    }
-
+    @Nullable
     public String getMessage() {
         return message;
     }
 
-    public ConstraintViolation<T> setMessage(String message) {
-        this.message = message;
+    private ConstraintViolation<T> setMessage() {
+
         return this;
+    }
+
+    @Nullable
+    public Map<String, Object> getMessageParameters() {
+        return messageParameters;
+    }
+
+    private ConstraintViolation<T> setMessageParameters() {
+
+        return this;
+    }
+
+    @Nullable
+    public String getMessageTemplate() {
+        return messageTemplate;
     }
 
     public T getValidatedObject() {
         return validatedObject;
     }
 
-    public ConstraintViolation<T> setValidatedObject(T validatedObject) {
-        this.validatedObject = validatedObject;
-        return this;
-    }
-
     public Object getInvalidValue() {
         return invalidValue;
-    }
-
-    public ConstraintViolation<T> setInvalidValue(Object invalidValue) {
-        this.invalidValue = invalidValue;
-        return this;
     }
 }
