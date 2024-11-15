@@ -64,11 +64,11 @@ public class Validator {
             Class<? extends ConstraintValidator<?, ?>>[] constraintValidatorClasses = annotationType.getAnnotation(Constraint.class)
                 .validatedBy();
 
-            final int constraintValidatorClassesLength = constraintValidatorClasses.length;
-            if (constraintValidatorClassesLength == 0) return null;
+            final int length = constraintValidatorClasses.length;
+            if (length == 0) return null;
 
-            constraintValidators = new ConstraintValidator[constraintValidatorClassesLength];
-            for (int i = 0; i < constraintValidatorClassesLength; i++)
+            constraintValidators = new ConstraintValidator[length];
+            for (int i = 0; i < length; i++)
                 try {
                     constraintValidators[i] = (ConstraintValidator<Annotation, Object>) constraintValidatorClasses[i]
                         .getConstructor().newInstance();
@@ -87,19 +87,18 @@ public class Validator {
     private boolean isInGroups(Annotation annotation, Class<? extends Annotation> annotationType, @Nullable Class<?>[] groups) {
         if (groups == null || groups.length == 0) return true;
 
-        Class<?>[] annotationGroups;
+        final Class<?>[] annotationGroups;
         try {
             annotationGroups = (Class<?>[]) annotationType.getMethod("groups").invoke(annotation);
         } catch (Exception ignored) {
             return true;
         }
 
-        Class<?>[] finalAnnotationGroups = annotationGroups;
         return Arrays.stream(groups)
             .filter(Objects::nonNull)
-            .anyMatch(group -> Arrays.stream(finalAnnotationGroups)
-                .filter(Objects::nonNull).anyMatch(
-                    annotationGroup -> annotationGroup.isAssignableFrom(group)
-                ));
+            .anyMatch(group -> Arrays.stream(annotationGroups)
+                .filter(Objects::nonNull)
+                .anyMatch(annotationGroup -> annotationGroup.isAssignableFrom(group))
+            );
     }
 }
