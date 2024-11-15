@@ -1,7 +1,7 @@
 package mg.matsd.javaframework.validation.constraints.basic;
 
 import mg.matsd.javaframework.validation.base.Constraint;
-import mg.matsd.javaframework.validation.base.internal.constraintvalidators.basic.RequiredConstraintValidator;
+import mg.matsd.javaframework.validation.constraintvalidators.basic.RequiredConstraintValidator;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

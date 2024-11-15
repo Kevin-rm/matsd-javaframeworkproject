@@ -1,4 +1,4 @@
-package mg.matsd.javaframework.validation.base.internal.constraintvalidators.basic;
+package mg.matsd.javaframework.validation.constraintvalidators.basic;
 
 import mg.matsd.javaframework.validation.constraints.basic.Required;
 import mg.matsd.javaframework.validation.base.ConstraintValidator;

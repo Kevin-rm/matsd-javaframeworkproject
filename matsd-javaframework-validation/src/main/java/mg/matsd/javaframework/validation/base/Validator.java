@@ -6,16 +6,20 @@ import mg.matsd.javaframework.validation.exceptions.ValidationProcessException;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.stream.IntStream;
 
 public class Validator {
-    private final Map<Class<? extends Annotation>, ConstraintValidator<Annotation, Object>[]> constraintValidatorsCache;
+    private final ValidatorFactory validatorFactory;
     private final Map<Class<?>, Field[]> fieldsCache;
 
-    Validator() {
-        constraintValidatorsCache = new HashMap<>();
+    Validator(ValidatorFactory validatorFactory) {
+        this.validatorFactory = validatorFactory;
         fieldsCache = new HashMap<>();
+    }
+
+    public ValidatorFactory getValidatorFactory() {
+        return validatorFactory;
     }
 
     public <T> ValidationErrors<T> doValidate(T t, @Nullable Class<?>... groups) {
@@ -27,7 +31,7 @@ public class Validator {
 
             for (Annotation annotation : field.getAnnotations()) {
                 Class<? extends Annotation> annotationType = annotation.annotationType();
-                ConstraintValidator<Annotation, Object>[] constraintValidators = getOrCreateConstraintValidators(annotationType);
+                ConstraintValidator<Annotation, Object>[] constraintValidators = getConstraintValidators(annotationType);
                 if (constraintValidators == null) continue;
 
                 try {
@@ -39,7 +43,7 @@ public class Validator {
                         if (isValid || !isInGroups(annotation, annotationType, groups)) continue;
 
                         validationErrors.addConstraintViolation(field.getName(),
-                            new ConstraintViolation<>(fieldValue, annotation, annotationType));
+                            new ConstraintViolation<>(fieldValue, annotation, annotationType, validatorFactory));
                     }
                 } catch (IllegalAccessException e) {
                     throw new ValidationProcessException(e);
@@ -56,32 +60,17 @@ public class Validator {
 
     @Nullable
     @SuppressWarnings("unchecked")
-    private ConstraintValidator<Annotation, Object>[] getOrCreateConstraintValidators(Class<? extends Annotation> annotationType) {
-        if (!annotationType.isAnnotationPresent(Constraint.class)) return null;
+    private ConstraintValidator<Annotation, Object>[] getConstraintValidators(Class<? extends Annotation> annotationType) {
+        Class<? extends ConstraintValidator<?, ?>>[] constraintValidatorClasses = annotationType.getAnnotation(Constraint.class)
+            .validatedBy();
 
-        ConstraintValidator<Annotation, Object>[] constraintValidators = constraintValidatorsCache.get(annotationType);
-        if (constraintValidators == null) {
-            Class<? extends ConstraintValidator<?, ?>>[] constraintValidatorClasses = annotationType.getAnnotation(Constraint.class)
-                .validatedBy();
+        final int length = constraintValidatorClasses.length;
+        if (length == 0) return null;
 
-            final int length = constraintValidatorClasses.length;
-            if (length == 0) return null;
-
-            constraintValidators = new ConstraintValidator[length];
-            for (int i = 0; i < length; i++)
-                try {
-                    constraintValidators[i] = (ConstraintValidator<Annotation, Object>) constraintValidatorClasses[i]
-                        .getConstructor().newInstance();
-                } catch (InstantiationException | IllegalAccessException | NoSuchMethodException e) {
-                    throw new ValidationProcessException(e);
-                } catch (InvocationTargetException e) {
-                     throw new ValidationProcessException(e.getCause());
-                }
-
-            constraintValidatorsCache.put(annotationType, constraintValidators);
-        }
-
-        return constraintValidators;
+        ConstraintValidatorFactory constraintValidatorFactory = validatorFactory.getConstraintValidatorFactory();
+        return IntStream.range(0, length).mapToObj(
+            i -> (ConstraintValidator<Annotation, Object>) constraintValidatorFactory.getInstance(constraintValidatorClasses[i]))
+            .toArray(ConstraintValidator[]::new);
     }
 
     private boolean isInGroups(Annotation annotation, Class<? extends Annotation> annotationType, @Nullable Class<?>[] groups) {
@@ -90,9 +79,7 @@ public class Validator {
         final Class<?>[] annotationGroups;
         try {
             annotationGroups = (Class<?>[]) annotationType.getMethod("groups").invoke(annotation);
-        } catch (Exception ignored) {
-            return true;
-        }
+        } catch (Exception ignored) { return true; }
 
         return Arrays.stream(groups)
             .filter(Objects::nonNull)

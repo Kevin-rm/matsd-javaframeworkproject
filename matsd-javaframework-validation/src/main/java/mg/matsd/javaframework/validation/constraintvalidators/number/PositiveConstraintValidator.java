@@ -1,4 +1,4 @@
-package mg.matsd.javaframework.validation.base.internal.constraintvalidators.number;
+package mg.matsd.javaframework.validation.constraintvalidators.number;
 
 import mg.matsd.javaframework.validation.constraints.number.Positive;
 import mg.matsd.javaframework.validation.base.ConstraintValidator;

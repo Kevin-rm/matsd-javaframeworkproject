@@ -9,25 +9,63 @@ import java.io.IOException;
 import java.util.Properties;
 
 public class ValidatorFactory {
-    private static final Properties DEFAULT_MESSAGES = new Properties();
-    private static Validator validator;
+    public static final String MATSD_VALIDATION_MESSAGE_PREFIX = "mg.matsd.javaframework.validation.constraints";
+    private static ValidatorFactory instance;
 
-    static {
+    private final ConstraintValidatorFactory constraintValidatorFactory;
+    private Validator validator;
+    private Properties defaultMessages;
+
+    private ValidatorFactory() {
+        constraintValidatorFactory = new ConstraintValidatorFactory();
+
         try (Resource resource = new ClassPathResource("default-validation-messages.properties")) {
-            DEFAULT_MESSAGES.load(resource.getInputStream());
+            defaultMessages = new Properties();
+            defaultMessages.load(resource.getInputStream());
         } catch (IOException ignored) { }
     }
 
-    private ValidatorFactory() { }
+    public static ValidatorFactory getInstance() {
+        return instance == null ? instance = new ValidatorFactory() : instance;
+    }
 
-    public static Validator getValidatorInstance() {
-        return validator == null ? validator = new Validator() : validator;
+    public synchronized Validator getValidator() {
+        return validator == null ? validator = new Validator(this) : validator;
+    }
+
+    public ConstraintValidatorFactory getConstraintValidatorFactory() {
+        return constraintValidatorFactory;
+    }
+
+    public Properties getDefaultMessages() {
+        return defaultMessages;
+    }
+
+    public ValidatorFactory setDefaultMessages(Properties defaultMessages) {
+        Assert.notNull(defaultMessages, "L'argument defaultMessages ne peut pas être \"null\"");
+
+        this.defaultMessages = defaultMessages;
+        return this;
     }
 
     @Nullable
-    public static String getMessage(String key) {
+    public String getDefaultMessage(String key) {
         Assert.notBlank(key, false, "L'argument key ne peut pas être vide ou \"null\"");
 
-        return DEFAULT_MESSAGES.getProperty(key);
+        return defaultMessages.getProperty(key);
+    }
+
+    public ValidatorFactory addDefaultMessages(@Nullable Properties properties) {
+        if (properties == null) return this;
+
+        defaultMessages.putAll(properties);
+        return this;
+    }
+
+    public ValidatorFactory addDefaultMessage(String key, @Nullable String value) {
+        Assert.notBlank(key, false, "L'argument key ne peut pas être vide ou \"null\"");
+
+        defaultMessages.put(key, value);
+        return this;
     }
 }

@@ -9,8 +9,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ConstraintViolation<T> {
-    private static final String MATSD_VALIDATION_MESSAGE_PREFIX = "mg.matsd.javaframework.validation.constraints";
-
     @Nullable
     private String messageTemplate;
     @Nullable
@@ -22,13 +20,18 @@ public class ConstraintViolation<T> {
     private final Annotation annotation;
     private final Class<? extends Annotation> annotationType;
 
-    ConstraintViolation(@Nullable Object invalidValue, Annotation annotation, Class<? extends Annotation> annotationType) {
+    ConstraintViolation(
+        @Nullable Object invalidValue,
+        Annotation annotation,
+        Class<? extends Annotation> annotationType,
+        ValidatorFactory validatorFactory
+    ) {
         this.invalidValue   = invalidValue;
         this.annotation     = annotation;
         this.annotationType = annotationType;
 
         this.setMessageTemplate()
-            .initMessageAndMessageParameters();
+            .initMessageAndMessageParameters(validatorFactory);
     }
 
     @Nullable
@@ -54,22 +57,26 @@ public class ConstraintViolation<T> {
         return message;
     }
 
+    public ConstraintViolation<T> setMessage(@Nullable String message) {
+        this.message = message;
+        return this;
+    }
+
     @Nullable
     public Object getInvalidValue() {
         return invalidValue;
     }
 
-    private void initMessageAndMessageParameters() {
+    private void initMessageAndMessageParameters(ValidatorFactory validatorFactory) {
         if (messageTemplate == null) return;
         messageParameters = new HashMap<>();
 
-        Pattern pattern = Pattern.compile("\\{\\{\\s*(.*?)\\s*}}");
-        Matcher matcher = pattern.matcher(messageTemplate);
+        Matcher matcher = Pattern.compile("\\{\\{\\s*(.*?)\\s*}}").matcher(messageTemplate);
         StringBuilder stringBuilder = new StringBuilder();
 
         while (matcher.find()) {
             String messageParameterName  = matcher.group(1);
-            Object messageParameterValue = getMessageParameterValue(messageParameterName);
+            Object messageParameterValue = getMessageParameterValue(messageParameterName, validatorFactory);
             messageParameters.put(messageParameterName, messageParameterValue);
 
             matcher.appendReplacement(stringBuilder, Matcher.quoteReplacement(String.valueOf(messageParameterValue)));
@@ -80,12 +87,12 @@ public class ConstraintViolation<T> {
     }
 
     @Nullable
-    private Object getMessageParameterValue(String messageParameterName) {
+    private Object getMessageParameterValue(String messageParameterName, ValidatorFactory validatorFactory) {
         if ("value".equals(messageParameterName))
             return invalidValue;
 
-        if (messageParameterName.startsWith(MATSD_VALIDATION_MESSAGE_PREFIX))
-            return ValidatorFactory.getMessage(messageParameterName);
+        if (messageParameterName.startsWith(ValidatorFactory.MATSD_VALIDATION_MESSAGE_PREFIX))
+            return validatorFactory.getDefaultMessage(messageParameterName);
 
         try {
             return annotationType.getMethod(messageParameterName).invoke(annotation);
@@ -99,6 +106,8 @@ public class ConstraintViolation<T> {
         return "ConstraintViolation{" +
             "message='" + message + '\'' +
             ", invalidValue=" + invalidValue +
+            ", messageTemplate='" + messageTemplate + '\'' +
+            ", annotationType=" + annotationType +
             '}';
     }
 }
