@@ -5,18 +5,29 @@ import mg.matsd.javaframework.core.utils.Assert;
 
 import java.util.*;
 
-public class ConstraintViolations<T> {
+public class ValidationErrors<T> {
     private final Map<String, List<ConstraintViolation<T>>> constraintViolationMap;
+    private final T validatedObject;
 
-    ConstraintViolations() {
+    ValidationErrors(T validatedObject) {
         constraintViolationMap = new HashMap<>();
+        this.validatedObject = validatedObject;
     }
 
-    void addConstraintViolation(String property, ConstraintViolation<T> constraintViolation) {
-        List<ConstraintViolation<T>> constraintViolations = hasConstraintViolations(property) ?
-            constraintViolationMap.get(property) : Collections.unmodifiableList(new ArrayList<>());
+    public Map<String, List<ConstraintViolation<T>>> getConstraintViolationMap() {
+        return constraintViolationMap;
+    }
 
-        constraintViolations.add(constraintViolation);
+    public T getValidatedObject() {
+        return validatedObject;
+    }
+
+    public boolean isEmpty() {
+        return constraintViolationMap.isEmpty();
+    }
+
+    public int count() {
+        return constraintViolationMap.size();
     }
 
     public boolean hasConstraintViolations(String property) {
@@ -32,7 +43,8 @@ public class ConstraintViolations<T> {
         return constraintViolationMap.get(property);
     }
 
-    public Map<String, List<ConstraintViolation<T>>> getConstraintViolationMap() {
-        return constraintViolationMap;
+    void addConstraintViolation(String property, ConstraintViolation<T> constraintViolation) {
+        constraintViolationMap.computeIfAbsent(property, k -> new ArrayList<>())
+            .add(constraintViolation);
     }
 }

@@ -10,13 +10,18 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 public class Validator {
-    private final Map<Class<? extends Annotation>, ConstraintValidator<Annotation, Object>[]> constraintValidatorsCache = new HashMap<>();
-    private final Map<Class<?>, Field[]> fieldsCache = new HashMap<>();
+    private final Map<Class<? extends Annotation>, ConstraintValidator<Annotation, Object>[]> constraintValidatorsCache;
+    private final Map<Class<?>, Field[]> fieldsCache;
 
-    public <T> ConstraintViolations<T> doValidate(T t, @Nullable Class<?>... groups) {
+    Validator() {
+        constraintValidatorsCache = new HashMap<>();
+        fieldsCache = new HashMap<>();
+    }
+
+    public <T> ValidationErrors<T> doValidate(T t, @Nullable Class<?>... groups) {
         Assert.notNull(t, "L'objet à valider ne peut pas être \"null\"");
 
-        ConstraintViolations<T> constraintViolations = new ConstraintViolations<>();
+        ValidationErrors<T> validationErrors = new ValidationErrors<>(t);
         for (Field field : getFields(t.getClass())) {
             field.setAccessible(true);
 
@@ -33,7 +38,7 @@ public class Validator {
 
                         if (isValid || !isInGroups(annotation, annotationType, groups)) continue;
 
-                        constraintViolations.addConstraintViolation(field.getName(),
+                        validationErrors.addConstraintViolation(field.getName(),
                             new ConstraintViolation<>(fieldValue, annotation, annotationType));
                     }
                 } catch (IllegalAccessException e) {
@@ -42,7 +47,7 @@ public class Validator {
             }
         }
 
-        return constraintViolations;
+        return validationErrors;
     }
 
     private Field[] getFields(Class<?> clazz) {
@@ -79,20 +84,22 @@ public class Validator {
         return constraintValidators;
     }
 
-    private boolean isInGroups(Annotation annotation, Class<? extends Annotation> annotationType, Class<?>[] groups) {
+    private boolean isInGroups(Annotation annotation, Class<? extends Annotation> annotationType, @Nullable Class<?>[] groups) {
+        if (groups == null || groups.length == 0) return true;
+
         Class<?>[] annotationGroups;
         try {
             annotationGroups = (Class<?>[]) annotationType.getMethod("groups").invoke(annotation);
         } catch (Exception ignored) {
-            annotationGroups = null;
+            return true;
         }
 
         Class<?>[] finalAnnotationGroups = annotationGroups;
-        if (finalAnnotationGroups == null) return true;
-
-        return Arrays.stream(groups).anyMatch(
-            group -> Arrays.stream(finalAnnotationGroups).anyMatch(
-                annotationGroup -> annotationGroup.isAssignableFrom(group)
-            ));
+        return Arrays.stream(groups)
+            .filter(Objects::nonNull)
+            .anyMatch(group -> Arrays.stream(finalAnnotationGroups)
+                .filter(Objects::nonNull).anyMatch(
+                    annotationGroup -> annotationGroup.isAssignableFrom(group)
+                ));
     }
 }

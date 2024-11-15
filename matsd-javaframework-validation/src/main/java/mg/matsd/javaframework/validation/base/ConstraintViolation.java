@@ -15,11 +15,12 @@ public class ConstraintViolation<T> {
     private Map<String, Object> messageParameters;
     @Nullable
     private String message;
+    @Nullable
     private final Object invalidValue;
     private final Annotation annotation;
     private final Class<? extends Annotation> annotationType;
 
-    ConstraintViolation(Object invalidValue, Annotation annotation, Class<? extends Annotation> annotationType) {
+    ConstraintViolation(@Nullable Object invalidValue, Annotation annotation, Class<? extends Annotation> annotationType) {
         this.invalidValue   = invalidValue;
         this.annotation     = annotation;
         this.annotationType = annotationType;
@@ -51,7 +52,7 @@ public class ConstraintViolation<T> {
         if (messageTemplate == null) return this;
         messageParameters = new HashMap<>();
 
-        Pattern pattern = Pattern.compile("\\{\\{(.*?)}}");
+        Pattern pattern = Pattern.compile("\\{\\{\\s*(.*?)\\s*}}");
         Matcher matcher = pattern.matcher(messageTemplate);
         while (matcher.find()) {
             String messageParameterName = matcher.group(1);
@@ -77,6 +78,7 @@ public class ConstraintViolation<T> {
         return this;
     }
 
+    @Nullable
     public Object getInvalidValue() {
         return invalidValue;
     }
@@ -91,5 +93,13 @@ public class ConstraintViolation<T> {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    @Override
+    public String toString() {
+        return "ConstraintViolation{" +
+            "message='" + message + '\'' +
+            ", invalidValue=" + invalidValue +
+            '}';
     }
 }
