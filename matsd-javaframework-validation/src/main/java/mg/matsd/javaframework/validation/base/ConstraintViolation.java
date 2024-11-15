@@ -2,32 +2,43 @@ package mg.matsd.javaframework.validation.base;
 
 import mg.matsd.javaframework.core.annotations.Nullable;
 
+import java.lang.annotation.Annotation;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ConstraintViolation<T> {
     @Nullable
-    private String message;
+    private String messageTemplate;
     @Nullable
     private Map<String, Object> messageParameters;
     @Nullable
-    private final String messageTemplate;
-    private final String property;
-    private final T validatedObject;
+    private String message;
     private final Object invalidValue;
+    private final Annotation annotation;
+    private final Class<? extends Annotation> annotationType;
 
-    ConstraintViolation(@Nullable String messageTemplate, String property, T validatedObject, Object invalidValue) {
-        this.messageTemplate = messageTemplate;
-        this.property        = property;
-        this.validatedObject = validatedObject;
-        this.invalidValue    = invalidValue;
+    ConstraintViolation(Object invalidValue, Annotation annotation, Class<? extends Annotation> annotationType) {
+        this.invalidValue   = invalidValue;
+        this.annotation     = annotation;
+        this.annotationType = annotationType;
+
+        this.setMessageTemplate()
+            .setMessageParameters()
+            .setMessage();
     }
 
     @Nullable
-    public String getMessage() {
-        return message;
+    public String getMessageTemplate() {
+        return messageTemplate;
     }
 
-    private ConstraintViolation<T> setMessage() {
+    private ConstraintViolation<T> setMessageTemplate() {
+        try {
+            messageTemplate = (String) annotationType.getMethod("message").invoke(annotation);
+        } catch (Exception ignored) { }
+
         return this;
     }
 
@@ -37,23 +48,48 @@ public class ConstraintViolation<T> {
     }
 
     private ConstraintViolation<T> setMessageParameters() {
+        if (messageTemplate == null) return this;
+        messageParameters = new HashMap<>();
+
+        Pattern pattern = Pattern.compile("\\{\\{(.*?)}}");
+        Matcher matcher = pattern.matcher(messageTemplate);
+        while (matcher.find()) {
+            String messageParameterName = matcher.group(1);
+            messageParameters.put(messageParameterName, getMessageParameterValue(messageParameterName));
+        }
+
         return this;
     }
 
     @Nullable
-    public String getMessageTemplate() {
-        return messageTemplate;
+    public String getMessage() {
+        return message;
     }
 
-    public String getProperty() {
-        return property;
-    }
+    private ConstraintViolation<T> setMessage() {
+        if (messageParameters == null) return this;
 
-    public T getValidatedObject() {
-        return validatedObject;
+        message = messageTemplate;
+        messageParameters.forEach((key, value) ->
+            message = message.replaceFirst(String.format("\\{\\{\\s*%s\\s*\\}\\}", key), String.valueOf(value))
+        );
+
+        return this;
     }
 
     public Object getInvalidValue() {
         return invalidValue;
+    }
+
+    @Nullable
+    private Object getMessageParameterValue(String messageParameterName) {
+        if ("value".equals(messageParameterName))
+            return invalidValue;
+
+        try {
+            return annotationType.getMethod(messageParameterName).invoke(annotation);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
