@@ -1,6 +1,7 @@
 package mg.itu.prom16.base;
 
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -25,7 +26,6 @@ import mg.matsd.javaframework.core.utils.Assert;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.nio.file.Paths;
 import java.util.*;
 
 public class FrontServlet extends HttpServlet {
@@ -126,10 +126,8 @@ public class FrontServlet extends HttpServlet {
             mappingHandler = mappingHandlerEntry.getValue();
             responseRenderer.doRender(request, response, session, mappingHandler, mappingHandlerEntry.getKey());
         } catch (Throwable throwable) {
-            if (mappingHandler == null) {
-                ResponseRenderer.doRenderError(throwable, response);
-                return;
-            }
+            assert mappingHandler != null;
+
             List<Throwable> throwableTrace = ExceptionHandler.getThrowableTrace(throwable, null);
             ExceptionHandler exceptionHandler = resolveExceptionHandler(throwableTrace, mappingHandler.getControllerClass());
 
@@ -142,15 +140,9 @@ public class FrontServlet extends HttpServlet {
     }
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+    protected void service(HttpServletRequest req, HttpServletResponse resp)
         throws ServletException, IOException {
-        processRequest(request, response);
-    }
-
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
-        processRequest(request, response);
+        processRequest(req, resp);
     }
 
     @Nullable
