@@ -91,7 +91,7 @@ public class ConstraintViolation<T> {
         if ("value".equals(messageParameterName))
             return invalidValue;
 
-        if (messageParameterName.startsWith(ValidatorFactory.MATSD_VALIDATION_MESSAGE_PREFIX))
+        if (validatorFactory.hasDefaultMessage(messageParameterName))
             return validatorFactory.getDefaultMessage(messageParameterName);
 
         try {

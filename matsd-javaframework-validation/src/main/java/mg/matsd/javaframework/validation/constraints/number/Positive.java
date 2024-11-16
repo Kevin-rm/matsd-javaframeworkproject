@@ -1,6 +1,6 @@
 package mg.matsd.javaframework.validation.constraints.number;
 
-import mg.matsd.javaframework.validation.base.Constraint;
+import mg.matsd.javaframework.validation.annotations.Constraint;
 import mg.matsd.javaframework.validation.constraintvalidators.number.PositiveConstraintValidator;
 
 import java.lang.annotation.ElementType;

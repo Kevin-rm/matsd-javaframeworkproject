@@ -2,6 +2,7 @@ package mg.matsd.javaframework.validation.base;
 
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
+import mg.matsd.javaframework.validation.annotations.Constraint;
 import mg.matsd.javaframework.validation.exceptions.ValidationProcessException;
 
 import java.lang.annotation.Annotation;
@@ -69,8 +70,8 @@ public class Validator {
 
         ConstraintValidatorFactory constraintValidatorFactory = validatorFactory.getConstraintValidatorFactory();
         return IntStream.range(0, length).mapToObj(
-            i -> (ConstraintValidator<Annotation, Object>) constraintValidatorFactory.getInstance(constraintValidatorClasses[i]))
-            .toArray(ConstraintValidator[]::new);
+                i -> (ConstraintValidator<Annotation, Object>) constraintValidatorFactory.getInstance(constraintValidatorClasses[i])
+            ).toArray(ConstraintValidator[]::new);
     }
 
     private boolean isInGroups(Annotation annotation, Class<? extends Annotation> annotationType, @Nullable Class<?>[] groups) {

@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.util.Properties;
 
 public class ValidatorFactory {
-    public static final String MATSD_VALIDATION_MESSAGE_PREFIX = "mg.matsd.javaframework.validation.constraints";
     private static ValidatorFactory instance;
 
     private final ConstraintValidatorFactory constraintValidatorFactory;
@@ -41,11 +40,16 @@ public class ValidatorFactory {
         return defaultMessages;
     }
 
-    public ValidatorFactory setDefaultMessages(Properties defaultMessages) {
+    public void setDefaultMessages(Properties defaultMessages) {
         Assert.notNull(defaultMessages, "L'argument defaultMessages ne peut pas être \"null\"");
 
         this.defaultMessages = defaultMessages;
-        return this;
+    }
+
+    public boolean hasDefaultMessage(String key) {
+        Assert.notBlank(key, false, "L'argument key ne peut pas être vide ou \"null\"");
+
+        return defaultMessages.containsKey(key);
     }
 
     @Nullable

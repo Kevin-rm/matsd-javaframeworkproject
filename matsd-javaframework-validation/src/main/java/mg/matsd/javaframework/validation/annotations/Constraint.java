@@ -1,4 +1,6 @@
-package mg.matsd.javaframework.validation.base;
+package mg.matsd.javaframework.validation.annotations;
+
+import mg.matsd.javaframework.validation.base.ConstraintValidator;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
