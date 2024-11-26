@@ -57,4 +57,12 @@ public class ValidationErrors<T> {
         constraintViolationMap.computeIfAbsent(property, k -> new ArrayList<>())
             .add(constraintViolation);
     }
+
+    @Override
+    public String toString() {
+        return "ValidationErrors{" +
+            "constraintViolationMap=" + constraintViolationMap +
+            ", validatedObject=" + validatedObject +
+            '}';
+    }
 }
