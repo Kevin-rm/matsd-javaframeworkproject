@@ -2,7 +2,7 @@ package mg.matsd.javaframework.validation.base;
 
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.validation.annotations.Constraint;
-import mg.matsd.javaframework.validation.exceptions.ConstraintMappingDefinitionException;
+import mg.matsd.javaframework.validation.exceptions.ConstraintDefinitionException;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -53,7 +53,7 @@ public class ConstraintMapping<A extends Annotation> {
         try {
             messageMethod = annotationClass.getMethod("message");
         } catch (NoSuchMethodException e) {
-            throw new ConstraintMappingDefinitionException(String.format("Aucune méthode nommée \"message\" " +
+            throw new ConstraintDefinitionException(String.format("Aucune méthode nommée \"message\" " +
                 "trouvée sur l'annotation : \"%s\"", annotationClass.getName()));
         }
 
@@ -68,7 +68,7 @@ public class ConstraintMapping<A extends Annotation> {
         try {
             groupsMethod = annotationClass.getMethod("groups");
         } catch (NoSuchMethodException e) {
-            throw new ConstraintMappingDefinitionException(String.format("Aucune méthode nommée \"groups\" " +
+            throw new ConstraintDefinitionException(String.format("Aucune méthode nommée \"groups\" " +
                 "trouvée sur l'annotation : \"%s\"", annotationClass.getName()));
         }
 
