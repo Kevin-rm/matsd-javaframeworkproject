@@ -1,49 +1,63 @@
 package mg.matsd.javaframework.validation.base;
 
+import com.sun.jdi.InternalException;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.io.ClassPathResource;
 import mg.matsd.javaframework.core.io.Resource;
 import mg.matsd.javaframework.core.utils.Assert;
+import mg.matsd.javaframework.validation.exceptions.ValidationProcessException;
 
 import java.io.IOException;
-import java.util.Properties;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
 
 public class ValidatorFactory {
-    private static ValidatorFactory instance;
+    private final Map<Class<?>, Object> constraintValidatorInstancesMap;
+    private final List<ConstraintMapping<?>> constraintMappings;
 
-    private final ConstraintValidatorFactory constraintValidatorFactory;
-    private Validator validator;
+    private Validator  validator;
+    private boolean    autoDetectConstraints;
     private Properties defaultMessages;
 
-    private ValidatorFactory() {
-        constraintValidatorFactory = new ConstraintValidatorFactory();
+    public ValidatorFactory(Properties defaultMessages, boolean autoDetectConstraints) {
+        constraintValidatorInstancesMap = new HashMap<>();
+        constraintMappings = new ArrayList<>();
 
-        try (Resource resource = new ClassPathResource("default-validation-messages.properties")) {
-            defaultMessages = new Properties();
-            defaultMessages.load(resource.getInputStream());
-        } catch (IOException ignored) { }
+        this.setDefaultMessages(defaultMessages)
+            .setAutoDetectConstraints(autoDetectConstraints);
     }
 
-    public static ValidatorFactory getInstance() {
-        return instance == null ? instance = new ValidatorFactory() : instance;
+    public Map<Class<?>, Object> getConstraintValidatorInstancesMap() {
+        return constraintValidatorInstancesMap;
     }
 
-    public synchronized Validator getValidator() {
+    public List<ConstraintMapping<?>> getConstraintMappings() {
+        return constraintMappings;
+    }
+
+    public Validator getValidator() {
         return validator == null ? validator = new Validator(this) : validator;
     }
 
-    public ConstraintValidatorFactory getConstraintValidatorFactory() {
-        return constraintValidatorFactory;
+    public boolean isAutoDetectConstraints() {
+        return autoDetectConstraints;
+    }
+
+    public ValidatorFactory setAutoDetectConstraints(boolean autoDetectConstraints) {
+        this.autoDetectConstraints = autoDetectConstraints;
+        return this;
     }
 
     public Properties getDefaultMessages() {
         return defaultMessages;
     }
 
-    public void setDefaultMessages(Properties defaultMessages) {
+    public ValidatorFactory setDefaultMessages(Properties defaultMessages) {
         Assert.notNull(defaultMessages, "L'argument defaultMessages ne peut pas être \"null\"");
 
         this.defaultMessages = defaultMessages;
+        return this;
     }
 
     public boolean hasDefaultMessage(String key) {
@@ -71,5 +85,43 @@ public class ValidatorFactory {
 
         defaultMessages.put(key, value);
         return this;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <A extends Annotation> ConstraintMapping<A> getConstraintMapping(Class<A> annotationClass) {
+        return (ConstraintMapping<A>) constraintMappings.stream()
+            .filter(mapping -> mapping.getAnnotationClass().equals(annotationClass))
+            .findFirst()
+            .orElseThrow(InternalException::new);
+    }
+
+    public <A extends Annotation> ValidatorFactory addConstraintMapping(Class<A> annotationClass) {
+        constraintMappings.add(new ConstraintMapping<>(annotationClass));
+        return this;
+    }
+
+    public static ValidatorFactory buildDefault() {
+        Properties defaultMessages = null;
+        try (Resource resource = new ClassPathResource("default-validation-messages.properties")) {
+            defaultMessages = new Properties();
+            defaultMessages.load(resource.getInputStream());
+        } catch (IOException ignored) { }
+
+        return new ValidatorFactory(defaultMessages, true);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T extends ConstraintValidator<?, ?>> T getConstraintValidatorInstance(Class<T> clazz) {
+        Assert.notNull(clazz, "La classe de l'instance du contraintValidator à récupérer ne peut pas être \"null\"");
+
+        return (T) constraintValidatorInstancesMap.computeIfAbsent(clazz, k -> {
+            try {
+                return k.getConstructor().newInstance();
+            } catch (InstantiationException | IllegalAccessException | NoSuchMethodException e) {
+                throw new ValidationProcessException(e);
+            } catch (InvocationTargetException e) {
+                throw new ValidationProcessException(e.getCause());
+            }
+        });
     }
 }

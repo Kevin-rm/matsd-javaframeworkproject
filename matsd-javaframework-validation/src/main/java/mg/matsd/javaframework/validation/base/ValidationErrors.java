@@ -4,7 +4,10 @@ import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.validation.exceptions.ValidationException;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ValidationErrors<T> {
     private final Map<String, List<ConstraintViolation<T>>> constraintViolationMap;
