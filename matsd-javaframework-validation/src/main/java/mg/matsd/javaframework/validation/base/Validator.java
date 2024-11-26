@@ -27,32 +27,31 @@ public class Validator {
         Assert.notNull(t, "L'objet à valider ne peut pas être \"null\"");
 
         ValidationErrors<T> validationErrors = new ValidationErrors<>(t);
-        for (Map.Entry<Field, Annotation[]> entry : getFields(t.getClass()).entrySet()) {
-            Field field = entry.getKey();
+        getFields(t.getClass()).forEach((field, value) -> {
             field.setAccessible(true);
 
-            for (Annotation annotation : entry.getValue()) {
+            Arrays.stream(value).forEachOrdered(annotation -> {
                 ConstraintMapping<?> constraintMapping = validatorFactory.getConstraintMapping(annotation.annotationType());
                 ConstraintValidator<Annotation, Object>[] constraintValidators = (ConstraintValidator<Annotation, Object>[])
                     getConstraintValidators(constraintMapping);
 
                 try {
                     Object fieldValue = field.get(t);
-                    for (ConstraintValidator<Annotation, Object> constraintValidator : constraintValidators) {
+                    Arrays.stream(constraintValidators).forEachOrdered(constraintValidator -> {
                         constraintValidator.initialize(annotation);
                         boolean isValid = constraintValidator.isValid(fieldValue);
 
-                        if (isValid || !isInGroups(constraintMapping, annotation, groups)) continue;
+                        if (isValid || !isInGroups(constraintMapping, annotation, groups)) return;
 
                         String fieldName = field.getName();
                         validationErrors.addConstraintViolation(fieldName,
                             new ConstraintViolation<>(fieldName, fieldValue, constraintMapping, annotation, validatorFactory));
-                    }
+                    });
                 } catch (IllegalAccessException e) {
                     throw new ValidationProcessException(e);
                 }
-            }
-        }
+            });
+        });
 
         return validationErrors;
     }
@@ -61,20 +60,21 @@ public class Validator {
         if (fieldsCache.containsKey(clazz)) return fieldsCache.get(clazz);
 
         Map<Field, Annotation[]> fieldsMap = new HashMap<>();
-        for (Field field : clazz.getDeclaredFields()) {
+        Arrays.stream(clazz.getDeclaredFields()).forEachOrdered(field -> {
             List<Annotation> annotations = new ArrayList<>();
-            Arrays.stream(field.getAnnotations())
-                .filter(annotation -> annotation.annotationType().isAnnotationPresent(Constraint.class))
-                .forEachOrdered(annotation -> {
+            Arrays.stream(field.getAnnotations()).forEachOrdered(annotation -> {
+                Class<? extends Annotation> annotationType = annotation.annotationType();
+                if (annotationType.isAnnotationPresent(Constraint.class)) {
                     annotations.add(annotation);
 
                     if (validatorFactory.isAutoDetectConstraints())
-                        validatorFactory.addConstraintMapping(annotation.getClass());
-                });
+                        validatorFactory.addConstraintMapping(annotationType);
+                }
+            });
 
-            if (annotations.isEmpty()) continue;
+            if (annotations.isEmpty()) return;
             fieldsMap.put(field, annotations.toArray(new Annotation[0]));
-        }
+        });
 
         fieldsCache.put(clazz, fieldsMap);
         return fieldsMap;
