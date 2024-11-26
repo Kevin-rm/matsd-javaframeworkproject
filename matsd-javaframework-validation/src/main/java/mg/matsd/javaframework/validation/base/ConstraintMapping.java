@@ -26,7 +26,6 @@ public class ConstraintMapping<A extends Annotation> {
     }
 
     private ConstraintMapping<A> setAnnotationClass(Class<A> annotationClass) {
-        System.out.println(annotationClass);
         Assert.notNull(annotationClass, "L'argument annotationClass ne peut pas être \"null\"");
         Assert.state(annotationClass.isAnnotationPresent(Constraint.class),
             "Une annotation de contrainte doit être annotée avec \"@Constraint\"");
