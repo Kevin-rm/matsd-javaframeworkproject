@@ -12,12 +12,14 @@ import mg.matsd.javaframework.core.container.AbstractXmlResourceContainer;
 import mg.matsd.javaframework.core.io.Resource;
 import mg.matsd.javaframework.core.managedinstances.ManagedInstance;
 import mg.matsd.javaframework.core.managedinstances.ManagedInstanceUtils;
-import mg.matsd.javaframework.core.managedinstances.Scope;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.validation.base.ValidatorFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static mg.itu.prom16.support.ThirdPartyConfiguration.*;
+import static mg.matsd.javaframework.core.managedinstances.Scope.*;
 
 public class WebApplicationContainer extends AbstractXmlResourceContainer {
     public static final String WEB_SCOPED_MANAGED_INSTANCES_KEY_PREFIX = "web_scoped_managedinstance";
@@ -55,13 +57,11 @@ public class WebApplicationContainer extends AbstractXmlResourceContainer {
         registerManagedInstance(
             new ManagedInstance(SessionImpl.MANAGED_INSTANCE_ID, SessionImpl.class, "session", null, null),
             new ManagedInstance(Model.MANAGED_INSTANCE_ID, Model.class, "request", null, null),
-            new ManagedInstance(ThirdPartyConfiguration.MANAGED_INSTANCE_ID, ThirdPartyConfiguration.class, "singleton", null, null)
+            new ManagedInstance(MANAGED_INSTANCE_ID, ThirdPartyConfiguration.class, "singleton", null, null)
         );
 
-        registerManagedInstance(ThirdPartyConfiguration.JACKSON_OBJECT_MAPPER_ID, ObjectMapper.class,
-            Scope.SINGLETON, ThirdPartyConfiguration.MANAGED_INSTANCE_ID, "objectMapper");
-        registerManagedInstance("default_validator_factory", ValidatorFactory.class,
-            Scope.SINGLETON, ThirdPartyConfiguration.MANAGED_INSTANCE_ID, "validatorFactory");
+        registerManagedInstance(JACKSON_OBJECT_MAPPER_ID, ObjectMapper.class, SINGLETON, MANAGED_INSTANCE_ID, "objectMapper");
+        registerManagedInstance(VALIDATOR_FACTORY_ID, ValidatorFactory.class, SINGLETON, MANAGED_INSTANCE_ID, "validatorFactory");
     }
 
     @Override
@@ -70,7 +70,7 @@ public class WebApplicationContainer extends AbstractXmlResourceContainer {
         String key = WEB_SCOPED_MANAGED_INSTANCES_KEY_PREFIX + managedInstance.getId();
 
         Object instance;
-        if (managedInstance.getScope() == Scope.REQUEST) {
+        if (managedInstance.getScope() == REQUEST) {
             instance = httpServletRequest.getAttribute(key);
             if (instance == null) {
                 instance = ManagedInstanceUtils.instantiate(managedInstance, this);
