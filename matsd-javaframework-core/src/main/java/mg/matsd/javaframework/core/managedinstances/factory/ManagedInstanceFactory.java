@@ -6,6 +6,7 @@ import mg.matsd.javaframework.core.managedinstances.*;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.core.utils.StringUtils;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,10 +74,25 @@ public abstract class ManagedInstanceFactory {
         Assert.notNull(managedInstances, "L'argument managedInstances ne peut pas être \"null\"");
         Assert.noNullElements(managedInstances, "Chaque \"ManagedInstance\" à enregistrer ne peut pas être \"null\"");
 
-        for (ManagedInstance m : managedInstances) managedInstanceDefinitionRegistry.registerManagedInstance(m);
+        Arrays.stream(managedInstances).forEachOrdered(m -> managedInstanceDefinitionRegistry.registerManagedInstance(m));
     }
 
-    public void registerManagedInstance(String id, String clazz, String scope) {
+    public void registerManagedInstance(
+        @Nullable String id,
+        Class<?> clazz,
+        @Nullable Scope scope,
+        String parentId,
+        String factoryMethodName
+    ) {
+        Assert.notBlank(parentId, false, "L'identifiant du parent ne peut pas être vide ou \"null\"");
+        Assert.notBlank(factoryMethodName, false, "Le nom de la factoryMethod ne peut pas être vide ou \"null\"");
+
+        managedInstanceDefinitionRegistry.registerManagedInstance(id, clazz, scope, parentId, factoryMethodName);
+    }
+
+    public void registerManagedInstance(
+       @Nullable String id, String clazz, @Nullable String scope
+    ) {
         managedInstanceDefinitionRegistry.registerManagedInstance(id, clazz, scope);
     }
 

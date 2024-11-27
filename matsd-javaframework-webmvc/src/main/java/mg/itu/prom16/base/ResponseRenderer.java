@@ -9,6 +9,7 @@ import mg.itu.prom16.base.internal.handler.AbstractHandler;
 import mg.itu.prom16.exceptions.InvalidReturnTypeException;
 import mg.itu.prom16.exceptions.NotFoundHttpException;
 import mg.itu.prom16.http.Session;
+import mg.itu.prom16.support.ThirdPartyConfiguration;
 import mg.itu.prom16.support.WebApplicationContainer;
 import mg.itu.prom16.utils.WebUtils;
 
@@ -335,7 +336,7 @@ class ResponseRenderer {
             );
 
         httpServletResponse.setContentType("application/json");
-        ObjectMapper objectMapper = (ObjectMapper) webApplicationContainer.getManagedInstance(WebApplicationContainer.JACKSON_OBJECT_MAPPER_ID);
+        ObjectMapper objectMapper = (ObjectMapper) webApplicationContainer.getManagedInstance(ThirdPartyConfiguration.JACKSON_OBJECT_MAPPER_ID);
         objectMapper.writeValue(httpServletResponse.getWriter(),
             handlerMethodResult instanceof ModelAndView modelAndView ? modelAndView.getData() : handlerMethodResult);
     }

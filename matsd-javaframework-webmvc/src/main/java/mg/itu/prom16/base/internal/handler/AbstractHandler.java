@@ -12,8 +12,9 @@ import mg.itu.prom16.http.Session;
 import mg.itu.prom16.support.WebApplicationContainer;
 import mg.matsd.javaframework.core.managedinstances.NoSuchManagedInstanceException;
 import mg.matsd.javaframework.core.utils.Assert;
+import mg.matsd.javaframework.validation.base.Validator;
+import mg.matsd.javaframework.validation.base.ValidatorFactory;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -90,6 +91,8 @@ public abstract class AbstractHandler {
                     args[i] = session;
                 else if (parameter.isAnnotationPresent(SessionAttribute.class))
                     args[i] = UtilFunctions.getSessionAttributeValue(parameterType, parameter, httpServletRequest.getSession());
+                else if (parameterType == Validator.class)
+                    args[i] = ((ValidatorFactory) webApplicationContainer.getManagedInstance(ValidatorFactory.class)).getValidator();
                 else {
                     try {
                         args[i] = resolveAdditionalParameter(parameterType, parameter, httpServletRequest, additionalParameter);

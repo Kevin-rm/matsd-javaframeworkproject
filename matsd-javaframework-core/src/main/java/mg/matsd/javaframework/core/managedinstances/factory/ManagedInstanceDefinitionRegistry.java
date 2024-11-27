@@ -1,9 +1,8 @@
 package mg.matsd.javaframework.core.managedinstances.factory;
 
-import mg.matsd.javaframework.core.managedinstances.ConstructorArgument;
-import mg.matsd.javaframework.core.managedinstances.ManagedInstance;
-import mg.matsd.javaframework.core.managedinstances.NoSuchManagedInstanceException;
+import mg.matsd.javaframework.core.managedinstances.*;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -57,6 +56,23 @@ public class ManagedInstanceDefinitionRegistry {
                 );
 
         managedInstances.add(managedInstance);
+    }
+
+    void registerManagedInstance(
+        String id, Class<?> clazz, Scope scope, String parentId, String factoryMethodName
+    ) {
+        ManagedInstance parent = getManagedInstanceById(parentId);
+        Class<?> parentClass   = parent.getClazz();
+        try {
+            Method method = parentClass.getMethod(factoryMethodName);
+            ManagedInstance managedInstance = new ManagedInstance(id, clazz, scope, parent, method);
+            ManagedInstanceUtils.processConstructorArguments(method, managedInstance);
+
+            registerManagedInstance(managedInstance);
+        } catch (NoSuchMethodException e) {
+            throw new ManagedInstanceDefinitionException(String.format("Aucune méthode nommée \"%s\" " +
+                "sur la classe parente \"%s\"", factoryMethodName, parentClass.getName()));
+        }
     }
 
     void registerManagedInstance(String id, String clazz, String scope) {
