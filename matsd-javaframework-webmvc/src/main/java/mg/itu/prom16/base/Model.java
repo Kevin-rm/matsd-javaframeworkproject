@@ -10,7 +10,7 @@ import java.util.Map;
 public class Model {
     public static final String MANAGED_INSTANCE_ID = "_matsd_model";
 
-    private final Map<String, Object> data = new HashMap<>();
+    private final  Map<String, Object> data = new HashMap<>();
 
     public Map<String, Object> getData() {
         return data;
@@ -37,5 +37,6 @@ public class Model {
         if (data.isEmpty()) return;
 
         data.forEach(httpServletRequest::setAttribute);
+        data.clear();
     }
 }

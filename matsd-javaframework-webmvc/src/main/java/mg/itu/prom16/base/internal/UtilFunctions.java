@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
 import mg.itu.prom16.annotations.*;
+import mg.itu.prom16.base.Model;
 import mg.itu.prom16.exceptions.MissingServletRequestParameterException;
 import mg.itu.prom16.exceptions.ModelBindingException;
 import mg.itu.prom16.exceptions.UndefinedPathVariableException;
@@ -135,7 +136,17 @@ public final class UtilFunctions {
         if (modelName == null || StringUtils.isBlank(modelName))
             modelName = parameter.getName();
 
-        return instantiateModelFromRequest(parameterType, modelName, httpServletRequest);
+        Object model;
+        try {
+            model = parameterType.getConstructor().newInstance();
+        } catch (InstantiationException | InvocationTargetException e) {
+            throw new ModelBindingException(e instanceof InvocationTargetException ? e.getCause() : e);
+        } catch (NoSuchMethodException | IllegalAccessException e) {
+            throw new ModelBindingException(String.format("Le modèle avec la classe \"%s\" doit disposer d'un constructeur sans arguments " +
+                "accessible publiquement", parameterType.getName()));
+        }
+
+        return populateModelFromRequest(parameterType, model, modelName, httpServletRequest);
     }
 
     public static Object getSessionAttributeValue(
@@ -162,10 +173,10 @@ public final class UtilFunctions {
         return sessionAttributeValue;
     }
 
-    private static Object instantiateModelFromRequest(Class<?> clazz, String modelName, HttpServletRequest httpServletRequest) {
+    private static Object populateModelFromRequest(
+        Class<?> clazz, Object model, String modelName, HttpServletRequest httpServletRequest
+    ) {
         try {
-            Object result = clazz.getConstructor().newInstance();
-
             for (Field field : clazz.getDeclaredFields()) {
                 field.setAccessible(true);
                 Class<?> fieldType = field.getType();
@@ -177,7 +188,7 @@ public final class UtilFunctions {
                 String requestParameterName = modelName + "." + fieldAlias;
                 if (fieldType == UploadedFile.class) {
                     UploadedFile uploadedFile = getUploadedFile(requestParameterName, httpServletRequest);
-                    if (uploadedFile != null) field.set(result, uploadedFile);
+                    if (uploadedFile != null) field.set(model, uploadedFile);
 
                     continue;
                 }
@@ -189,13 +200,13 @@ public final class UtilFunctions {
                     ClassUtils.isPrimitiveOrWrapper(fieldType) ||
                     ClassUtils.isStandardClass(fieldType)      ||
                     fieldType == String.class
-                )    field.set(result, StringConverter.convert(requestParameterValue, fieldType));
-                else field.set(result, instantiateModelFromRequest(fieldType, fieldAlias, httpServletRequest));
+                )    field.set(model, StringConverter.convert(requestParameterValue, fieldType));
+                else field.set(model, populateModelFromRequest(fieldType, model, fieldAlias, httpServletRequest));
             }
 
-            return result;
-        } catch (Exception e) {
-            throw new ModelBindingException(e instanceof InvocationTargetException ? e.getCause() : e);
+            return model;
+        } catch (ServletException | IllegalAccessException e) {
+            throw new ModelBindingException(e);
         }
     }
 
