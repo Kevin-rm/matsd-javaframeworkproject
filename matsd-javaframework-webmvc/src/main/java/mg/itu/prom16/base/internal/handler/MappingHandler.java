@@ -3,9 +3,10 @@ package mg.itu.prom16.base.internal.handler;
 import com.sun.jdi.InternalException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
-import mg.itu.prom16.annotations.FromRequestParameters;
+import mg.itu.prom16.annotations.ModelData;
 import mg.itu.prom16.annotations.PathVariable;
 import mg.itu.prom16.annotations.RequestParameter;
+import mg.itu.prom16.base.Model;
 import mg.itu.prom16.base.internal.RequestMappingInfo;
 import mg.itu.prom16.base.internal.UtilFunctions;
 import mg.itu.prom16.exceptions.UnexpectedParameterException;
@@ -20,7 +21,8 @@ public class MappingHandler extends AbstractHandler {
 
     @Override
     protected Object resolveAdditionalParameter(
-        Class<?> parameterType, Parameter parameter, HttpServletRequest httpServletRequest, Object additionalParameter
+        Class<?> parameterType, Parameter parameter,
+        HttpServletRequest httpServletRequest, Model model, Object additionalParameter
     ) throws UnexpectedParameterException, InternalException, ServletException {
         if (!(additionalParameter instanceof RequestMappingInfo requestMappingInfo)) throw new InternalException();
 
@@ -29,8 +31,8 @@ public class MappingHandler extends AbstractHandler {
             result = UtilFunctions.getRequestParameterValue(parameterType, parameter, httpServletRequest);
         else if (parameter.isAnnotationPresent(PathVariable.class))
             result = UtilFunctions.getPathVariableValue(parameterType, parameter, requestMappingInfo, httpServletRequest);
-        else if (parameter.isAnnotationPresent(FromRequestParameters.class))
-            result = UtilFunctions.bindRequestParameters(parameterType, parameter, httpServletRequest);
+        else if (parameter.isAnnotationPresent(ModelData.class))
+            result = UtilFunctions.bindRequestParameters(parameterType, parameter, httpServletRequest, model);
         else throw new UnexpectedParameterException();
 
         return result;

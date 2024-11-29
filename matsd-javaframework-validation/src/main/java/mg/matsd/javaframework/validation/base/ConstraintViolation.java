@@ -65,6 +65,10 @@ public class ConstraintViolation<T> {
         return this;
     }
 
+    public String getProperty() {
+        return property;
+    }
+
     @Nullable
     public Object getInvalidValue() {
         return invalidValue;

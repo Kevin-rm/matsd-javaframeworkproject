@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
 import mg.itu.prom16.annotations.*;
+import mg.itu.prom16.base.Model;
 import mg.itu.prom16.exceptions.MissingServletRequestParameterException;
 import mg.itu.prom16.exceptions.ModelBindingException;
 import mg.itu.prom16.exceptions.UndefinedPathVariableException;
@@ -128,24 +129,25 @@ public final class UtilFunctions {
         return StringConverter.convert(pathVariables.get(pathVariableName), parameterType);
     }
 
-    public static Object bindRequestParameters(Class<?> parameterType, Parameter parameter, HttpServletRequest httpServletRequest) {
-        String modelName = null;
-        if (parameter.isAnnotationPresent(FromRequestParameters.class))
-            modelName = parameter.getAnnotation(FromRequestParameters.class).value();
+    public static Object bindRequestParameters(
+        Class<?> parameterType, Parameter parameter, HttpServletRequest httpServletRequest, Model model
+    ) {
+        String modelName = parameter.getAnnotation(ModelData.class).value();
         if (modelName == null || StringUtils.isBlank(modelName))
             modelName = parameter.getName();
 
-        Object model;
-        try {
-            model = parameterType.getConstructor().newInstance();
+        Object modelInstance;
+        if (!model.hasData(modelName)) try {
+            modelInstance = parameterType.getConstructor().newInstance();
+            model.addData(modelName, modelInstance);
         } catch (InstantiationException | InvocationTargetException e) {
             throw new ModelBindingException(e instanceof InvocationTargetException ? e.getCause() : e);
         } catch (NoSuchMethodException | IllegalAccessException e) {
             throw new ModelBindingException(String.format("Le modèle avec la classe \"%s\" doit disposer d'un constructeur sans arguments " +
                 "accessible publiquement", parameterType.getName()));
-        }
+        } else modelInstance = model.getData(modelName);
 
-        return populateModelFromRequest(parameterType, model, modelName, httpServletRequest);
+        return populateModelFromRequest(parameterType, modelInstance, modelName, httpServletRequest);
     }
 
     public static Object getSessionAttributeValue(
@@ -173,7 +175,7 @@ public final class UtilFunctions {
     }
 
     private static Object populateModelFromRequest(
-        Class<?> clazz, Object model, String modelName, HttpServletRequest httpServletRequest
+        Class<?> clazz, Object modelInstance, String modelName, HttpServletRequest httpServletRequest
     ) {
         try {
             for (Field field : clazz.getDeclaredFields()) {
@@ -187,7 +189,7 @@ public final class UtilFunctions {
                 String requestParameterName = modelName + "." + fieldAlias;
                 if (fieldType == UploadedFile.class) {
                     UploadedFile uploadedFile = getUploadedFile(requestParameterName, httpServletRequest);
-                    if (uploadedFile != null) field.set(model, uploadedFile);
+                    if (uploadedFile != null) field.set(modelInstance, uploadedFile);
 
                     continue;
                 }
@@ -199,11 +201,11 @@ public final class UtilFunctions {
                     ClassUtils.isPrimitiveOrWrapper(fieldType) ||
                     ClassUtils.isStandardClass(fieldType)      ||
                     fieldType == String.class
-                )    field.set(model, StringConverter.convert(requestParameterValue, fieldType));
-                else field.set(model, populateModelFromRequest(fieldType, model, fieldAlias, httpServletRequest));
+                )    field.set(modelInstance, StringConverter.convert(requestParameterValue, fieldType));
+                else field.set(modelInstance, populateModelFromRequest(fieldType, modelInstance, fieldAlias, httpServletRequest));
             }
 
-            return model;
+            return modelInstance;
         } catch (ServletException | IllegalAccessException e) {
             throw new ModelBindingException(e);
         }

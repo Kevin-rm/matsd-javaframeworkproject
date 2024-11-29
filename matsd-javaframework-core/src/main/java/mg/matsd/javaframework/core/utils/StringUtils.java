@@ -56,4 +56,13 @@ public final class StringUtils {
     public static boolean isValidPackageName(@Nullable String packageName) {
         return packageName != null && StringUtils.hasText(packageName) && packageName.matches(PACKAGE_NAME_REGEX);
     }
+
+    @Nullable
+    public static String escapeHtml(@Nullable String input) {
+        return input == null ? null : input.replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\"", "&quot;")
+            .replace("'", "&#39;");
+    }
 }

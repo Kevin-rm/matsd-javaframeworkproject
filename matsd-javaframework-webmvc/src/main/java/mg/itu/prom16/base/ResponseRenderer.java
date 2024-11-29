@@ -12,9 +12,11 @@ import mg.itu.prom16.http.Session;
 import mg.itu.prom16.support.ThirdPartyConfiguration;
 import mg.itu.prom16.support.WebApplicationContainer;
 import mg.itu.prom16.utils.WebUtils;
+import mg.matsd.javaframework.core.utils.StringUtils;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.Method;
 
 class ResponseRenderer {
@@ -276,7 +278,7 @@ class ResponseRenderer {
         printWriter.println("           </div>");
         printWriter.println("           <div class=\"detail-item\">");
         printWriter.println("               <span class=\"detail-label\">Message</span>");
-        printWriter.println(String.format("               <span class=\"detail-value\">%s</span>", throwable.getMessage()));
+        printWriter.println(String.format("               <span class=\"detail-value\">%s</span>", StringUtils.escapeHtml(throwable.getMessage())));
         printWriter.println("           </div>");
         printWriter.println("           <div class=\"detail-item\">");
         printWriter.println("               <span class=\"detail-label\">Code d'état HTTP</span>");
@@ -286,7 +288,9 @@ class ResponseRenderer {
         printWriter.println("       <h2>Pile d'appels</h2>");
         printWriter.println("       <div class=\"stacktrace\">");
         printWriter.println("           <pre>");
-        throwable.printStackTrace(printWriter);
+        StringWriter stringWriter = new StringWriter();
+        throwable.printStackTrace(new PrintWriter(stringWriter));
+        printWriter.println(StringUtils.escapeHtml(stringWriter.toString()));
         printWriter.println("           </pre>");
         printWriter.println("       </div>");
         printWriter.println("   </div>");
@@ -304,13 +308,13 @@ class ResponseRenderer {
         AbstractHandler handler,
         Object additionalParameter
     ) throws ServletException, IOException {
+        Model model = (Model) webApplicationContainer.getManagedInstance(Model.MANAGED_INSTANCE_ID);
+
         Object handlerMethodResult = handler.invokeMethod(
-            webApplicationContainer, httpServletRequest, httpServletResponse, session, additionalParameter);
+            webApplicationContainer, httpServletRequest, httpServletResponse, session, model, additionalParameter);
         Method handlerMethod = handler.getMethod();
 
-        Model model = (Model) webApplicationContainer.getManagedInstance(Model.MANAGED_INSTANCE_ID);
         model.setAttributes(httpServletRequest);
-
         if (handler.isJsonResponse())
             handleJsonResult(httpServletResponse, handler.getControllerClass(), handlerMethod, handlerMethodResult);
         else if (handlerMethodResult instanceof ModelAndView modelAndView) {
