@@ -8,80 +8,57 @@ import java.util.*;
 public class FlashBagImpl implements FlashBag {
     public static final String STORAGE_KEY = "_matsd_flashes";
 
-    private final Map<String, List<Object>> flashes;
+    private final Map<String, Object> flashes;
 
     public FlashBagImpl() {
         flashes = new HashMap<>();
     }
 
     @Override
-    public void add(String key, Object value) {
+    public void set(String key, Object value) {
         validateKey(key);
         Assert.notNull(value, "La valeur ne peut pas être \"null\"");
 
-        List<Object> flashValues = flashes.computeIfAbsent(key, k -> new ArrayList<>());
-        flashValues.add(value);
-    }
-
-    @Override
-    public void add(String key, Object[] values) {
-        validateKey(key);
-        Assert.notNull(values, "La liste des valeurs ne peut pas être \"null\"");
-        Assert.noNullElements(values, "Chaque valeur dans la liste ne peut pas être \"null\"");
-
-        List<Object> flashValues = flashes.computeIfAbsent(key, k -> new ArrayList<>());
-        flashValues.addAll(List.of(values));
-    }
-
-    @Override
-    public void set(String key, Object[] values) {
-        validateKey(key);
-        Assert.notNull(values, "La liste de valeurs ne peut pas être \"null\"");
-        Assert.noNullElements(values, "Chaque valeur dans la liste ne peut pas être \"null\"");
-
-        flashes.put(key, List.of(values));
+        flashes.put(key, value);
     }
 
     @Override
     @Nullable
-    public Object[] get(String key) {
+    public Object get(String key) {
         return get(key, null);
     }
 
     @Override
     @Nullable
-    public Object[] get(String key, @Nullable Object[] defaultValue) {
+    public Object get(String key, @Nullable Object defaultValue) {
         if (!has(key)) return defaultValue;
 
-        List<Object> results = flashes.get(key);
+        Object result = flashes.get(key);
         flashes.remove(key);
 
-        return results.toArray(new Object[0]);
+        return result;
     }
 
     @Override
     @Nullable
-    public Object[] peek(String key) {
+    public Object peek(String key) {
         return peek(key, null);
     }
 
     @Override
     @Nullable
-    public Object[] peek(String key, @Nullable Object[] defaultValue) {
-        return has(key) ? flashes.get(key).toArray(new Object[0]) : defaultValue;
+    public Object peek(String key, @Nullable Object defaultValue) {
+        return has(key) ? flashes.get(key) : defaultValue;
     }
 
     @Override
-    public Map<String, Object[]> peekAll() {
-        Map<String, Object[]> results = new HashMap<>();
-        flashes.forEach((key, value) -> results.put(key, value.toArray(new Object[0])));
-
-        return results;
+    public Map<String, Object> peekAll() {
+        return new HashMap<>(flashes);
     }
 
     @Override
-    public Map<String, Object[]> all() {
-        Map<String, Object[]> results = peekAll();
+    public Map<String, Object> all() {
+        Map<String, Object> results = peekAll();
         flashes.clear();
 
         return results;

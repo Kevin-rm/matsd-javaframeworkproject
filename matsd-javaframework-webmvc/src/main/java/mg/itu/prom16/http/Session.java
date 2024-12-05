@@ -25,6 +25,4 @@ public interface Session {
     FlashBag getFlashBag();
 
     void addFlash(String key, Object value);
-
-    void addFlash(String key, Object[] values);
 }

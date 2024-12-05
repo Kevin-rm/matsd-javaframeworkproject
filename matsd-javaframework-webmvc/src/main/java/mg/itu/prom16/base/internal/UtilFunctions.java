@@ -6,7 +6,6 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
 import mg.itu.prom16.annotations.*;
 import mg.itu.prom16.base.Model;
-import mg.itu.prom16.validation.GlobalError;
 import mg.itu.prom16.validation.ModelBindingResult;
 import mg.itu.prom16.exceptions.MissingServletRequestParameterException;
 import mg.itu.prom16.exceptions.ModelBindingException;
@@ -209,6 +208,7 @@ public final class UtilFunctions {
         try {
             for (Field field : clazz.getDeclaredFields()) {
                 field.setAccessible(true);
+
                 Class<?> fieldType = field.getType();
 
                 BindRequestParameter bindRequestParameter = field.getAnnotation(BindRequestParameter.class);
@@ -224,18 +224,18 @@ public final class UtilFunctions {
                 }
 
                 String requestParameterValue = httpServletRequest.getParameter(requestParameterName);
-                if (requestParameterValue == null || StringUtils.isBlank(requestParameterValue)) continue;
-
                 if (
                     ClassUtils.isPrimitiveOrWrapper(fieldType) ||
                     ClassUtils.isStandardClass(fieldType)      ||
                     fieldType == String.class
-                )    field.set(modelInstance, StringConverter.convert(requestParameterValue, fieldType));
+                ) field.set(modelInstance, requestParameterValue == null || StringUtils.isBlank(requestParameterValue)
+                    ? null : StringConverter.convert(requestParameterValue, fieldType));
                 else field.set(modelInstance, populateModelFromRequest(fieldType, null, fieldAlias, httpServletRequest));
             }
 
             return modelInstance;
         } catch (ServletException | IllegalAccessException e) {
+            e.printStackTrace();
             throw new ModelBindingException(e);
         }
     }

@@ -19,7 +19,6 @@ import mg.matsd.javaframework.validation.base.ValidatorFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-import static mg.itu.prom16.support.ThirdPartyConfiguration.*;
 import static mg.matsd.javaframework.core.managedinstances.Scope.*;
 
 public class WebApplicationContainer extends AbstractXmlResourceContainer {
@@ -58,12 +57,12 @@ public class WebApplicationContainer extends AbstractXmlResourceContainer {
         registerManagedInstance(
             new ManagedInstance(SessionImpl.MANAGED_INSTANCE_ID, SessionImpl.class, "session", null, null),
             new ManagedInstance(Model.MANAGED_INSTANCE_ID, Model.class, "request", null, null),
-            new ManagedInstance(MANAGED_INSTANCE_ID, ThirdPartyConfiguration.class, "singleton", null, null),
+            new ManagedInstance(ThirdPartyConfiguration.MANAGED_INSTANCE_ID, ThirdPartyConfiguration.class, "singleton", null, null),
             new ManagedInstance(ModelBindingResult.MANAGED_INSTANCE_ID, ModelBindingResult.class, "request", null, null)
         );
 
-        registerManagedInstance(JACKSON_OBJECT_MAPPER_ID, ObjectMapper.class, SINGLETON, MANAGED_INSTANCE_ID, "objectMapper");
-        registerManagedInstance(VALIDATOR_FACTORY_ID, ValidatorFactory.class, SINGLETON, MANAGED_INSTANCE_ID, "validatorFactory");
+        registerManagedInstance(ThirdPartyConfiguration.JACKSON_OBJECT_MAPPER_ID, ObjectMapper.class, SINGLETON, ThirdPartyConfiguration.MANAGED_INSTANCE_ID, "objectMapper");
+        registerManagedInstance(ThirdPartyConfiguration.VALIDATOR_FACTORY_ID, ValidatorFactory.class, SINGLETON, ThirdPartyConfiguration.MANAGED_INSTANCE_ID, "validatorFactory");
     }
 
     @Override
