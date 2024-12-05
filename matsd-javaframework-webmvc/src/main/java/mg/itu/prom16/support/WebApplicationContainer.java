@@ -5,6 +5,7 @@ import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import mg.itu.prom16.base.Model;
+import mg.itu.prom16.validation.ModelBindingResult;
 import mg.itu.prom16.base.internal.UtilFunctions;
 import mg.itu.prom16.base.internal.request.RequestContextHolder;
 import mg.itu.prom16.http.SessionImpl;
@@ -57,7 +58,8 @@ public class WebApplicationContainer extends AbstractXmlResourceContainer {
         registerManagedInstance(
             new ManagedInstance(SessionImpl.MANAGED_INSTANCE_ID, SessionImpl.class, "session", null, null),
             new ManagedInstance(Model.MANAGED_INSTANCE_ID, Model.class, "request", null, null),
-            new ManagedInstance(MANAGED_INSTANCE_ID, ThirdPartyConfiguration.class, "singleton", null, null)
+            new ManagedInstance(MANAGED_INSTANCE_ID, ThirdPartyConfiguration.class, "singleton", null, null),
+            new ManagedInstance(ModelBindingResult.MANAGED_INSTANCE_ID, ModelBindingResult.class, "request", null, null)
         );
 
         registerManagedInstance(JACKSON_OBJECT_MAPPER_ID, ObjectMapper.class, SINGLETON, MANAGED_INSTANCE_ID, "objectMapper");

@@ -36,12 +36,12 @@ public final class WebFacade {
     }
 
     @Nullable
-    public static String[] flashMessages(String key) {
+    public static Object[] flash(String key) {
         return getFlashBag().get(key);
     }
 
     @Nullable
-    public static String[] flashMessages(String key, @Nullable String[] defaultValue) {
+    public static Object[] flash(String key, @Nullable Object[] defaultValue) {
         return getFlashBag().get(key, defaultValue);
     }
 

@@ -8,80 +8,80 @@ import java.util.*;
 public class FlashBagImpl implements FlashBag {
     public static final String STORAGE_KEY = "_matsd_flashes";
 
-    private final Map<String, List<String>> flashes;
+    private final Map<String, List<Object>> flashes;
 
     public FlashBagImpl() {
         flashes = new HashMap<>();
     }
 
     @Override
-    public void add(String key, String message) {
+    public void add(String key, Object value) {
         validateKey(key);
-        Assert.notNull(message, "Le message ne peut pas être \"null\"");
+        Assert.notNull(value, "La valeur ne peut pas être \"null\"");
 
-        List<String> flashMessages = flashes.computeIfAbsent(key, k -> new ArrayList<>());
-        flashMessages.add(message);
+        List<Object> flashValues = flashes.computeIfAbsent(key, k -> new ArrayList<>());
+        flashValues.add(value);
     }
 
     @Override
-    public void add(String key, String[] messages) {
+    public void add(String key, Object[] values) {
         validateKey(key);
-        Assert.notNull(messages, "La liste de messages ne peut pas être \"null\"");
-        Arrays.stream(messages).forEachOrdered(message -> Assert.notNull(message, "Chaque message de la liste ne peut pas être \"null\""));
+        Assert.notNull(values, "La liste des valeurs ne peut pas être \"null\"");
+        Assert.noNullElements(values, "Chaque valeur dans la liste ne peut pas être \"null\"");
 
-        List<String> flashMessages = flashes.computeIfAbsent(key, k -> new ArrayList<>());
-        flashMessages.addAll(List.of(messages));
+        List<Object> flashValues = flashes.computeIfAbsent(key, k -> new ArrayList<>());
+        flashValues.addAll(List.of(values));
     }
 
     @Override
-    public void set(String key, String[] messages) {
+    public void set(String key, Object[] values) {
         validateKey(key);
-        Assert.notNull(messages, "La liste de messages ne peut pas être \"null\"");
-        Arrays.stream(messages).forEach(message -> Assert.notNull(message, "Chaque message dans la liste ne peut pas être \"null\""));
+        Assert.notNull(values, "La liste de valeurs ne peut pas être \"null\"");
+        Assert.noNullElements(values, "Chaque valeur dans la liste ne peut pas être \"null\"");
 
-        flashes.put(key, List.of(messages));
+        flashes.put(key, List.of(values));
     }
 
     @Override
     @Nullable
-    public String[] get(String key) {
+    public Object[] get(String key) {
         return get(key, null);
     }
 
     @Override
     @Nullable
-    public String[] get(String key, @Nullable String[] defaultValue) {
+    public Object[] get(String key, @Nullable Object[] defaultValue) {
         if (!has(key)) return defaultValue;
 
-        List<String> results = flashes.get(key);
+        List<Object> results = flashes.get(key);
         flashes.remove(key);
 
-        return results.toArray(new String[0]);
+        return results.toArray(new Object[0]);
     }
 
     @Override
     @Nullable
-    public String[] peek(String key) {
+    public Object[] peek(String key) {
         return peek(key, null);
     }
 
     @Override
     @Nullable
-    public String[] peek(String key, @Nullable String[] defaultValue) {
-        return has(key) ? flashes.get(key).toArray(new String[0]) : defaultValue;
+    public Object[] peek(String key, @Nullable Object[] defaultValue) {
+        return has(key) ? flashes.get(key).toArray(new Object[0]) : defaultValue;
     }
 
     @Override
-    public Map<String, String[]> peekAll() {
-        Map<String, String[]> results = new HashMap<>();
-        flashes.forEach((key, value) -> results.put(key, value.toArray(new String[0])));
+    public Map<String, Object[]> peekAll() {
+        Map<String, Object[]> results = new HashMap<>();
+        flashes.forEach((key, value) -> results.put(key, value.toArray(new Object[0])));
 
         return results;
     }
 
     @Override
-    public Map<String, String[]> all() {
-        Map<String, String[]> results = peekAll();
+    public Map<String, Object[]> all() {
+        Map<String, Object[]> results = peekAll();
         flashes.clear();
 
         return results;

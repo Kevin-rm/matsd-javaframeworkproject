@@ -6,10 +6,13 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
 import mg.itu.prom16.annotations.*;
 import mg.itu.prom16.base.Model;
+import mg.itu.prom16.validation.GlobalError;
+import mg.itu.prom16.validation.ModelBindingResult;
 import mg.itu.prom16.exceptions.MissingServletRequestParameterException;
 import mg.itu.prom16.exceptions.ModelBindingException;
 import mg.itu.prom16.exceptions.UndefinedPathVariableException;
 import mg.itu.prom16.exceptions.UnexpectedParameterException;
+import mg.itu.prom16.support.WebApplicationContainer;
 import mg.itu.prom16.upload.FileUploadException;
 import mg.itu.prom16.upload.UploadedFile;
 import mg.matsd.javaframework.core.annotations.Nullable;
@@ -17,6 +20,8 @@ import mg.matsd.javaframework.core.utils.AnnotationUtils;
 import mg.matsd.javaframework.core.utils.ClassUtils;
 import mg.matsd.javaframework.core.utils.StringUtils;
 import mg.matsd.javaframework.core.utils.converter.StringConverter;
+import mg.matsd.javaframework.validation.annotations.Validate;
+import mg.matsd.javaframework.validation.base.ValidatorFactory;
 
 import java.io.IOException;
 import java.lang.reflect.*;
@@ -129,25 +134,37 @@ public final class UtilFunctions {
         return StringConverter.convert(pathVariables.get(pathVariableName), parameterType);
     }
 
+    @Nullable
     public static Object bindRequestParameters(
-        Class<?> parameterType, Parameter parameter, HttpServletRequest httpServletRequest, Model model
+        Class<?> parameterType, Parameter parameter,
+        WebApplicationContainer webApplicationContainer, HttpServletRequest httpServletRequest
     ) {
+        Model model = (Model) webApplicationContainer.getManagedInstance(Model.MANAGED_INSTANCE_ID);
+
         String modelName = parameter.getAnnotation(ModelData.class).value();
         if (modelName == null || StringUtils.isBlank(modelName))
             modelName = parameter.getName();
 
-        Object modelInstance;
-        if (!model.hasData(modelName)) try {
-            modelInstance = parameterType.getConstructor().newInstance();
-            model.addData(modelName, modelInstance);
-        } catch (InstantiationException | InvocationTargetException e) {
-            throw new ModelBindingException(e instanceof InvocationTargetException ? e.getCause() : e);
-        } catch (NoSuchMethodException | IllegalAccessException e) {
-            throw new ModelBindingException(String.format("Le modèle avec la classe \"%s\" doit disposer d'un constructeur sans arguments " +
-                "accessible publiquement", parameterType.getName()));
-        } else modelInstance = model.getData(modelName);
+        Object result = null;
+        ModelBindingResult modelBindingResult = (ModelBindingResult) webApplicationContainer.getManagedInstance(ModelBindingResult.MANAGED_INSTANCE_ID);
+        try {
+            Object modelInstance;
+            if (!model.hasData(modelName)) {
+                modelInstance = instantiateModel(parameterType);
+                model.addData(modelName, modelInstance);
+            } else modelInstance = model.getData(modelName);
 
-        return populateModelFromRequest(parameterType, modelInstance, modelName, httpServletRequest);
+            result = populateModelFromRequest(parameterType, modelInstance, modelName, httpServletRequest);
+            if (parameter.isAnnotationPresent(Validate.class))
+                modelBindingResult.addValidationErrors(modelName, ((ValidatorFactory) webApplicationContainer
+                    .getManagedInstance(ValidatorFactory.class))
+                    .getValidator()
+                    .doValidate(modelInstance));
+        } catch (Throwable e) {
+            modelBindingResult.addGlobalError(e);
+        }
+
+        return result;
     }
 
     public static Object getSessionAttributeValue(
@@ -174,9 +191,21 @@ public final class UtilFunctions {
         return sessionAttributeValue;
     }
 
+    private static Object instantiateModel(Class<?> clazz) {
+        try {
+            return clazz.getConstructor().newInstance();
+        } catch (InstantiationException | InvocationTargetException e) {
+            throw new ModelBindingException(e instanceof InvocationTargetException ? e.getCause() : e);
+        } catch (NoSuchMethodException | IllegalAccessException e) {
+            throw new ModelBindingException(String.format("Le modèle avec la classe \"%s\" doit disposer d'un constructeur sans arguments " +
+                "accessible publiquement", clazz.getName()));
+        }
+    }
+
     private static Object populateModelFromRequest(
-        Class<?> clazz, Object modelInstance, String modelName, HttpServletRequest httpServletRequest
+        Class<?> clazz, @Nullable Object modelInstance, String modelName, HttpServletRequest httpServletRequest
     ) {
+        if (modelInstance == null) modelInstance = instantiateModel(clazz);
         try {
             for (Field field : clazz.getDeclaredFields()) {
                 field.setAccessible(true);
@@ -202,7 +231,7 @@ public final class UtilFunctions {
                     ClassUtils.isStandardClass(fieldType)      ||
                     fieldType == String.class
                 )    field.set(modelInstance, StringConverter.convert(requestParameterValue, fieldType));
-                else field.set(modelInstance, populateModelFromRequest(fieldType, modelInstance, fieldAlias, httpServletRequest));
+                else field.set(modelInstance, populateModelFromRequest(fieldType, null, fieldAlias, httpServletRequest));
             }
 
             return modelInstance;

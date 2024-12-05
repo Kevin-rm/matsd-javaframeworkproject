@@ -311,7 +311,7 @@ class ResponseRenderer {
         Model model = (Model) webApplicationContainer.getManagedInstance(Model.MANAGED_INSTANCE_ID);
 
         Object handlerMethodResult = handler.invokeMethod(
-            webApplicationContainer, httpServletRequest, httpServletResponse, session, model, additionalParameter);
+            webApplicationContainer, httpServletRequest, httpServletResponse, session, additionalParameter);
         Method handlerMethod = handler.getMethod();
 
         model.setAttributes(httpServletRequest);

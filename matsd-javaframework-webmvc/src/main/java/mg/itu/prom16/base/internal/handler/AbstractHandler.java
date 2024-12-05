@@ -6,7 +6,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.annotations.JsonResponse;
 import mg.itu.prom16.annotations.SessionAttribute;
-import mg.itu.prom16.base.Model;
 import mg.itu.prom16.base.internal.UtilFunctions;
 import mg.itu.prom16.exceptions.UnexpectedParameterException;
 import mg.itu.prom16.http.Session;
@@ -67,7 +66,8 @@ public abstract class AbstractHandler {
 
     protected abstract Object resolveAdditionalParameter(
         Class<?> parameterType, Parameter parameter,
-        HttpServletRequest httpServletRequest, Model model, Object additionalParameter
+        WebApplicationContainer webApplicationContainer, HttpServletRequest httpServletRequest,
+        Object additionalParameter
     ) throws UnexpectedParameterException, InternalException, ServletException;
 
     public Object invokeMethod(
@@ -75,7 +75,6 @@ public abstract class AbstractHandler {
         HttpServletRequest httpServletRequest,
         HttpServletResponse httpServletResponse,
         Session session,
-        Model model,
         Object additionalParameter
     ) throws ServletException {
         try {
@@ -98,7 +97,7 @@ public abstract class AbstractHandler {
                     args[i] = ((ValidatorFactory) webApplicationContainer.getManagedInstance(ValidatorFactory.class)).getValidator();
                 else {
                     try {
-                        args[i] = resolveAdditionalParameter(parameterType, parameter, httpServletRequest, model, additionalParameter);
+                        args[i] = resolveAdditionalParameter(parameterType, parameter, webApplicationContainer, httpServletRequest, additionalParameter);
                     } catch (UnexpectedParameterException | InternalException e) {
                         try {
                             args[i] = webApplicationContainer.getManagedInstance(parameterType);
