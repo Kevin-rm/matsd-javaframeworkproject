@@ -24,7 +24,7 @@ public interface Session {
 
     FlashBag getFlashBag();
 
-    void addFlash(String key, String message);
+    void addFlash(String key, Object value);
 
-    void addFlash(String key, String[] messages);
+    void addFlash(String key, Object[] values);
 }
