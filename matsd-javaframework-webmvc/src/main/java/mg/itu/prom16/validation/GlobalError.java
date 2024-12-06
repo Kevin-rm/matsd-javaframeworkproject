@@ -1,5 +1,7 @@
 package mg.itu.prom16.validation;
 
+import mg.matsd.javaframework.core.annotations.Nullable;
+
 import java.time.LocalDateTime;
 
 public class GlobalError {
@@ -21,6 +23,11 @@ public class GlobalError {
 
     public String getMessage() {
         return throwable.getMessage();
+    }
+
+    @Nullable
+    public Throwable getThrowableCause() {
+        return throwable.getCause();
     }
 
     @Override

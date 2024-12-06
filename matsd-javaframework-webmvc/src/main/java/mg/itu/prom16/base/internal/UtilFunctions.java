@@ -207,8 +207,9 @@ public final class UtilFunctions {
         if (modelInstance == null) modelInstance = instantiateModel(clazz);
         try {
             for (Field field : clazz.getDeclaredFields()) {
-                field.setAccessible(true);
+                if (Modifier.isFinal(field.getModifiers())) continue;
 
+                field.setAccessible(true);
                 Class<?> fieldType = field.getType();
 
                 BindRequestParameter bindRequestParameter = field.getAnnotation(BindRequestParameter.class);
@@ -235,7 +236,6 @@ public final class UtilFunctions {
 
             return modelInstance;
         } catch (ServletException | IllegalAccessException e) {
-            e.printStackTrace();
             throw new ModelBindingException(e);
         }
     }
