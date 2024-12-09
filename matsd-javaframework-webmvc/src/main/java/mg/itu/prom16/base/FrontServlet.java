@@ -17,6 +17,7 @@ import mg.itu.prom16.exceptions.NotFoundHttpException;
 import mg.itu.prom16.http.RequestMethod;
 import mg.itu.prom16.http.Session;
 import mg.itu.prom16.support.WebApplicationContainer;
+import mg.itu.prom16.utils.JspUtils;
 import mg.itu.prom16.utils.WebFacade;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.AnnotationUtils;
@@ -44,7 +45,7 @@ public class FrontServlet extends HttpServlet {
             responseRenderer = new ResponseRenderer(webApplicationContainer);
             initHandlers();
 
-            WebFacade.setFrontServlet(this);
+            JspUtils.setFrontServlet(this);
         } catch (Throwable throwable) {
             throwableOnInit = throwable;
         }
@@ -113,7 +114,7 @@ public class FrontServlet extends HttpServlet {
 
         RequestContextHolder.setServletRequestAttributes(new ServletRequestAttributes(request, response));
         Session session = ((Session) webApplicationContainer.getManagedInstance(Session.class))
-            .setHttpSession(RequestContextHolder.getServletRequestAttributes().getSession());
+            .setHttpSession(WebFacade.getCurrentSession());
 
         MappingHandler mappingHandler = null;
         try {

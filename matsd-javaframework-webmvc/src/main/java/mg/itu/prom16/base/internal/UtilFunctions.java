@@ -158,10 +158,8 @@ public final class UtilFunctions {
                 modelBindingResult.addValidationErrors(modelName, ((ValidatorFactory) webApplicationContainer
                     .getManagedInstance(ValidatorFactory.class))
                     .getValidator()
-                    .doValidate(modelInstance));
-        } catch (Throwable e) {
-            modelBindingResult.addGlobalError(e);
-        }
+                    .doValidate(modelInstance)).addToRequestAttributes(httpServletRequest);
+        } catch (Throwable e) { modelBindingResult.addGlobalError(e); }
 
         return result;
     }
