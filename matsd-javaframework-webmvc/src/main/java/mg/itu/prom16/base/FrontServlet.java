@@ -126,10 +126,9 @@ public class FrontServlet extends HttpServlet {
             mappingHandler = mappingHandlerEntry.getValue();
             responseRenderer.doRender(request, response, session, mappingHandler, mappingHandlerEntry.getKey());
         } catch (Throwable throwable) {
-            assert mappingHandler != null;
-
             List<Throwable> throwableTrace = ExceptionHandler.getThrowableTrace(throwable, null);
-            ExceptionHandler exceptionHandler = resolveExceptionHandler(throwableTrace, mappingHandler.getControllerClass());
+            ExceptionHandler exceptionHandler = resolveExceptionHandler(throwableTrace,
+                mappingHandler == null ? null : mappingHandler.getControllerClass());
 
             if (exceptionHandler == null)
                  ResponseRenderer.doRenderError(throwable, response);
@@ -154,7 +153,9 @@ public class FrontServlet extends HttpServlet {
     }
 
     @Nullable
-    private ExceptionHandler resolveExceptionHandler(List<Throwable> throwableTrace, Class<?> currentControllerClass) {
+    private ExceptionHandler resolveExceptionHandler(
+        List<Throwable> throwableTrace, @Nullable Class<?> currentControllerClass
+    ) {
         return exceptionHandlers.isEmpty() ? null : exceptionHandlers.stream()
             .filter(exceptionHandler -> exceptionHandler.canHandle(throwableTrace, currentControllerClass))
             .findFirst()

@@ -3,34 +3,41 @@ package mg.itu.prom16.validation;
 import mg.matsd.javaframework.validation.base.ConstraintViolation;
 
 public class FieldError {
-    private final String message;
+    private final String modelName;
     private final String property;
-    private final Object invalidValue;
+    private final String message;
+    private final Object rejectedValue;
 
-    FieldError(final ConstraintViolation<?> constraintViolation) {
-        this.message      = constraintViolation.getMessage();
-        this.property     = constraintViolation.getProperty();
-        this.invalidValue = constraintViolation.getInvalidValue();
+    FieldError(final String modelName, final ConstraintViolation<?> constraintViolation) {
+        this.modelName     = modelName;
+        this.property      = constraintViolation.getProperty();
+        this.message       = constraintViolation.getMessage();
+        this.rejectedValue = constraintViolation.getInvalidValue();
     }
 
-    public String getMessage() {
-        return message;
+    public String getModelName() {
+        return modelName;
     }
 
     public String getProperty() {
         return property;
     }
 
-    public Object getInvalidValue() {
-        return invalidValue;
+    public String getMessage() {
+        return message;
+    }
+
+    public Object getRejectedValue() {
+        return rejectedValue;
     }
 
     @Override
     public String toString() {
         return "FieldError{" +
-            "message='" + message + '\'' +
+            "modelName='" + modelName + '\'' +
             ", property='" + property + '\'' +
-            ", invalidValue=" + invalidValue +
+            ", message='" + message + '\'' +
+            ", rejectedValue=" + rejectedValue +
             '}';
     }
 }

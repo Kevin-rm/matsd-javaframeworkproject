@@ -8,7 +8,6 @@ import mg.itu.prom16.annotations.JsonResponse;
 import mg.itu.prom16.annotations.SessionAttribute;
 import mg.itu.prom16.base.internal.UtilFunctions;
 import mg.itu.prom16.exceptions.UnexpectedParameterException;
-import mg.itu.prom16.http.FlashBag;
 import mg.itu.prom16.http.Session;
 import mg.itu.prom16.support.WebApplicationContainer;
 import mg.matsd.javaframework.core.managedinstances.NoSuchManagedInstanceException;
@@ -92,8 +91,6 @@ public abstract class AbstractHandler {
                     args[i] = httpServletResponse;
                 else if (Session.class.isAssignableFrom(parameterType))
                     args[i] = session;
-                else if (FlashBag.class.isAssignableFrom(parameterType))
-                    args[i] = session.getFlashBag();
                 else if (parameter.isAnnotationPresent(SessionAttribute.class))
                     args[i] = UtilFunctions.getSessionAttributeValue(parameterType, parameter, httpServletRequest.getSession());
                 else if (parameterType == Validator.class)

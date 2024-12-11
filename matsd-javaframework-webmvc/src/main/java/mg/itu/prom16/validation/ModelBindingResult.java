@@ -1,7 +1,5 @@
 package mg.itu.prom16.validation;
 
-import jakarta.servlet.http.HttpServletRequest;
-import mg.itu.prom16.http.FlashBag;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.validation.base.ValidationErrors;
@@ -30,14 +28,23 @@ public class ModelBindingResult {
         return fieldErrorsMap;
     }
 
+    public List<FieldError> getFieldErrors() {
+        List<FieldError> fieldErrors = new ArrayList<>();
+        fieldErrorsMap.forEach((key, value) -> fieldErrors.addAll(value));
+
+        return fieldErrors;
+    }
+
     public Map<String, ValidationErrors<?>> getValidationErrorsMap() {
         return validationErrorsMap;
     }
 
-    public void addGlobalError(Throwable throwable) {
+    public void addGlobalError(String modelName, Throwable throwable) {
+        Assert.notBlank(modelName, false, "Le nom du modèle qui a causé une erreur " +
+            "ne peut pas être vide ou \"null\"");
         Assert.notNull(throwable, "L'argument throwable ne peut pas être \"null\"");
 
-        globalErrors.add(new GlobalError(throwable));
+        globalErrors.add(new GlobalError(modelName, throwable));
         globalErrors.sort(Comparator.comparing(GlobalError::getCreatedAt));
     }
 
@@ -63,12 +70,13 @@ public class ModelBindingResult {
         validateModelName(modelName);
         Assert.notNull(validationErrors, "Les erreurs de validation ne peuvent pas être \"null\"");
 
-        validationErrorsMap.put(modelName, validationErrors);
-        validationErrors.getConstraintViolationMap().forEach((property, constraintViolations) -> {
-            fieldErrorsMap.put(modelName + "." + property, constraintViolations.stream()
-                .map(FieldError::new).toList());
-        });
+        if (!validationErrors.any()) return this;
 
+        validationErrorsMap.put(modelName, validationErrors);
+        validationErrors.getConstraintViolationMap().forEach((property, constraintViolations) ->
+            fieldErrorsMap.put(ModelBindingResult.FIELD_ERRORS_KEY_PREFIX + modelName + "." + property, constraintViolations.stream()
+                .map(constraintViolation -> new FieldError(modelName, constraintViolation))
+                .toList()));
         return this;
     }
 
@@ -89,20 +97,6 @@ public class ModelBindingResult {
 
     public boolean hasErrors() {
         return hasGlobalErrors() || hasAnyValidationErrors();
-    }
-
-    public void addToRequestAttributes(HttpServletRequest httpServletRequest) {
-        Assert.notNull(httpServletRequest, "La requête ne peut pas être \"null\"");
-
-        fieldErrorsMap.forEach((propertyPath, fieldErrors) ->
-            httpServletRequest.setAttribute(ModelBindingResult.FIELD_ERRORS_KEY_PREFIX + propertyPath, fieldErrors));
-    }
-
-    public void addToFlashes(FlashBag flashBag) {
-        Assert.notNull(flashBag, "L'argument flashBag ne peut pas être \"null\"");
-
-        fieldErrorsMap.forEach((propertyPath, fieldErrors) ->
-            flashBag.set(ModelBindingResult.FIELD_ERRORS_KEY_PREFIX + propertyPath, fieldErrors));
     }
 
     private static void validateModelName(final String modelName) throws IllegalArgumentException {

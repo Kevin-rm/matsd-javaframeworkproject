@@ -156,10 +156,11 @@ public final class UtilFunctions {
             result = populateModelFromRequest(parameterType, modelInstance, modelName, httpServletRequest);
             if (parameter.isAnnotationPresent(Validate.class))
                 modelBindingResult.addValidationErrors(modelName, ((ValidatorFactory) webApplicationContainer
-                    .getManagedInstance(ValidatorFactory.class))
-                    .getValidator()
-                    .doValidate(modelInstance)).addToRequestAttributes(httpServletRequest);
-        } catch (Throwable e) { modelBindingResult.addGlobalError(e); }
+                        .getManagedInstance(ValidatorFactory.class))
+                        .getValidator()
+                        .doValidate(modelInstance))
+                    .getFieldErrorsMap().forEach(httpServletRequest::setAttribute);
+        } catch (Throwable e) { modelBindingResult.addGlobalError(modelName, e); }
 
         return result;
     }

@@ -15,11 +15,17 @@ public class FlashBagImpl implements FlashBag {
     }
 
     @Override
-    public void set(String key, Object value) {
+    public void set(String key, @Nullable Object value) {
         validateKey(key);
-        Assert.notNull(value, "La valeur ne peut pas être \"null\"");
 
         flashes.put(key, value);
+    }
+
+    @Override
+    public void setAll(Map<String, ?> map) {
+        Assert.notNull(map, "L'argument map ne peut pas être \"null\"");
+
+        flashes.putAll(map);
     }
 
     @Override
