@@ -5,7 +5,9 @@ import mg.matsd.javaframework.core.annotations.Nullable;
 import java.util.Map;
 
 public interface FlashBag {
-    void set(String key, Object value);
+    void set(String key, @Nullable Object value);
+
+    void setAll(Map<String, ?> map);
 
     @Nullable
     Object get(String key);

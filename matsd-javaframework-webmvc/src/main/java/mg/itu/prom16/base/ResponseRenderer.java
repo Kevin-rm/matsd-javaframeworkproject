@@ -4,14 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import mg.itu.prom16.base.internal.UtilFunctions;
 import mg.itu.prom16.base.internal.handler.AbstractHandler;
 import mg.itu.prom16.exceptions.InvalidReturnTypeException;
 import mg.itu.prom16.exceptions.NotFoundHttpException;
+import mg.itu.prom16.http.FlashBag;
 import mg.itu.prom16.http.Session;
 import mg.itu.prom16.support.ThirdPartyConfiguration;
 import mg.itu.prom16.support.WebApplicationContainer;
-import mg.itu.prom16.utils.WebUtils;
 import mg.matsd.javaframework.core.utils.StringUtils;
 
 import java.io.IOException;
@@ -309,6 +308,11 @@ class ResponseRenderer {
         Object additionalParameter
     ) throws ServletException, IOException {
         Model model = (Model) webApplicationContainer.getManagedInstance(Model.MANAGED_INSTANCE_ID);
+        FlashBag flashBag = session.getFlashBag();
+        flashBag.peekAll().keySet()
+            .stream()
+            .filter(k -> k.startsWith(RedirectData.KEY_PREFIX))
+            .forEachOrdered(k -> model.addData(k.substring(RedirectData.KEY_PREFIX.length()), flashBag.get(k)));
 
         Object handlerMethodResult = handler.invokeMethod(
             webApplicationContainer, httpServletRequest, httpServletResponse, session, additionalParameter);
@@ -369,12 +373,8 @@ class ResponseRenderer {
             return;
         }
 
-        originalStringParts[1] = originalStringParts[1].stripLeading();
-        if (UtilFunctions.isAbsoluteUrl(originalStringParts[1])) {
-            httpServletResponse.sendRedirect(originalStringParts[1]);
-            return;
-        }
-
-        httpServletResponse.sendRedirect(WebUtils.absolutePath(originalStringParts[1]));
+        httpServletResponse.sendRedirect(
+            ((RedirectData) webApplicationContainer.getManagedInstance(RedirectData.MANAGED_INSTANCE_ID))
+            .buildCompleteUrl(originalStringParts[1].stripLeading()));
     }
 }

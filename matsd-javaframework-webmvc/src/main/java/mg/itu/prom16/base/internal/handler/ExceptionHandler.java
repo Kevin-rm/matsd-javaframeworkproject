@@ -27,7 +27,7 @@ public class ExceptionHandler extends AbstractHandler {
         return isGlobal;
     }
 
-    public boolean canHandle(List<Throwable> throwableTrace, Class<?> currentControllerClass) {
+    public boolean canHandle(List<Throwable> throwableTrace, @Nullable Class<?> currentControllerClass) {
         return throwableTrace.stream().anyMatch(throwable ->
             exceptionsClasses.stream().anyMatch(exceptionClass ->
                 exceptionClass.isInstance(throwable)
