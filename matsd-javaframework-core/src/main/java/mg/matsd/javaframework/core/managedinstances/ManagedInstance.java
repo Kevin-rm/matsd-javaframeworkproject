@@ -18,8 +18,19 @@ public class ManagedInstance {
     private ManagedInstance parent;
     @Nullable
     private Method factoryMethod;
-    private List<Property> properties;
-    private List<ConstructorArgument> constructorArguments;
+    private final List<Property> properties = new ArrayList<>();
+    private final List<ConstructorArgument> constructorArguments = new ArrayList<>();
+
+    public ManagedInstance(
+        @Nullable String id,
+        Class<?> clazz,
+        @Nullable Scope scope,
+        @Nullable ManagedInstance parent,
+        @Nullable Method factoryMethod
+    ) {
+        this(id, clazz, parent, factoryMethod);
+        setScope(scope);
+    }
 
     public ManagedInstance(
         @Nullable String id,
@@ -28,26 +39,23 @@ public class ManagedInstance {
         @Nullable ManagedInstance parent,
         @Nullable Method factoryMethod
     ) {
-        this.setClazz(clazz)
-            .setParent(parent)
-            .setFactoryMethod(factoryMethod)
-            .setId(id)
-            .setScope(scope);
-
-        initPropertiesAndConstructorArguments();
+        this(id, clazz, parent, factoryMethod);
+        setScope(scope);
     }
 
     public ManagedInstance(@Nullable String id, String clazz, @Nullable String scope) {
         this.setClazz(clazz)
             .setId(id)
             .setScope(scope);
-
-        initPropertiesAndConstructorArguments();
     }
 
-    private void initPropertiesAndConstructorArguments() {
-        properties = new ArrayList<>();
-        constructorArguments = new ArrayList<>();
+    private ManagedInstance(
+        @Nullable String id, Class<?> clazz, @Nullable ManagedInstance parent, @Nullable Method factoryMethod
+    ) {
+        this.setClazz(clazz)
+            .setParent(parent)
+            .setFactoryMethod(factoryMethod)
+            .setId(id);
     }
 
     public String getId() {

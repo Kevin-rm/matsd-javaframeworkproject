@@ -1,7 +1,6 @@
 package mg.itu.prom16.base;
 
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -18,6 +17,7 @@ import mg.itu.prom16.exceptions.NotFoundHttpException;
 import mg.itu.prom16.http.RequestMethod;
 import mg.itu.prom16.http.Session;
 import mg.itu.prom16.support.WebApplicationContainer;
+import mg.itu.prom16.utils.JspUtils;
 import mg.itu.prom16.utils.WebFacade;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.AnnotationUtils;
@@ -45,7 +45,7 @@ public class FrontServlet extends HttpServlet {
             responseRenderer = new ResponseRenderer(webApplicationContainer);
             initHandlers();
 
-            WebFacade.setFrontServlet(this);
+            JspUtils.setFrontServlet(this);
         } catch (Throwable throwable) {
             throwableOnInit = throwable;
         }
@@ -114,7 +114,7 @@ public class FrontServlet extends HttpServlet {
 
         RequestContextHolder.setServletRequestAttributes(new ServletRequestAttributes(request, response));
         Session session = ((Session) webApplicationContainer.getManagedInstance(Session.class))
-            .setHttpSession(RequestContextHolder.getServletRequestAttributes().getSession());
+            .setHttpSession(WebFacade.getCurrentSession());
 
         MappingHandler mappingHandler = null;
         try {
@@ -126,10 +126,9 @@ public class FrontServlet extends HttpServlet {
             mappingHandler = mappingHandlerEntry.getValue();
             responseRenderer.doRender(request, response, session, mappingHandler, mappingHandlerEntry.getKey());
         } catch (Throwable throwable) {
-            assert mappingHandler != null;
-
             List<Throwable> throwableTrace = ExceptionHandler.getThrowableTrace(throwable, null);
-            ExceptionHandler exceptionHandler = resolveExceptionHandler(throwableTrace, mappingHandler.getControllerClass());
+            ExceptionHandler exceptionHandler = resolveExceptionHandler(throwableTrace,
+                mappingHandler == null ? null : mappingHandler.getControllerClass());
 
             if (exceptionHandler == null)
                  ResponseRenderer.doRenderError(throwable, response);
@@ -154,7 +153,9 @@ public class FrontServlet extends HttpServlet {
     }
 
     @Nullable
-    private ExceptionHandler resolveExceptionHandler(List<Throwable> throwableTrace, Class<?> currentControllerClass) {
+    private ExceptionHandler resolveExceptionHandler(
+        List<Throwable> throwableTrace, @Nullable Class<?> currentControllerClass
+    ) {
         return exceptionHandlers.isEmpty() ? null : exceptionHandlers.stream()
             .filter(exceptionHandler -> exceptionHandler.canHandle(throwableTrace, currentControllerClass))
             .findFirst()

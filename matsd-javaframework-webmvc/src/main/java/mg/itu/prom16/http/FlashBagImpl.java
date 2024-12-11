@@ -8,80 +8,63 @@ import java.util.*;
 public class FlashBagImpl implements FlashBag {
     public static final String STORAGE_KEY = "_matsd_flashes";
 
-    private final Map<String, List<String>> flashes;
+    private final Map<String, Object> flashes;
 
     public FlashBagImpl() {
         flashes = new HashMap<>();
     }
 
     @Override
-    public void add(String key, String message) {
+    public void set(String key, @Nullable Object value) {
         validateKey(key);
-        Assert.notNull(message, "Le message ne peut pas être \"null\"");
 
-        List<String> flashMessages = flashes.computeIfAbsent(key, k -> new ArrayList<>());
-        flashMessages.add(message);
+        flashes.put(key, value);
     }
 
     @Override
-    public void add(String key, String[] messages) {
-        validateKey(key);
-        Assert.notNull(messages, "La liste de messages ne peut pas être \"null\"");
-        Arrays.stream(messages).forEachOrdered(message -> Assert.notNull(message, "Chaque message de la liste ne peut pas être \"null\""));
+    public void setAll(Map<String, ?> map) {
+        Assert.notNull(map, "L'argument map ne peut pas être \"null\"");
 
-        List<String> flashMessages = flashes.computeIfAbsent(key, k -> new ArrayList<>());
-        flashMessages.addAll(List.of(messages));
-    }
-
-    @Override
-    public void set(String key, String[] messages) {
-        validateKey(key);
-        Assert.notNull(messages, "La liste de messages ne peut pas être \"null\"");
-        Arrays.stream(messages).forEach(message -> Assert.notNull(message, "Chaque message dans la liste ne peut pas être \"null\""));
-
-        flashes.put(key, List.of(messages));
+        flashes.putAll(map);
     }
 
     @Override
     @Nullable
-    public String[] get(String key) {
+    public Object get(String key) {
         return get(key, null);
     }
 
     @Override
     @Nullable
-    public String[] get(String key, @Nullable String[] defaultValue) {
+    public Object get(String key, @Nullable Object defaultValue) {
         if (!has(key)) return defaultValue;
 
-        List<String> results = flashes.get(key);
+        Object result = flashes.get(key);
         flashes.remove(key);
 
-        return results.toArray(new String[0]);
+        return result;
     }
 
     @Override
     @Nullable
-    public String[] peek(String key) {
+    public Object peek(String key) {
         return peek(key, null);
     }
 
     @Override
     @Nullable
-    public String[] peek(String key, @Nullable String[] defaultValue) {
-        return has(key) ? flashes.get(key).toArray(new String[0]) : defaultValue;
+    public Object peek(String key, @Nullable Object defaultValue) {
+        return has(key) ? flashes.get(key) : defaultValue;
     }
 
     @Override
-    public Map<String, String[]> peekAll() {
-        Map<String, String[]> results = new HashMap<>();
-        flashes.forEach((key, value) -> results.put(key, value.toArray(new String[0])));
-
-        return results;
+    public Map<String, Object> peekAll() {
+        return new HashMap<>(flashes);
     }
 
     @Override
-    public Map<String, String[]> all() {
-        Map<String, String[]> results = peekAll();
+    public Map<String, Object> all() {
+        Map<String, Object> results = peekAll();
         flashes.clear();
 
         return results;

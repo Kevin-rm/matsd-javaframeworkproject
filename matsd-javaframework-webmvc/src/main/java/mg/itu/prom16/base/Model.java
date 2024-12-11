@@ -25,6 +25,12 @@ public class Model {
         return this;
     }
 
+    public boolean hasData(String key) {
+        Assert.notBlank(key, false, "La clé de la donnée ne peut pas être vide ou \"null\"");
+
+        return data.containsKey(key);
+    }
+
     @Nullable
     public Object getData(String key) {
         Assert.notBlank(key, false, "La clé de la donnée à récupérer ne peut pas être vide ou \"null\"");
@@ -37,5 +43,6 @@ public class Model {
         if (data.isEmpty()) return;
 
         data.forEach(httpServletRequest::setAttribute);
+        data.clear();
     }
 }

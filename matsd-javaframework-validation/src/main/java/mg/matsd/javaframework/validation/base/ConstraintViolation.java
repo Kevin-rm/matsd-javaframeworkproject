@@ -15,20 +15,23 @@ public class ConstraintViolation<T> {
     private Map<String, Object> messageParameters;
     @Nullable
     private String message;
+    private final String property;
     @Nullable
     private final Object invalidValue;
+    private final ConstraintMapping<?> constraintMapping;
     private final Annotation annotation;
-    private final Class<? extends Annotation> annotationType;
 
     ConstraintViolation(
+        String property,
         @Nullable Object invalidValue,
+        ConstraintMapping<?> constraintMapping,
         Annotation annotation,
-        Class<? extends Annotation> annotationType,
         ValidatorFactory validatorFactory
     ) {
-        this.invalidValue   = invalidValue;
-        this.annotation     = annotation;
-        this.annotationType = annotationType;
+        this.property          = property;
+        this.invalidValue      = invalidValue;
+        this.constraintMapping = constraintMapping;
+        this.annotation        = annotation;
 
         this.setMessageTemplate()
             .initMessageAndMessageParameters(validatorFactory);
@@ -41,7 +44,7 @@ public class ConstraintViolation<T> {
 
     private ConstraintViolation<T> setMessageTemplate() {
         try {
-            messageTemplate = (String) annotationType.getMethod("message").invoke(annotation);
+            messageTemplate = (String) constraintMapping.getMessageMethod().invoke(annotation);
         } catch (Exception ignored) { }
 
         return this;
@@ -60,6 +63,10 @@ public class ConstraintViolation<T> {
     public ConstraintViolation<T> setMessage(@Nullable String message) {
         this.message = message;
         return this;
+    }
+
+    public String getProperty() {
+        return property;
     }
 
     @Nullable
@@ -91,13 +98,15 @@ public class ConstraintViolation<T> {
         if ("value".equals(messageParameterName))
             return invalidValue;
 
-        if (validatorFactory.hasDefaultMessage(messageParameterName))
-            return validatorFactory.getDefaultMessage(messageParameterName);
+        if ("property".equals(messageParameterName))
+            return property;
 
         try {
-            return annotationType.getMethod(messageParameterName).invoke(annotation);
-        } catch (Exception e) {
-            return null;
+            return constraintMapping.getAnnotationClass().getMethod(messageParameterName).invoke(annotation);
+        } catch (Exception ignored) {
+            if (validatorFactory.hasDefaultMessage(messageParameterName))
+                 return validatorFactory.getDefaultMessage(messageParameterName);
+            else return null;
         }
     }
 
@@ -105,9 +114,10 @@ public class ConstraintViolation<T> {
     public String toString() {
         return "ConstraintViolation{" +
             "message='" + message + '\'' +
+            ", property='" + property + '\'' +
             ", invalidValue=" + invalidValue +
             ", messageTemplate='" + messageTemplate + '\'' +
-            ", annotationType=" + annotationType +
+            ", constraintMapping=" + constraintMapping +
             '}';
     }
 }

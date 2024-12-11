@@ -7,11 +7,12 @@ import java.util.Map;
 
 public class ModelAndView {
     private String view;
-    private final Model model;
+    private final Model model = new Model();
+
+    public ModelAndView() { }
 
     public ModelAndView(String view) {
         setView(view);
-        model = new Model();
     }
 
     public String getView() {

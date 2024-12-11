@@ -86,13 +86,8 @@ public class SessionImpl implements Session {
     }
 
     @Override
-    public void addFlash(String key, String message) {
-        getFlashBag().add(key, message);
-    }
-
-    @Override
-    public void addFlash(String key, String[] messages) {
-        getFlashBag().add(key, messages);
+    public void addFlash(String key, Object value) {
+        getFlashBag().set(key, value);
     }
 
     private static void validateSessionKey(String key) {

@@ -1,10 +1,12 @@
 package mg.matsd.javaframework.core.managedinstances;
 
+import mg.matsd.javaframework.core.annotations.Identifier;
 import mg.matsd.javaframework.core.managedinstances.factory.ManagedInstanceFactory;
 import mg.matsd.javaframework.core.utils.Assert;
 
 import java.lang.reflect.*;
 import java.util.Arrays;
+import java.util.stream.IntStream;
 
 public class ManagedInstanceUtils {
     private ManagedInstanceUtils() { }
@@ -17,6 +19,21 @@ public class ManagedInstanceUtils {
         Arrays.sort(constructors, (c1, c2) -> Integer.compare(c2.getParameterCount(), c1.getParameterCount()));
 
         return constructors[0];
+    }
+
+    public static void processConstructorArguments(Executable executable, ManagedInstance managedInstance) {
+        Assert.notNull(executable);
+        Assert.notNull(managedInstance);
+
+        Parameter[] parameters = executable.getParameters();
+        IntStream.range(0, parameters.length).forEachOrdered(i -> {
+            Parameter parameter = parameters[i];
+            Class<?> parameterType = parameter.getType();
+
+            if (parameter.isAnnotationPresent(Identifier.class))
+                managedInstance.addConstructorArgument(i, parameterType, parameter.getAnnotation(Identifier.class).value());
+            else managedInstance.addConstructorArgument(i, parameterType, null);
+        });
     }
 
     public static Object instantiate(ManagedInstance managedInstance, ManagedInstanceFactory managedInstanceFactory) {

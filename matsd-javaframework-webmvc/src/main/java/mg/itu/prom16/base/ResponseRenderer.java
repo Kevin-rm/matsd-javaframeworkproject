@@ -4,16 +4,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import mg.itu.prom16.base.internal.UtilFunctions;
 import mg.itu.prom16.base.internal.handler.AbstractHandler;
 import mg.itu.prom16.exceptions.InvalidReturnTypeException;
 import mg.itu.prom16.exceptions.NotFoundHttpException;
+import mg.itu.prom16.http.FlashBag;
 import mg.itu.prom16.http.Session;
+import mg.itu.prom16.support.ThirdPartyConfiguration;
 import mg.itu.prom16.support.WebApplicationContainer;
-import mg.itu.prom16.utils.WebUtils;
+import mg.matsd.javaframework.core.utils.StringUtils;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.Method;
 
 class ResponseRenderer {
@@ -275,7 +277,7 @@ class ResponseRenderer {
         printWriter.println("           </div>");
         printWriter.println("           <div class=\"detail-item\">");
         printWriter.println("               <span class=\"detail-label\">Message</span>");
-        printWriter.println(String.format("               <span class=\"detail-value\">%s</span>", throwable.getMessage()));
+        printWriter.println(String.format("               <span class=\"detail-value\">%s</span>", StringUtils.escapeHtml(throwable.getMessage())));
         printWriter.println("           </div>");
         printWriter.println("           <div class=\"detail-item\">");
         printWriter.println("               <span class=\"detail-label\">Code d'état HTTP</span>");
@@ -285,7 +287,9 @@ class ResponseRenderer {
         printWriter.println("       <h2>Pile d'appels</h2>");
         printWriter.println("       <div class=\"stacktrace\">");
         printWriter.println("           <pre>");
-        throwable.printStackTrace(printWriter);
+        StringWriter stringWriter = new StringWriter();
+        throwable.printStackTrace(new PrintWriter(stringWriter));
+        printWriter.println(StringUtils.escapeHtml(stringWriter.toString()));
         printWriter.println("           </pre>");
         printWriter.println("       </div>");
         printWriter.println("   </div>");
@@ -303,13 +307,18 @@ class ResponseRenderer {
         AbstractHandler handler,
         Object additionalParameter
     ) throws ServletException, IOException {
+        Model model = (Model) webApplicationContainer.getManagedInstance(Model.MANAGED_INSTANCE_ID);
+        FlashBag flashBag = session.getFlashBag();
+        flashBag.peekAll().keySet()
+            .stream()
+            .filter(k -> k.startsWith(RedirectData.KEY_PREFIX))
+            .forEachOrdered(k -> model.addData(k.substring(RedirectData.KEY_PREFIX.length()), flashBag.get(k)));
+
         Object handlerMethodResult = handler.invokeMethod(
             webApplicationContainer, httpServletRequest, httpServletResponse, session, additionalParameter);
         Method handlerMethod = handler.getMethod();
 
-        Model model = (Model) webApplicationContainer.getManagedInstance(Model.MANAGED_INSTANCE_ID);
         model.setAttributes(httpServletRequest);
-
         if (handler.isJsonResponse())
             handleJsonResult(httpServletResponse, handler.getControllerClass(), handlerMethod, handlerMethodResult);
         else if (handlerMethodResult instanceof ModelAndView modelAndView) {
@@ -335,7 +344,7 @@ class ResponseRenderer {
             );
 
         httpServletResponse.setContentType("application/json");
-        ObjectMapper objectMapper = (ObjectMapper) webApplicationContainer.getManagedInstance(WebApplicationContainer.JACKSON_OBJECT_MAPPER_ID);
+        ObjectMapper objectMapper = (ObjectMapper) webApplicationContainer.getManagedInstance(ThirdPartyConfiguration.JACKSON_OBJECT_MAPPER_ID);
         objectMapper.writeValue(httpServletResponse.getWriter(),
             handlerMethodResult instanceof ModelAndView modelAndView ? modelAndView.getData() : handlerMethodResult);
     }
@@ -364,12 +373,8 @@ class ResponseRenderer {
             return;
         }
 
-        originalStringParts[1] = originalStringParts[1].stripLeading();
-        if (UtilFunctions.isAbsoluteUrl(originalStringParts[1])) {
-            httpServletResponse.sendRedirect(originalStringParts[1]);
-            return;
-        }
-
-        httpServletResponse.sendRedirect(WebUtils.absolutePath(originalStringParts[1]));
+        httpServletResponse.sendRedirect(
+            ((RedirectData) webApplicationContainer.getManagedInstance(RedirectData.MANAGED_INSTANCE_ID))
+            .buildCompleteUrl(originalStringParts[1].stripLeading()));
     }
 }

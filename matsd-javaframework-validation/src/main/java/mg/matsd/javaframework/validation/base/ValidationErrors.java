@@ -4,7 +4,10 @@ import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.validation.exceptions.ValidationException;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ValidationErrors<T> {
     private final Map<String, List<ConstraintViolation<T>>> constraintViolationMap;
@@ -53,5 +56,13 @@ public class ValidationErrors<T> {
     void addConstraintViolation(String property, ConstraintViolation<T> constraintViolation) {
         constraintViolationMap.computeIfAbsent(property, k -> new ArrayList<>())
             .add(constraintViolation);
+    }
+
+    @Override
+    public String toString() {
+        return "ValidationErrors{" +
+            "constraintViolationMap=" + constraintViolationMap +
+            ", validatedObject=" + validatedObject +
+            '}';
     }
 }

@@ -5,27 +5,25 @@ import mg.matsd.javaframework.core.annotations.Nullable;
 import java.util.Map;
 
 public interface FlashBag {
-    void add(String key, String message);
+    void set(String key, @Nullable Object value);
 
-    void add(String key, String[] messages);
-
-    void set(String key, String[] messages);
+    void setAll(Map<String, ?> map);
 
     @Nullable
-    String[] get(String key);
+    Object get(String key);
 
     @Nullable
-    String[] get(String key, @Nullable String[] defaultValue);
+    Object get(String key, @Nullable Object defaultValue);
 
     @Nullable
-    String[] peek(String key);
+    Object peek(String key);
 
     @Nullable
-    String[] peek(String key, @Nullable String[] defaultValue);
+    Object peek(String key, @Nullable Object defaultValue);
 
-    Map<String, String[]> peekAll();
+    Map<String, Object> peekAll();
 
-    Map<String, String[]> all();
+    Map<String, Object> all();
 
     boolean has(String key);
 }
