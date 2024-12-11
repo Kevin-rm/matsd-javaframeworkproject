@@ -31,14 +31,9 @@ public final class JspUtils {
 
         return WebUtils.absolutePath(frontServlet.getRequestMappingInfoByName(name.strip()).getPath());
     }
-
-    @SuppressWarnings("unchecked")
+    
     public static boolean hasFieldErrors(final String propertyPath) {
-        Assert.notBlank(propertyPath, false, "Le chemin vers la propriété ne peut pas être vide ou \"null\"");
-
-        final String key = ModelBindingResult.FIELD_ERRORS_KEY_PREFIX + propertyPath;
-        List<FieldError> fieldErrors = (List<FieldError>) getCurrentRequest().getAttribute(key);
-        return fieldErrors != null || getFlashBag().has(key);
+        return getFieldErrors(propertyPath) != null;
     }
 
     @Nullable
@@ -47,8 +42,7 @@ public final class JspUtils {
         Assert.notBlank(propertyPath, false, "Le chemin vers la propriété ne peut pas être vide ou \"null\"");
 
         final String key = ModelBindingResult.FIELD_ERRORS_KEY_PREFIX + propertyPath;
-        List<FieldError> fieldErrors = (List<FieldError>) getCurrentRequest().getAttribute(key);
-        return fieldErrors == null ? (List<FieldError>) flash(key) : fieldErrors;
+        return (List<FieldError>) getCurrentRequest().getAttribute(key);
     }
 
     @Nullable
