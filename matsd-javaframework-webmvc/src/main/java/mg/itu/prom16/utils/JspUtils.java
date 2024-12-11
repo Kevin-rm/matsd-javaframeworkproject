@@ -31,7 +31,7 @@ public final class JspUtils {
 
         return WebUtils.absolutePath(frontServlet.getRequestMappingInfoByName(name.strip()).getPath());
     }
-    
+
     public static boolean hasFieldErrors(final String propertyPath) {
         return getFieldErrors(propertyPath) != null;
     }
