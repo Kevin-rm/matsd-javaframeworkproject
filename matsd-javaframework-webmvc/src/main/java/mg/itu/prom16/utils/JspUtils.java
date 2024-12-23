@@ -6,7 +6,6 @@ import jakarta.servlet.jsp.tagext.JspFragment;
 import mg.itu.prom16.base.FrontServlet;
 import mg.itu.prom16.validation.FieldError;
 import mg.itu.prom16.validation.ModelBindingResult;
-import mg.itu.prom16.view.layout.PutTag;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 
@@ -66,15 +65,5 @@ public final class JspUtils {
         StringWriter stringWriter = new StringWriter();
         jspFragment.invoke(stringWriter);
         return stringWriter.toString().trim();
-    }
-
-    public static String blockContentsAttributeName(String blockName) {
-        Assert.notBlank(blockName, false, "Le nom de bloc ne peut pas être vide ou \"null\"");
-        return PutTag.DATA_KEY_PREFIX + blockName + ".contents";
-    }
-
-    public static String blockTypeAttributeName(String blockName) {
-        Assert.notBlank(blockName, false, "Le nom de bloc ne peut pas être vide ou \"null\"");
-        return PutTag.DATA_KEY_PREFIX + blockName + ".type";
     }
 }

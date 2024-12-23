@@ -19,16 +19,17 @@ public class BlockTag extends SimpleTagSupport {
     @Override
     public void doTag() throws JspException, IOException {
         PageContext pageContext = (PageContext) getJspContext();
-        getPutType(pageContext).write(pageContext.getOut(), JspUtils.invokeJspFragment(getJspBody()), getPutContents(pageContext));
+
+        PutTag.Put put = getPut(pageContext);
+        put.type().write(pageContext.getOut(), JspUtils.invokeJspFragment(getJspBody()), put.contents());
     }
 
-    private PutType getPutType(PageContext pageContext) {
-        PutType putType = (PutType) pageContext.findAttribute(JspUtils.blockTypeAttributeName(name));
-        return putType == null ? PutTag.DEFAULT_TYPE : putType;
-    }
+    private PutTag.Put getPut(PageContext pageContext) {
+        PutTag.Put put = (PutTag.Put) pageContext.findAttribute(PutTag.ATTRIBUTE_KEY_PREFIX + name);
 
-    private String getPutContents(PageContext pageContext) {
-        String putContents = (String) pageContext.findAttribute(JspUtils.blockContentsAttributeName(name));
-        return putContents == null ? "" : putContents;
+        final PutTag.Put result = put == null ? new PutTag.Put(null, PutTag.DEFAULT_TYPE, "") : put;
+        pageContext.removeAttribute(PutTag.ATTRIBUTE_KEY_PREFIX + name, PageContext.PAGE_SCOPE);
+
+        return result;
     }
 }

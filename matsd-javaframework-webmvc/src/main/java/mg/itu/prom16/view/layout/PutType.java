@@ -5,7 +5,7 @@ import mg.matsd.javaframework.core.utils.Assert;
 import java.io.IOException;
 import java.io.Writer;
 
-public enum PutType {
+enum PutType {
     APPEND {
         @Override
         void write(Writer writer, String bodyResult, String putContents) throws IOException {
@@ -27,7 +27,7 @@ public enum PutType {
         }
     };
 
-    public static PutType fromString(final String string) {
+    static PutType fromString(final String string) {
         Assert.notBlank(string, false, "L'argument string ne peut pas être vide ou \"null\"");
 
         try {
