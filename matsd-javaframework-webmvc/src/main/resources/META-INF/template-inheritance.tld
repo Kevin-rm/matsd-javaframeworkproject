@@ -4,7 +4,7 @@
         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee
                             https://jakarta.ee/xml/ns/jakartaee/web-jsptaglibrary_3_1.xsd"
         version="3.1">
-    <tlib-version>1.0</tlib-version>
+    <tlib-version>3.1</tlib-version>
     <short-name>layout</short-name>
     <uri>http://www.matsd.mg/javaframework/tags/template-inheritance</uri>
     <tag>

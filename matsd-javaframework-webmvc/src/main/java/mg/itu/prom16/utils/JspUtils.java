@@ -1,6 +1,5 @@
 package mg.itu.prom16.utils;
 
-import jakarta.servlet.ServletException;
 import jakarta.servlet.jsp.JspException;
 import jakarta.servlet.jsp.tagext.JspFragment;
 import mg.itu.prom16.base.FrontServlet;
@@ -26,11 +25,7 @@ public final class JspUtils {
         JspUtils.frontServlet = frontServlet;
     }
 
-    public static String display(@Nullable Object object) {
-        return object == null ? "" : object.toString();
-    }
-
-    public static String routeTo(String name) throws ServletException {
+    public static String routeTo(String name) throws JspException {
         Assert.notBlank(name, false, "Le nom de la route ne peut pas être vide ou \"null\"");
 
         return WebUtils.absolutePath(frontServlet.getRequestMappingInfoByName(name.strip()).getPath());

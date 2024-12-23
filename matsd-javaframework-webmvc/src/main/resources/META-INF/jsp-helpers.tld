@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<taglib xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="https://jakarta.ee/xml/ns/jakartaee"
+        xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee
+                            https://jakarta.ee/xml/ns/jakartaee/web-jsptaglibrary_3_1.xsd"
+        version="3.1">
+    <tlib-version>3.1</tlib-version>
+    <short-name>helper</short-name>
+    <uri>http://www.matsd.mg/javaframework/tags/jsp-helpers</uri>
+    <function>
+        <name>route</name>
+        <function-class>mg.itu.prom16.utils.JspUtils</function-class>
+        <function-signature>java.lang.String routeTo(java.lang.String)</function-signature>
+    </function>
+    <function>
+        <name>flash</name>
+        <function-class>mg.itu.prom16.utils.JspUtils</function-class>
+        <function-signature>java.lang.Object flash(java.lang.String)</function-signature>
+    </function>
+    <function>
+        <name>flashOrDefault</name>
+        <function-class>mg.itu.prom16.utils.JspUtils</function-class>
+        <function-signature>java.lang.Object flash(java.lang.String, java.lang.Object)</function-signature>
+    </function>
+    <function>
+        <name>hasFieldErrors</name>
+        <function-class>mg.itu.prom16.utils.JspUtils</function-class>
+        <function-signature>boolean hasFieldErrors(java.lang.String)</function-signature>
+    </function>
+    <function>
+        <name>getFieldErrors</name>
+        <function-class>mg.itu.prom16.utils.JspUtils</function-class>
+        <function-signature>java.util.List getFieldErrors(java.lang.String)</function-signature>
+    </function>
+    <function>
+        <name>baseUrl</name>
+        <function-class>mg.itu.prom16.utils.WebUtils</function-class>
+        <function-signature>java.lang.String baseUrl()</function-signature>
+    </function>
+    <function>
+        <name>absolutePath</name>
+        <function-class>mg.itu.prom16.utils.WebUtils</function-class>
+        <function-signature>java.lang.String absolutePath(java.lang.String)</function-signature>
+    </function>
+</taglib>
