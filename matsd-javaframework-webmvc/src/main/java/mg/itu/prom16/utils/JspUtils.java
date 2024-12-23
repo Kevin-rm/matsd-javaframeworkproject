@@ -1,12 +1,17 @@
 package mg.itu.prom16.utils;
 
 import jakarta.servlet.ServletException;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.tagext.JspFragment;
 import mg.itu.prom16.base.FrontServlet;
 import mg.itu.prom16.validation.FieldError;
 import mg.itu.prom16.validation.ModelBindingResult;
+import mg.itu.prom16.view.layout.PutTag;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.List;
 
 import static mg.itu.prom16.utils.WebFacade.*;
@@ -53,5 +58,23 @@ public final class JspUtils {
     @Nullable
     public static Object flash(String key, @Nullable Object defaultValue) {
         return getFlashBag().get(key, defaultValue);
+    }
+
+    public static String invokeJspFragment(@Nullable JspFragment jspFragment) throws JspException, IOException {
+        if (jspFragment == null) return "";
+
+        StringWriter stringWriter = new StringWriter();
+        jspFragment.invoke(stringWriter);
+        return stringWriter.toString().trim();
+    }
+
+    public static String blockContentsAttributeName(String blockName) {
+        Assert.notBlank(blockName, false, "Le nom de bloc ne peut pas être vide ou \"null\"");
+        return PutTag.DATA_KEY_PREFIX + blockName + ".contents";
+    }
+
+    public static String blockTypeAttributeName(String blockName) {
+        Assert.notBlank(blockName, false, "Le nom de bloc ne peut pas être vide ou \"null\"");
+        return PutTag.DATA_KEY_PREFIX + blockName + ".type";
     }
 }

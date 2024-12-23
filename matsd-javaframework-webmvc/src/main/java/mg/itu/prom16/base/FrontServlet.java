@@ -114,7 +114,7 @@ public class FrontServlet extends HttpServlet {
 
         RequestContextHolder.setServletRequestAttributes(new ServletRequestAttributes(request, response));
         Session session = ((Session) webApplicationContainer.getManagedInstance(Session.class))
-            .setHttpSession(WebFacade.getCurrentSession());
+            .setHttpSession(WebFacade.getCurrentHttpSession());
 
         MappingHandler mappingHandler = null;
         try {
