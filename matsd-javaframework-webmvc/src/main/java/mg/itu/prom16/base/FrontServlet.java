@@ -4,6 +4,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.jsp.JspException;
 import mg.itu.prom16.annotations.JsonResponse;
 import mg.itu.prom16.annotations.RequestMapping;
 import mg.itu.prom16.base.internal.RequestMappingInfo;
@@ -97,11 +98,11 @@ public class FrontServlet extends HttpServlet {
         }
     }
 
-    public RequestMappingInfo getRequestMappingInfoByName(String name) throws ServletException {
+    public RequestMappingInfo getRequestMappingInfoByName(String name) throws JspException {
         return mappingHandlerMap.entrySet().stream()
             .filter(entry -> name.equals(entry.getKey().getName()))
             .findFirst().map(Map.Entry::getKey)
-            .orElseThrow(() -> new ServletException(String.format("Aucun \"RequestMapping\" trouvé avec le nom : \"%s\"", name)));
+            .orElseThrow(() -> new JspException(String.format("Aucun \"RequestMapping\" trouvé avec le nom : \"%s\"", name)));
     }
 
     protected final void processRequest(HttpServletRequest request, HttpServletResponse response)
@@ -114,7 +115,7 @@ public class FrontServlet extends HttpServlet {
 
         RequestContextHolder.setServletRequestAttributes(new ServletRequestAttributes(request, response));
         Session session = ((Session) webApplicationContainer.getManagedInstance(Session.class))
-            .setHttpSession(WebFacade.getCurrentSession());
+            .setHttpSession(WebFacade.getCurrentHttpSession());
 
         MappingHandler mappingHandler = null;
         try {

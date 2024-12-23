@@ -16,14 +16,17 @@ public final class WebFacade {
         return getServletRequestAttributes().getRequest();
     }
 
-    public static HttpSession getCurrentSession() {
+    public static HttpSession getCurrentHttpSession() {
         return getServletRequestAttributes().getSession();
     }
 
+    public static Session getCurrentSession() {
+        return (Session) getCurrentHttpSession()
+            .getAttribute(WebApplicationContainer.WEB_SCOPED_MANAGED_INSTANCES_KEY_PREFIX + SessionImpl.MANAGED_INSTANCE_ID);
+    }
+
     public static FlashBag getFlashBag() {
-        return ((Session) getCurrentSession()
-            .getAttribute(WebApplicationContainer.WEB_SCOPED_MANAGED_INSTANCES_KEY_PREFIX + SessionImpl.MANAGED_INSTANCE_ID)
-        ).getFlashBag();
+        return getCurrentSession().getFlashBag();
     }
 
     public static boolean isGetRequest() {
