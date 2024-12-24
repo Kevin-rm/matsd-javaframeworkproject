@@ -23,14 +23,9 @@
         <function-signature>java.lang.Object flash(java.lang.String, java.lang.Object)</function-signature>
     </function>
     <function>
-        <name>hasFieldErrors</name>
+        <name>fieldErrors</name>
         <function-class>mg.itu.prom16.utils.JspUtils</function-class>
-        <function-signature>boolean hasFieldErrors(java.lang.String)</function-signature>
-    </function>
-    <function>
-        <name>getFieldErrors</name>
-        <function-class>mg.itu.prom16.utils.JspUtils</function-class>
-        <function-signature>java.util.List getFieldErrors(java.lang.String)</function-signature>
+        <function-signature>java.util.List fieldErrors(java.lang.String)</function-signature>
     </function>
     <function>
         <name>baseUrl</name>
