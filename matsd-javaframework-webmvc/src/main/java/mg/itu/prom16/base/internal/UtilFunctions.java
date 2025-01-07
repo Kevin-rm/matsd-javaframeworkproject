@@ -24,6 +24,7 @@ import mg.matsd.javaframework.validation.base.ValidatorFactory;
 
 import java.io.IOException;
 import java.lang.reflect.*;
+import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -36,7 +37,7 @@ import java.util.Set;
 
 public final class UtilFunctions {
     private static final Set<Class<?>> ALLOWED_CLASSES = Set.of(
-        LocalDate.class, LocalDateTime.class, LocalTime.class, Date.class, Timestamp.class, Time.class);
+        LocalDate.class, LocalDateTime.class, LocalTime.class, Date.class, Timestamp.class, Time.class, BigDecimal.class);
 
     private UtilFunctions() { }
 
@@ -205,7 +206,7 @@ public final class UtilFunctions {
     ) {
         if (modelInstance == null) modelInstance = instantiateModel(clazz);
         try {
-            for (Field field : clazz.getDeclaredFields()) {
+            for (Field field : ClassUtils.getAllFields(clazz)) {
                 if (Modifier.isFinal(field.getModifiers())) continue;
 
                 field.setAccessible(true);
@@ -228,9 +229,13 @@ public final class UtilFunctions {
                     ClassUtils.isPrimitiveOrWrapper(fieldType) ||
                     ClassUtils.isStandardClass(fieldType)      ||
                     fieldType == String.class
-                ) field.set(modelInstance, requestParameterValue == null || StringUtils.isBlank(requestParameterValue)
-                    ? null : StringConverter.convert(requestParameterValue, fieldType));
-                else field.set(modelInstance, populateModelFromRequest(fieldType, null, fieldAlias, httpServletRequest));
+                ) {
+                    boolean requestParameterValueIsNullOrBlank = requestParameterValue == null || StringUtils.isBlank(requestParameterValue);
+                    if (fieldType.isPrimitive() && requestParameterValueIsNullOrBlank) continue;
+
+                    field.set(modelInstance, requestParameterValueIsNullOrBlank ? null :
+                        StringConverter.convert(requestParameterValue, fieldType));
+                } else field.set(modelInstance, populateModelFromRequest(fieldType, null, fieldAlias, httpServletRequest));
             }
 
             return modelInstance;
