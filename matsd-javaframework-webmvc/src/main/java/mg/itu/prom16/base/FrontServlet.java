@@ -149,7 +149,13 @@ public class FrontServlet extends HttpServlet {
     private Map.Entry<RequestMappingInfo, MappingHandler> resolveMappingHandler(HttpServletRequest request) {
         return mappingHandlerMap.isEmpty() ? null : mappingHandlerMap.entrySet().stream()
             .filter(entry -> entry.getKey().matches(request))
-            .findFirst()
+            .min((entry1, entry2) -> {
+                String servletPath = request.getServletPath();
+                boolean isStatic1  = entry1.getKey().getPath().equals(servletPath);
+                boolean isStatic2  = entry2.getKey().getPath().equals(servletPath);
+
+                return isStatic1 && !isStatic2 ? -1 : isStatic2 && !isStatic1 ? 1 : 0;
+            })
             .orElse(null);
     }
 
