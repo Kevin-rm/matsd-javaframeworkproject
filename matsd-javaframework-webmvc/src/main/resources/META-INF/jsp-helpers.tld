@@ -32,9 +32,4 @@
         <function-class>mg.itu.prom16.utils.WebUtils</function-class>
         <function-signature>java.lang.String baseUrl()</function-signature>
     </function>
-    <function>
-        <name>absolutePath</name>
-        <function-class>mg.itu.prom16.utils.WebUtils</function-class>
-        <function-signature>java.lang.String absolutePath(java.lang.String)</function-signature>
-    </function>
 </taglib>
