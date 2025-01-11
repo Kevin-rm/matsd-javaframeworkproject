@@ -1,9 +1,11 @@
 package mg.matsd.javaframework.security.base;
 
-public interface User {
-    String[] getRoles();
+import java.util.List;
 
+public interface User {
     String getIdentifier();
 
     String getPassword();
+
+    List<UserRole> getRoles();
 }
