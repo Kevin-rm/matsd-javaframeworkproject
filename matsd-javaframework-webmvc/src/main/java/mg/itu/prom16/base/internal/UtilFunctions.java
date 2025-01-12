@@ -230,7 +230,7 @@ public final class UtilFunctions {
                                 .anyMatch(key -> key.startsWith(indexedParameterName + "."));
 
                             if (requestParameterValue == null && !isObjectFieldPresent) break;
-                            if (isSimpleOrStandardClass(itemType))
+                            if (ClassUtils.isSimpleOrStandardClass(itemType))
                                 setSimpleField(field, fieldType, modelInstance, requestParameterValue);
                             else list.add(
                                 populateModelFromRequest(itemType, null, indexedParameterName, httpServletRequest));
@@ -249,7 +249,7 @@ public final class UtilFunctions {
                     continue;
                 }
 
-                if (isSimpleOrStandardClass(fieldType))
+                if (ClassUtils.isSimpleOrStandardClass(fieldType))
                     setSimpleField(field, fieldType, modelInstance, httpServletRequest.getParameter(requestParameterName));
                 else field.set(modelInstance, populateModelFromRequest(fieldType, null, fieldAlias, httpServletRequest));
             }
@@ -258,12 +258,6 @@ public final class UtilFunctions {
         } catch (ServletException | IllegalAccessException e) {
             throw new ModelBindingException(e);
         }
-    }
-
-    private static boolean isSimpleOrStandardClass(Class<?> clazz) {
-        return ClassUtils.isPrimitiveOrWrapper(clazz) ||
-            ClassUtils.isStandardClass(clazz)         ||
-            clazz == String.class;
     }
 
     private static void setSimpleField(
