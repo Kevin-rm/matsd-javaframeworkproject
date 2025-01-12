@@ -221,24 +221,20 @@ public final class UtilFunctions {
                     if (genericType instanceof ParameterizedType parameterizedType) {
                         Class<?> itemType = (Class<?>) parameterizedType.getActualTypeArguments()[0];
 
-                        List<Object> list = new ArrayList<>();
+                        final List<Object> list = new ArrayList<>();
                         int index = 0;
-
                         while (true) {
-                            String indexedParameterName = requestParameterName + "[" + index + "]";
-                            String parameterValue = httpServletRequest.getParameter(indexedParameterName);
+                            String indexedParameterName  = String.format("%s[%d]", requestParameterName, index);
+                            String requestParameterValue = httpServletRequest.getParameter(indexedParameterName);
+                            boolean isObjectFieldPresent = httpServletRequest.getParameterMap().keySet().stream()
+                                .anyMatch(key -> key.startsWith(indexedParameterName + "."));
 
-                            if (parameterValue == null && !isObjectFieldPresent(httpServletRequest, indexedParameterName)) {
-                                break; // Plus d'éléments dans la liste
-                            }
+                            if (requestParameterValue == null && !isObjectFieldPresent) break;
+                            if (isSimpleOrStandardClass(itemType))
+                                setSimpleField(field, fieldType, modelInstance, requestParameterValue);
+                            else list.add(
+                                populateModelFromRequest(itemType, null, indexedParameterName, httpServletRequest));
 
-                            if (ClassUtils.isPrimitiveOrWrapper(itemType) || ClassUtils.isStandardClass(itemType) || itemType == String.class) {
-                                list.add(parameterValue == null ? null : StringConverter.convert(parameterValue, itemType));
-                            } else {
-                                // Gestion des objets complexes dans la liste
-                                Object item = populateModelFromRequest(itemType, null, indexedParameterName, httpServletRequest);
-                                list.add(item);
-                            }
                             index++;
                         }
                         field.set(modelInstance, list);
@@ -253,24 +249,34 @@ public final class UtilFunctions {
                     continue;
                 }
 
-                String requestParameterValue = httpServletRequest.getParameter(requestParameterName);
-                if (
-                    ClassUtils.isPrimitiveOrWrapper(fieldType) ||
-                    ClassUtils.isStandardClass(fieldType)      ||
-                    fieldType == String.class
-                ) {
-                    boolean requestParameterValueIsNullOrBlank = requestParameterValue == null || StringUtils.isBlank(requestParameterValue);
-                    if (fieldType.isPrimitive() && requestParameterValueIsNullOrBlank) continue;
-
-                    field.set(modelInstance, requestParameterValueIsNullOrBlank ? null :
-                        StringConverter.convert(requestParameterValue, fieldType));
-                } else field.set(modelInstance, populateModelFromRequest(fieldType, null, fieldAlias, httpServletRequest));
+                if (isSimpleOrStandardClass(fieldType))
+                    setSimpleField(field, fieldType, modelInstance, httpServletRequest.getParameter(requestParameterName));
+                else field.set(modelInstance, populateModelFromRequest(fieldType, null, fieldAlias, httpServletRequest));
             }
 
             return modelInstance;
         } catch (ServletException | IllegalAccessException e) {
             throw new ModelBindingException(e);
         }
+    }
+
+    private static boolean isSimpleOrStandardClass(Class<?> clazz) {
+        return ClassUtils.isPrimitiveOrWrapper(clazz) ||
+            ClassUtils.isStandardClass(clazz)         ||
+            clazz == String.class;
+    }
+
+    private static void setSimpleField(
+        Field    field,
+        Class<?> fieldType,
+        Object   modelInstance,
+        String   requestParameterValue
+    ) throws IllegalAccessException {
+        boolean requestParameterValueIsNullOrBlank = requestParameterValue == null || StringUtils.isBlank(requestParameterValue);
+        if (fieldType.isPrimitive() && requestParameterValueIsNullOrBlank) return;
+
+        field.set(modelInstance, requestParameterValueIsNullOrBlank ? null :
+            StringConverter.convert(requestParameterValue, fieldType));
     }
 
     @Nullable
