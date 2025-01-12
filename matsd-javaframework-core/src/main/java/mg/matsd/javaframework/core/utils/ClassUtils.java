@@ -78,7 +78,7 @@ public final class ClassUtils {
     public static boolean isSimpleOrStandardClass(Class<?> clazz) {
         Assert.notNull(clazz, "La classe ne peut pas être \"null\"");
 
-        return ClassUtils.isPrimitiveOrWrapper(clazz) || ClassUtils.isStandardClass(clazz) || clazz == String.class;
+        return isPrimitiveOrWrapper(clazz) || isStandardClass(clazz) || clazz == String.class;
     }
 
     public static Field[] getAllFields(Class<?> clazz) {
