@@ -20,7 +20,7 @@ public record SimpleUserRoleImpl(String value) implements UserRole {
 
     @Override
     public String toString() {
-        return "DefaultUserRoleImpl{" +
+        return "SimpleUserRoleImpl{" +
             "value='" + value + '\'' +
             '}';
     }
