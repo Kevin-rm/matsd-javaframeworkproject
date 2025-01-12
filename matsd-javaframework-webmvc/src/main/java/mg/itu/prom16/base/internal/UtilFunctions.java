@@ -31,9 +31,7 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public final class UtilFunctions {
     private static final Set<Class<?>> ALLOWED_CLASSES = Set.of(
@@ -217,6 +215,37 @@ public final class UtilFunctions {
                     bindRequestParameter.value() : field.getName();
 
                 String requestParameterName = modelName + "." + fieldAlias;
+
+                if (Collection.class.isAssignableFrom(fieldType)) {
+                    Type genericType = field.getGenericType();
+                    if (genericType instanceof ParameterizedType parameterizedType) {
+                        Class<?> itemType = (Class<?>) parameterizedType.getActualTypeArguments()[0];
+
+                        List<Object> list = new ArrayList<>();
+                        int index = 0;
+
+                        while (true) {
+                            String indexedParameterName = requestParameterName + "[" + index + "]";
+                            String parameterValue = httpServletRequest.getParameter(indexedParameterName);
+
+                            if (parameterValue == null && !isObjectFieldPresent(httpServletRequest, indexedParameterName)) {
+                                break; // Plus d'éléments dans la liste
+                            }
+
+                            if (ClassUtils.isPrimitiveOrWrapper(itemType) || ClassUtils.isStandardClass(itemType) || itemType == String.class) {
+                                list.add(parameterValue == null ? null : StringConverter.convert(parameterValue, itemType));
+                            } else {
+                                // Gestion des objets complexes dans la liste
+                                Object item = populateModelFromRequest(itemType, null, indexedParameterName, httpServletRequest);
+                                list.add(item);
+                            }
+                            index++;
+                        }
+                        field.set(modelInstance, list);
+                    }
+                    continue;
+                }
+
                 if (fieldType == UploadedFile.class) {
                     UploadedFile uploadedFile = getUploadedFile(requestParameterName, httpServletRequest);
                     if (uploadedFile != null) field.set(modelInstance, uploadedFile);
