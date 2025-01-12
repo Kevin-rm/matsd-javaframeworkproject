@@ -4,8 +4,8 @@ import mg.matsd.javaframework.core.utils.Assert;
 
 import java.util.Objects;
 
-public record DefaultUserRoleImpl(String value) implements UserRole {
-    public DefaultUserRoleImpl {
+public record SimpleUserRoleImpl(String value) implements UserRole {
+    public SimpleUserRoleImpl {
         Assert.notBlank(value, false, "La valeur d'une fonction d'un utilisateur ne peut pas être vide ou \"null\"");
     }
 
@@ -14,7 +14,7 @@ public record DefaultUserRoleImpl(String value) implements UserRole {
         if (this == object) return true;
         if (object == null || getClass() != object.getClass()) return false;
 
-        DefaultUserRoleImpl that = (DefaultUserRoleImpl) object;
+        SimpleUserRoleImpl that = (SimpleUserRoleImpl) object;
         return Objects.equals(value, that.value);
     }
 
