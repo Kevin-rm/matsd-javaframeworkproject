@@ -217,12 +217,10 @@ public final class UtilFunctions {
                 String requestParameterName = modelName + "." + fieldAlias;
 
                 if (Collection.class.isAssignableFrom(fieldType)) {
-                    final List<Object> list = new ArrayList<>();
-                    populateListFromRequest(list, field.getGenericType() instanceof ParameterizedType parameterizedType ?
-                        (Class<?>) parameterizedType.getActualTypeArguments()[0] : Object.class,
-                        requestParameterName, httpServletRequest);
-
-                    field.set(modelInstance, list);
+                    field.set(modelInstance,
+                        populateListFromRequest(field.getGenericType() instanceof ParameterizedType parameterizedType ?
+                            (Class<?>) parameterizedType.getActualTypeArguments()[0] : Object.class,
+                        requestParameterName, httpServletRequest));
                     continue;
                 }
 
@@ -244,12 +242,11 @@ public final class UtilFunctions {
         }
     }
 
-    private static void populateListFromRequest(
-        List<Object> list,
-        Class<?> clazz,
-        String requestParameterName,
-        HttpServletRequest httpServletRequest
+    private static List<Object> populateListFromRequest(
+        Class<?> clazz, String requestParameterName, HttpServletRequest httpServletRequest
     ) {
+        final List<Object> result = new ArrayList<>();
+
         int index = 0;
         while (true) {
             String indexedRequestParameterName  = String.format("%s[%d]", requestParameterName, index);
@@ -260,11 +257,13 @@ public final class UtilFunctions {
                     .keySet().stream()
                     .noneMatch(key -> key.startsWith(indexedRequestParameterName + "."))
             ) break;
-            list.add(ClassUtils.isSimpleOrStandardClass(clazz) ? indexedRequestParameterValue :
+            result.add(ClassUtils.isSimpleOrStandardClass(clazz) ? indexedRequestParameterValue :
                 populateModelFromRequest(clazz, null, indexedRequestParameterName, httpServletRequest));
 
             index++;
         }
+
+        return result;
     }
 
     private static void setSimpleField(
