@@ -217,28 +217,12 @@ public final class UtilFunctions {
                 String requestParameterName = modelName + "." + fieldAlias;
 
                 if (Collection.class.isAssignableFrom(fieldType)) {
-                    Type genericType = field.getGenericType();
-                    if (genericType instanceof ParameterizedType parameterizedType) {
-                        Class<?> itemType = (Class<?>) parameterizedType.getActualTypeArguments()[0];
+                    final List<Object> list = new ArrayList<>();
+                    populateListFromRequest(list, field.getGenericType() instanceof ParameterizedType parameterizedType ?
+                        (Class<?>) parameterizedType.getActualTypeArguments()[0] : Object.class,
+                        requestParameterName, httpServletRequest);
 
-                        final List<Object> list = new ArrayList<>();
-                        int index = 0;
-                        while (true) {
-                            String indexedParameterName  = String.format("%s[%d]", requestParameterName, index);
-                            String requestParameterValue = httpServletRequest.getParameter(indexedParameterName);
-                            boolean isObjectFieldPresent = httpServletRequest.getParameterMap().keySet().stream()
-                                .anyMatch(key -> key.startsWith(indexedParameterName + "."));
-
-                            if (requestParameterValue == null && !isObjectFieldPresent) break;
-                            if (ClassUtils.isSimpleOrStandardClass(itemType))
-                                setSimpleField(field, fieldType, modelInstance, requestParameterValue);
-                            else list.add(
-                                populateModelFromRequest(itemType, null, indexedParameterName, httpServletRequest));
-
-                            index++;
-                        }
-                        field.set(modelInstance, list);
-                    }
+                    field.set(modelInstance, list);
                     continue;
                 }
 
@@ -257,6 +241,29 @@ public final class UtilFunctions {
             return modelInstance;
         } catch (ServletException | IllegalAccessException e) {
             throw new ModelBindingException(e);
+        }
+    }
+
+    private static void populateListFromRequest(
+        List<Object> list,
+        Class<?> clazz,
+        String requestParameterName,
+        HttpServletRequest httpServletRequest
+    ) {
+        int index = 0;
+        while (true) {
+            String indexedRequestParameterName  = String.format("%s[%d]", requestParameterName, index);
+            String indexedRequestParameterValue = httpServletRequest.getParameter(indexedRequestParameterName);
+
+            if (indexedRequestParameterValue == null &&
+                httpServletRequest.getParameterMap()
+                    .keySet().stream()
+                    .noneMatch(key -> key.startsWith(indexedRequestParameterName + "."))
+            ) break;
+            list.add(ClassUtils.isSimpleOrStandardClass(clazz) ? indexedRequestParameterValue :
+                populateModelFromRequest(clazz, null, indexedRequestParameterName, httpServletRequest));
+
+            index++;
         }
     }
 
