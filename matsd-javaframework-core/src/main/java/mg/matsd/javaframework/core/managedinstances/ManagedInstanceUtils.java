@@ -30,11 +30,9 @@ public class ManagedInstanceUtils {
         Parameter[] parameters = executable.getParameters();
         IntStream.range(0, parameters.length).forEachOrdered(i -> {
             Parameter parameter = parameters[i];
-            Class<?> parameterType = parameter.getType();
 
-            if (parameter.isAnnotationPresent(Identifier.class))
-                 managedInstance.addConstructorArgument(i, parameterType, parameter.getAnnotation(Identifier.class).value());
-            else managedInstance.addConstructorArgument(i, parameterType, null);
+            managedInstance.addConstructorArgument(i, parameter.getType(), parameter.isAnnotationPresent(Identifier.class) ?
+                parameter.getAnnotation(Identifier.class).value() : null);
         });
     }
 

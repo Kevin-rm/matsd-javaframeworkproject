@@ -143,15 +143,14 @@ public abstract class ManagedInstanceFactory {
 
         if (isCurrentlyInCreation(managedInstanceId))
             throw new ManagedInstanceCurrentlyInCreationException(managedInstanceId);
-        managedInstanceDefinitionRegistry.resolveDependencies(managedInstance);
-
-        if (managedInstance.getScope() == Scope.REQUEST || managedInstance.getScope() == Scope.SESSION)
-            return getManagedInstanceForWebScope(managedInstance);
-
         if (
             isSingleton(managedInstanceId) &&
             singletonsMap.containsKey(managedInstanceId)
         ) return singletonsMap.get(managedInstanceId);
+
+        managedInstanceDefinitionRegistry.resolveDependencies(managedInstance);
+        if (managedInstance.getScope() == Scope.REQUEST || managedInstance.getScope() == Scope.SESSION)
+            return getManagedInstanceForWebScope(managedInstance);
 
         Object instance = ManagedInstanceUtils.instantiate(managedInstance, this);
         if (isSingleton(managedInstanceId))
