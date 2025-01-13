@@ -7,14 +7,20 @@ import java.util.List;
 
 public class AccessDeniedException extends BaseException {
     private static final String PREFIX = "Accès refusé";
-    private final List<UserRole> userRoles;
+    private final String unreachableResource;
+    private final List<UserRole> necessaryUserRoles;
 
-    public AccessDeniedException(List<UserRole> userRoles) {
-        super("Vous ne pouvez pas accéder à cette ressource car vous n'avez pas les fonctions nécessaires : " + userRoles, PREFIX);
-        this.userRoles = userRoles;
+    public AccessDeniedException(String unreachableResource, List<UserRole> necessaryUserRoles) {
+        super("Vous ne pouvez pas accéder à cette ressource car vous n'avez pas les fonctions nécessaires : " + necessaryUserRoles, PREFIX);
+        this.unreachableResource = unreachableResource;
+        this.necessaryUserRoles = necessaryUserRoles;
     }
 
-    public List<UserRole> getUserRoles() {
-        return userRoles;
+    public String getUnreachableResource() {
+        return unreachableResource;
+    }
+
+    public List<UserRole> getNecessaryUserRoles() {
+        return necessaryUserRoles;
     }
 }
