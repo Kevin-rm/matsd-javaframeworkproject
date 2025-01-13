@@ -81,13 +81,14 @@ public abstract class ManagedInstanceFactory {
         @Nullable String id,
         Class<?> clazz,
         @Nullable Scope scope,
+        @Nullable Boolean isLazy,
         String parentId,
         String factoryMethodName
     ) {
         Assert.notBlank(parentId, false, "L'identifiant du parent ne peut pas être vide ou \"null\"");
         Assert.notBlank(factoryMethodName, false, "Le nom de la factoryMethod ne peut pas être vide ou \"null\"");
 
-        managedInstanceDefinitionRegistry.registerManagedInstance(id, clazz, scope, parentId, factoryMethodName);
+        managedInstanceDefinitionRegistry.registerManagedInstance(id, clazz, scope, isLazy, parentId, factoryMethodName);
     }
 
     public void registerManagedInstance(
