@@ -59,13 +59,13 @@ public class ManagedInstanceDefinitionRegistry {
     }
 
     void registerManagedInstance(
-        String id, Class<?> clazz, Scope scope, String parentId, String factoryMethodName
+        String id, Class<?> clazz, Scope scope, Boolean isLazy, String parentId, String factoryMethodName
     ) {
         ManagedInstance parent = getManagedInstanceById(parentId);
         Class<?> parentClass   = parent.getClazz();
         try {
             Method method = parentClass.getMethod(factoryMethodName);
-            ManagedInstance managedInstance = new ManagedInstance(id, clazz, scope, parent, method);
+            ManagedInstance managedInstance = new ManagedInstance(id, clazz, scope, isLazy, parent, method);
             ManagedInstanceUtils.processConstructorArguments(method, managedInstance);
 
             registerManagedInstance(managedInstance);

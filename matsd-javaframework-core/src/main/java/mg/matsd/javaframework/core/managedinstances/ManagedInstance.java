@@ -1,9 +1,11 @@
 package mg.matsd.javaframework.core.managedinstances;
 
 import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.exceptions.TypeMismatchException;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.core.utils.ClassUtils;
 import mg.matsd.javaframework.core.utils.StringUtils;
+import mg.matsd.javaframework.core.utils.converter.StringConverter;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -14,6 +16,7 @@ public class ManagedInstance {
     private String   id;
     private Class<?> clazz;
     private Scope    scope;
+    private Boolean  isLazy = false;
     @Nullable
     private ManagedInstance parent;
     @Nullable
@@ -25,22 +28,26 @@ public class ManagedInstance {
         @Nullable String id,
         Class<?> clazz,
         @Nullable Scope scope,
+        @Nullable Boolean lazy,
         @Nullable ManagedInstance parent,
         @Nullable Method factoryMethod
     ) {
         this(id, clazz, parent, factoryMethod);
-        setScope(scope);
+        this.setScope(scope)
+            .setLazy(lazy);
     }
 
     public ManagedInstance(
         @Nullable String id,
         Class<?> clazz,
         @Nullable String scope,
+        @Nullable String lazy,
         @Nullable ManagedInstance parent,
         @Nullable Method factoryMethod
     ) {
         this(id, clazz, parent, factoryMethod);
-        setScope(scope);
+        this.setScope(scope)
+            .setLazy(lazy);
     }
 
     public ManagedInstance(@Nullable String id, String clazz, @Nullable String scope) {
@@ -124,6 +131,25 @@ public class ManagedInstance {
             return setScope(Scope.valueOf(scope.strip().toUpperCase()));
         } catch (IllegalArgumentException e) {
             throw new ManagedInstanceCreationException(String.format("Scope non valide : %s", scope));
+        }
+    }
+
+    public Boolean getLazy() {
+        return isLazy;
+    }
+
+    private ManagedInstance setLazy(@Nullable Boolean lazy) {
+        isLazy = lazy != null && scope != Scope.SINGLETON && lazy;
+        return this;
+    }
+
+    private ManagedInstance setLazy(@Nullable String lazy) {
+        if (lazy == null || StringUtils.isBlank(lazy)) return this;
+
+        try {
+            return setLazy(StringConverter.convert(lazy, Boolean.class));
+        } catch (TypeMismatchException e) {
+            throw new ManagedInstanceCreationException("La valeur de l'argument \"lazy\" donné n'est pas un \"boolean\" : " + isLazy);
         }
     }
 
