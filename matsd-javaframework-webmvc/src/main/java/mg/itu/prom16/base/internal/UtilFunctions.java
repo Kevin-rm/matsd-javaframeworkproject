@@ -6,11 +6,8 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
 import mg.itu.prom16.annotations.*;
 import mg.itu.prom16.base.Model;
+import mg.itu.prom16.exceptions.*;
 import mg.itu.prom16.validation.ModelBindingResult;
-import mg.itu.prom16.exceptions.MissingServletRequestParameterException;
-import mg.itu.prom16.exceptions.ModelBindingException;
-import mg.itu.prom16.exceptions.UndefinedPathVariableException;
-import mg.itu.prom16.exceptions.UnexpectedParameterException;
 import mg.itu.prom16.support.WebApplicationContainer;
 import mg.itu.prom16.upload.FileUploadException;
 import mg.itu.prom16.upload.UploadedFile;
@@ -32,6 +29,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.stream.Stream;
 
 public final class UtilFunctions {
     private static final Set<Class<?>> ALLOWED_CLASSES = Set.of(
@@ -199,6 +197,7 @@ public final class UtilFunctions {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private static Object populateModelFromRequest(
         Class<?> clazz, @Nullable Object modelInstance, String modelName, HttpServletRequest httpServletRequest
     ) {
@@ -217,8 +216,13 @@ public final class UtilFunctions {
                 String requestParameterName = modelName + "." + fieldAlias;
 
                 if (Collection.class.isAssignableFrom(fieldType)) {
+                    Collection<Object> collection = (Collection<Object>) field.get(modelInstance);
+                    if (collection == null)
+                        throw new ModelBindingException(new NonInitializedCollectionException(modelName, clazz, field));
+
                     field.set(modelInstance,
-                        populateListFromRequest(field.getGenericType() instanceof ParameterizedType parameterizedType ?
+                        populateCollectionFromRequest(collection,
+                            field.getGenericType() instanceof ParameterizedType parameterizedType ?
                             (Class<?>) parameterizedType.getActualTypeArguments()[0] : Object.class,
                         requestParameterName, httpServletRequest));
                     continue;
@@ -242,28 +246,28 @@ public final class UtilFunctions {
         }
     }
 
-    private static List<Object> populateListFromRequest(
-        Class<?> clazz, String requestParameterName, HttpServletRequest httpServletRequest
+    private static Collection<Object> populateCollectionFromRequest(
+        Collection<Object> collection,
+        Class<?> clazz,
+        String requestParameterName,
+        HttpServletRequest httpServletRequest
     ) {
-        final List<Object> result = new ArrayList<>();
-
         int index = 0;
-        while (true) {
-            String indexedRequestParameterName  = String.format("%s[%d]", requestParameterName, index);
-            String indexedRequestParameterValue = httpServletRequest.getParameter(indexedRequestParameterName);
+        try (Stream<String> parameterMapStream = httpServletRequest.getParameterMap().keySet().stream()) {
+            while (true) {
+                String indexedRequestParameterName = String.format("%s[%d]", requestParameterName, index);
+                String indexedRequestParameterValue = httpServletRequest.getParameter(indexedRequestParameterName);
 
-            if (indexedRequestParameterValue == null &&
-                httpServletRequest.getParameterMap()
-                    .keySet().stream()
-                    .noneMatch(key -> key.startsWith(indexedRequestParameterName + "."))
-            ) break;
-            result.add(ClassUtils.isSimpleOrStandardClass(clazz) ? indexedRequestParameterValue :
-                populateModelFromRequest(clazz, null, indexedRequestParameterName, httpServletRequest));
+                if (indexedRequestParameterValue == null && parameterMapStream.noneMatch(
+                    key -> key.startsWith(indexedRequestParameterName + "."))) break;
+                collection.add(ClassUtils.isSimpleOrStandardClass(clazz) ? indexedRequestParameterValue :
+                    populateModelFromRequest(clazz, null, indexedRequestParameterName, httpServletRequest));
 
-            index++;
+                index++;
+            }
         }
 
-        return result;
+        return collection;
     }
 
     private static void setSimpleField(
