@@ -21,8 +21,9 @@ class ManagedInstanceDefinitionScanner {
             if (clazz.isAnnotationPresent(Scope.class))
                 scope = clazz.getAnnotation(Scope.class).value();
 
+            String componentValue = component.value();
             ManagedInstance managedInstance = new ManagedInstance(
-                StringUtils.isBlank(component.value()) ? null : component.value(),
+                StringUtils.isBlank(componentValue) ? null : componentValue,
                 clazz, scope, null, null
             );
             ManagedInstanceUtils.processConstructorArguments(
