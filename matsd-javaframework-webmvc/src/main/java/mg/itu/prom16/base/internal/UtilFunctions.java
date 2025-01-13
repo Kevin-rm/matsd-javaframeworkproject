@@ -31,9 +31,7 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public final class UtilFunctions {
     private static final Set<Class<?>> ALLOWED_CLASSES = Set.of(
@@ -217,6 +215,15 @@ public final class UtilFunctions {
                     bindRequestParameter.value() : field.getName();
 
                 String requestParameterName = modelName + "." + fieldAlias;
+
+                if (Collection.class.isAssignableFrom(fieldType)) {
+                    field.set(modelInstance,
+                        populateListFromRequest(field.getGenericType() instanceof ParameterizedType parameterizedType ?
+                            (Class<?>) parameterizedType.getActualTypeArguments()[0] : Object.class,
+                        requestParameterName, httpServletRequest));
+                    continue;
+                }
+
                 if (fieldType == UploadedFile.class) {
                     UploadedFile uploadedFile = getUploadedFile(requestParameterName, httpServletRequest);
                     if (uploadedFile != null) field.set(modelInstance, uploadedFile);
@@ -224,24 +231,52 @@ public final class UtilFunctions {
                     continue;
                 }
 
-                String requestParameterValue = httpServletRequest.getParameter(requestParameterName);
-                if (
-                    ClassUtils.isPrimitiveOrWrapper(fieldType) ||
-                    ClassUtils.isStandardClass(fieldType)      ||
-                    fieldType == String.class
-                ) {
-                    boolean requestParameterValueIsNullOrBlank = requestParameterValue == null || StringUtils.isBlank(requestParameterValue);
-                    if (fieldType.isPrimitive() && requestParameterValueIsNullOrBlank) continue;
-
-                    field.set(modelInstance, requestParameterValueIsNullOrBlank ? null :
-                        StringConverter.convert(requestParameterValue, fieldType));
-                } else field.set(modelInstance, populateModelFromRequest(fieldType, null, fieldAlias, httpServletRequest));
+                if (ClassUtils.isSimpleOrStandardClass(fieldType))
+                    setSimpleField(field, fieldType, modelInstance, httpServletRequest.getParameter(requestParameterName));
+                else field.set(modelInstance, populateModelFromRequest(fieldType, null, fieldAlias, httpServletRequest));
             }
 
             return modelInstance;
         } catch (ServletException | IllegalAccessException e) {
             throw new ModelBindingException(e);
         }
+    }
+
+    private static List<Object> populateListFromRequest(
+        Class<?> clazz, String requestParameterName, HttpServletRequest httpServletRequest
+    ) {
+        final List<Object> result = new ArrayList<>();
+
+        int index = 0;
+        while (true) {
+            String indexedRequestParameterName  = String.format("%s[%d]", requestParameterName, index);
+            String indexedRequestParameterValue = httpServletRequest.getParameter(indexedRequestParameterName);
+
+            if (indexedRequestParameterValue == null &&
+                httpServletRequest.getParameterMap()
+                    .keySet().stream()
+                    .noneMatch(key -> key.startsWith(indexedRequestParameterName + "."))
+            ) break;
+            result.add(ClassUtils.isSimpleOrStandardClass(clazz) ? indexedRequestParameterValue :
+                populateModelFromRequest(clazz, null, indexedRequestParameterName, httpServletRequest));
+
+            index++;
+        }
+
+        return result;
+    }
+
+    private static void setSimpleField(
+        Field    field,
+        Class<?> fieldType,
+        Object   modelInstance,
+        String   requestParameterValue
+    ) throws IllegalAccessException {
+        boolean requestParameterValueIsNullOrBlank = requestParameterValue == null || StringUtils.isBlank(requestParameterValue);
+        if (fieldType.isPrimitive() && requestParameterValueIsNullOrBlank) return;
+
+        field.set(modelInstance, requestParameterValueIsNullOrBlank ? null :
+            StringConverter.convert(requestParameterValue, fieldType));
     }
 
     @Nullable
