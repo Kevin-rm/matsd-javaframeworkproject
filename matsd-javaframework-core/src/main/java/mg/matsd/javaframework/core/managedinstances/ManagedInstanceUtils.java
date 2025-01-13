@@ -1,11 +1,13 @@
 package mg.matsd.javaframework.core.managedinstances;
 
 import mg.matsd.javaframework.core.annotations.Identifier;
+import mg.matsd.javaframework.core.annotations.Inject;
 import mg.matsd.javaframework.core.managedinstances.factory.ManagedInstanceFactory;
 import mg.matsd.javaframework.core.utils.Assert;
 
 import java.lang.reflect.*;
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.IntStream;
 
 public class ManagedInstanceUtils {
@@ -14,7 +16,7 @@ public class ManagedInstanceUtils {
     public static Constructor<?> constructorToUse(ManagedInstance managedInstance) {
         Assert.notNull(managedInstance);
 
-        Constructor<?>[] constructors = managedInstance.getClazz().getDeclaredConstructors();
+        Constructor<?>[] constructors = getCandidateConstructors(managedInstance);
         if (constructors.length == 1) return constructors[0];
         Arrays.sort(constructors, (c1, c2) -> Integer.compare(c2.getParameterCount(), c1.getParameterCount()));
 
@@ -31,7 +33,7 @@ public class ManagedInstanceUtils {
             Class<?> parameterType = parameter.getType();
 
             if (parameter.isAnnotationPresent(Identifier.class))
-                managedInstance.addConstructorArgument(i, parameterType, parameter.getAnnotation(Identifier.class).value());
+                 managedInstance.addConstructorArgument(i, parameterType, parameter.getAnnotation(Identifier.class).value());
             else managedInstance.addConstructorArgument(i, parameterType, null);
         });
     }
@@ -88,5 +90,14 @@ public class ManagedInstanceUtils {
             args[constructorArgument.getIndex()] = constructorArgument.getValue();
 
         return args;
+    }
+
+    private static Constructor<?>[] getCandidateConstructors(ManagedInstance managedInstance) {
+        Constructor<?>[] constructors = managedInstance.getClazz().getDeclaredConstructors();
+        List<Constructor<?>> injectableConstructors = Arrays.stream(constructors)
+            .filter(constructor -> constructor.isAnnotationPresent(Inject.class))
+            .toList();
+
+        return injectableConstructors.isEmpty() ? constructors : injectableConstructors.toArray(new Constructor<?>[0]);
     }
 }
