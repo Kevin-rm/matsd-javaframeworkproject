@@ -23,6 +23,7 @@ public abstract class ManagedInstanceFactory {
         singletonsMap = new HashMap<>();
 
         defineCustomConfiguration();
+        eagerInitSingletonManagedInstances();
     }
 
     public ManagedInstanceFactory setComponentScanBasePackage(String componentScanBasePackage) {
@@ -159,7 +160,9 @@ public abstract class ManagedInstanceFactory {
     }
 
     private void eagerInitSingletonManagedInstances() {
-
+        managedInstanceDefinitionRegistry.getManagedInstances().stream()
+            .filter(managedInstance -> managedInstance.getScope() == Scope.SINGLETON && !managedInstance.getLazy())
+            .forEachOrdered(this::getManagedInstance);
     }
 
     private static void validateId(String id) {

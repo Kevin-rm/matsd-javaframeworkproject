@@ -27,27 +27,27 @@ public class ManagedInstance {
     public ManagedInstance(
         @Nullable String id,
         Class<?> clazz,
-        @Nullable Scope scope,
-        @Nullable Boolean lazy,
+        @Nullable Scope   scope,
+        @Nullable Boolean isLazy,
         @Nullable ManagedInstance parent,
         @Nullable Method factoryMethod
     ) {
         this(id, clazz, parent, factoryMethod);
         this.setScope(scope)
-            .setLazy(lazy);
+            .setLazy(isLazy);
     }
 
     public ManagedInstance(
         @Nullable String id,
         Class<?> clazz,
         @Nullable String scope,
-        @Nullable String lazy,
+        @Nullable String isLazy,
         @Nullable ManagedInstance parent,
         @Nullable Method factoryMethod
     ) {
         this(id, clazz, parent, factoryMethod);
         this.setScope(scope)
-            .setLazy(lazy);
+            .setLazy(isLazy);
     }
 
     public ManagedInstance(@Nullable String id, String clazz, @Nullable String scope) {
@@ -138,18 +138,18 @@ public class ManagedInstance {
         return isLazy;
     }
 
-    private ManagedInstance setLazy(@Nullable Boolean lazy) {
-        isLazy = lazy != null && scope != Scope.SINGLETON && lazy;
+    private ManagedInstance setLazy(@Nullable Boolean isLazy) {
+        this.isLazy = isLazy != null && scope != Scope.SINGLETON && isLazy;
         return this;
     }
 
-    private ManagedInstance setLazy(@Nullable String lazy) {
-        if (lazy == null || StringUtils.isBlank(lazy)) return this;
+    private ManagedInstance setLazy(@Nullable String isLazy) {
+        if (isLazy == null || StringUtils.isBlank(isLazy)) return this;
 
         try {
-            return setLazy(StringConverter.convert(lazy, Boolean.class));
+            return setLazy(StringConverter.convert(isLazy, Boolean.class));
         } catch (TypeMismatchException e) {
-            throw new ManagedInstanceCreationException("La valeur de l'argument \"lazy\" donné n'est pas un \"boolean\" : " + isLazy);
+            throw new ManagedInstanceCreationException("La valeur de l'argument \"isLazy\" donné n'est pas un \"boolean\" : " + this.isLazy);
         }
     }
 
