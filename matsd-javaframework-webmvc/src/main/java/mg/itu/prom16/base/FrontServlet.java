@@ -23,6 +23,8 @@ import mg.itu.prom16.utils.WebFacade;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.AnnotationUtils;
 import mg.matsd.javaframework.core.utils.Assert;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -30,6 +32,8 @@ import java.lang.reflect.Modifier;
 import java.util.*;
 
 public class FrontServlet extends HttpServlet {
+    private static final Logger LOGGER = LogManager.getLogger();
+
     private static Throwable throwableOnInit;
     private WebApplicationContainer webApplicationContainer;
     private ResponseRenderer responseRenderer;
@@ -39,6 +43,7 @@ public class FrontServlet extends HttpServlet {
     @Override
     public void init() {
         try {
+            LOGGER.info("Démarrage du conteneur de \"ManagedInstance\"");
             webApplicationContainer = new WebApplicationContainer(
                 getServletContext(),
                 getServletConfig().getInitParameter("containerConfigLocation")

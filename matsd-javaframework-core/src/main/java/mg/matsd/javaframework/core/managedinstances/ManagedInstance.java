@@ -16,7 +16,7 @@ public class ManagedInstance {
     private String   id;
     private Class<?> clazz;
     private Scope    scope;
-    private Boolean  isLazy = false;
+    private Boolean  isLazy;
     @Nullable
     private ManagedInstance parent;
     @Nullable
@@ -139,7 +139,7 @@ public class ManagedInstance {
     }
 
     private ManagedInstance setLazy(@Nullable Boolean isLazy) {
-        this.isLazy = isLazy != null && scope != Scope.SINGLETON && isLazy;
+        this.isLazy = scope != Scope.SINGLETON || (isLazy != null && isLazy);
         return this;
     }
 

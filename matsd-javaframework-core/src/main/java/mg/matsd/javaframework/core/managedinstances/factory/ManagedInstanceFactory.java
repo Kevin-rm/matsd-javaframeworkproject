@@ -161,7 +161,7 @@ public abstract class ManagedInstanceFactory {
 
     private void eagerInitSingletonManagedInstances() {
         managedInstanceDefinitionRegistry.getManagedInstances().stream()
-            .filter(managedInstance -> managedInstance.getScope() == Scope.SINGLETON && !managedInstance.getLazy())
+            .filter(managedInstance -> !managedInstance.getLazy())
             .forEachOrdered(this::getManagedInstance);
     }
 
