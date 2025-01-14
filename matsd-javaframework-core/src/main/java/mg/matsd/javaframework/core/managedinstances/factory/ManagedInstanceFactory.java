@@ -42,8 +42,7 @@ public abstract class ManagedInstanceFactory {
         List<ManagedInstance> managedInstances = managedInstanceDefinitionRegistry.getManagedInstances();
 
         String[] names = new String[managedInstances.size()];
-        for (int i = 0; i < names.length; i++)
-            names[i] = managedInstances.get(i).getClazz().getName();
+        Arrays.setAll(names, i -> managedInstances.get(i).getClazz().getName());
 
         return names;
     }
@@ -157,6 +156,10 @@ public abstract class ManagedInstanceFactory {
             singletonsMap.put(managedInstanceId, instance);
 
         return instance;
+    }
+
+    private void eagerInitSingletonManagedInstances() {
+
     }
 
     private static void validateId(String id) {

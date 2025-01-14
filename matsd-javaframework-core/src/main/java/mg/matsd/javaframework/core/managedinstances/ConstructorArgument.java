@@ -98,12 +98,11 @@ public class ConstructorArgument {
     }
 
     public ConstructorArgument setValue(@Nullable Object value) {
-        if (!ClassUtils.isAssignable(type, value)) {
+        if (!ClassUtils.isAssignable(type, value))
             throw new TypeMismatchException(String.format(
                 "La valeur spécifiée \"%s\" ne correspond pas au type attendu \"%s\" pour l'argument de constructeur à l'indice %d",
                 value, type.getSimpleName(), index
             ));
-        }
 
         this.value = value;
         return this;
@@ -111,15 +110,13 @@ public class ConstructorArgument {
 
     private ConstructorArgument setValue(@Nullable String value) {
         Object obj = null;
-        if (value != null && StringUtils.hasText(value)) {
-            try {
-                obj = StringConverter.convert(value, type);
-            } catch (TypeMismatchException e) {
-                throw new TypeMismatchException(String.format(
-                    "La valeur fournie pour l'argument de constructeur à l'indice %d ne correspond pas au type \"%s\" attendu",
-                    index, type
-                ));
-            }
+        if (value != null && StringUtils.hasText(value)) try {
+            obj = StringConverter.convert(value, type);
+        } catch (TypeMismatchException e) {
+            throw new TypeMismatchException(String.format(
+                "La valeur fournie pour l'argument de constructeur à l'indice %d ne correspond pas au type \"%s\" attendu",
+                index, type
+            ));
         }
 
         return setValue(obj);

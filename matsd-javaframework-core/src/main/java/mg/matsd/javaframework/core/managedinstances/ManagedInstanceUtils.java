@@ -23,14 +23,13 @@ public class ManagedInstanceUtils {
         return constructors[0];
     }
 
-    public static void processConstructorArguments(Executable executable, ManagedInstance managedInstance) {
+    public static void addConstructorArguments(Executable executable, ManagedInstance managedInstance) {
         Assert.notNull(executable);
         Assert.notNull(managedInstance);
 
         Parameter[] parameters = executable.getParameters();
         IntStream.range(0, parameters.length).forEachOrdered(i -> {
             Parameter parameter = parameters[i];
-
             managedInstance.addConstructorArgument(i, parameter.getType(), parameter.isAnnotationPresent(Identifier.class) ?
                 parameter.getAnnotation(Identifier.class).value() : null);
         });
@@ -44,7 +43,7 @@ public class ManagedInstanceUtils {
         Object instance;
         try {
             Constructor<?> constructor = constructorToUse(managedInstance);
-            instance = constructor.newInstance(getConstructorArguments(constructor, managedInstance));
+            instance = constructor.newInstance(resolveConstructorArguments(constructor, managedInstance));
 
             for (Property property : managedInstance.getProperties()) {
                 Field field = property.getField();
@@ -70,7 +69,7 @@ public class ManagedInstanceUtils {
         try {
             return factoryMethod.invoke(
                 managedInstanceFactory.getManagedInstance(managedInstance.getParent().getClazz()),
-                getConstructorArguments(factoryMethod, managedInstance)
+                resolveConstructorArguments(factoryMethod, managedInstance)
             );
         } catch (IllegalAccessException e) {
             throw new ManagedInstanceException(String.format(
@@ -82,10 +81,10 @@ public class ManagedInstanceUtils {
         }
     }
 
-    private static Object[] getConstructorArguments(Executable executable, ManagedInstance managedInstance) {
+    private static Object[] resolveConstructorArguments(Executable executable, ManagedInstance managedInstance) {
         Object[] args = new Object[executable.getParameterCount()];
-        for (ConstructorArgument constructorArgument : managedInstance.getConstructorArguments())
-            args[constructorArgument.getIndex()] = constructorArgument.getValue();
+        managedInstance.getConstructorArguments()
+            .forEach(constructorArgument -> args[constructorArgument.getIndex()] = constructorArgument.getValue());
 
         return args;
     }

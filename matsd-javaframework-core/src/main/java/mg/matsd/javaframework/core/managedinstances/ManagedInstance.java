@@ -242,12 +242,14 @@ public class ManagedInstance {
 
     private void addConstructorArgument(ConstructorArgument constructorArgument) {
         final int i = constructorArgument.getIndex();
-        constructorArguments.stream().filter(c -> i == c.getIndex()).forEachOrdered(c -> {
-            throw new ManagedInstanceCreationException(
-                String.format("L'argument de constructeur avec l'indice %d " +
-                    "est redondant pour la \"ManagedInstance\" avec l'ID \"%s\"", i, id)
-            );
-        });
+        constructorArguments.stream()
+            .filter(c -> i == c.getIndex())
+            .forEachOrdered(c -> {
+                throw new ManagedInstanceCreationException(
+                    String.format("L'argument de constructeur avec l'indice %d " +
+                        "est redondant pour la \"ManagedInstance\" avec l'ID \"%s\"", i, id)
+                );
+            });
 
         constructorArguments.add(constructorArgument);
     }

@@ -24,7 +24,7 @@ class ManagedInstanceDefinitionScanner {
                 clazz.isAnnotationPresent(Lazy.class)  ? "true" : null,
                 null, null
             );
-            ManagedInstanceUtils.processConstructorArguments(
+            ManagedInstanceUtils.addConstructorArguments(
                 ManagedInstanceUtils.constructorToUse(managedInstance), managedInstance);
 
             managedInstanceDefinitionRegistry.registerManagedInstance(managedInstance);
@@ -49,7 +49,7 @@ class ManagedInstanceDefinitionScanner {
                 method.isAnnotationPresent(Lazy.class)  ? "true" : null,
                 configuration, method
             );
-            ManagedInstanceUtils.processConstructorArguments(method, managedInstance);
+            ManagedInstanceUtils.addConstructorArguments(method, managedInstance);
 
             managedInstanceDefinitionRegistry.registerManagedInstance(managedInstance);
         }

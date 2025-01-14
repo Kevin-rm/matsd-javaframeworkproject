@@ -66,7 +66,7 @@ public class ManagedInstanceDefinitionRegistry {
         try {
             Method method = parentClass.getMethod(factoryMethodName);
             ManagedInstance managedInstance = new ManagedInstance(id, clazz, scope, isLazy, parent, method);
-            ManagedInstanceUtils.processConstructorArguments(method, managedInstance);
+            ManagedInstanceUtils.addConstructorArguments(method, managedInstance);
 
             registerManagedInstance(managedInstance);
         } catch (NoSuchMethodException e) {
