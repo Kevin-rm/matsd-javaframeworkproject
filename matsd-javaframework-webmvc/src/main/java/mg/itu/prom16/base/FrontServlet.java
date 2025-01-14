@@ -115,6 +115,7 @@ public class FrontServlet extends HttpServlet {
         response.setCharacterEncoding("UTF-8");
         if (throwableOnInit != null) {
             ResponseRenderer.doRenderError(throwableOnInit, response);
+            LOGGER.fatal(throwableOnInit);
             return;
         }
 
@@ -136,9 +137,10 @@ public class FrontServlet extends HttpServlet {
             ExceptionHandler exceptionHandler = resolveExceptionHandler(throwableTrace,
                 mappingHandler == null ? null : mappingHandler.getControllerClass());
 
-            if (exceptionHandler == null)
-                 ResponseRenderer.doRenderError(throwable, response);
-            else responseRenderer.doRender(request, response, session, exceptionHandler, throwableTrace);
+            if (exceptionHandler == null) {
+                ResponseRenderer.doRenderError(throwable, response);
+                LOGGER.error(throwable);
+            } else responseRenderer.doRender(request, response, session, exceptionHandler, throwableTrace);
         } finally {
             RequestContextHolder.clear();
         }
