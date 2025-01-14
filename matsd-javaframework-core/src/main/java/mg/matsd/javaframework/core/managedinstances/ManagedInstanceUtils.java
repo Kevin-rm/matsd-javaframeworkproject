@@ -10,7 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
 
-public class ManagedInstanceUtils {
+public final class ManagedInstanceUtils {
     private ManagedInstanceUtils() { }
 
     public static Constructor<?> constructorToUse(ManagedInstance managedInstance) {
