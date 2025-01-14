@@ -91,10 +91,10 @@ public class ManagedInstanceUtils {
 
     private static Constructor<?>[] getCandidateConstructors(ManagedInstance managedInstance) {
         Constructor<?>[] constructors = managedInstance.getClazz().getDeclaredConstructors();
-        List<Constructor<?>> injectableConstructors = Arrays.stream(constructors)
+        List<Constructor<?>> requestedConstructors = Arrays.stream(constructors)
             .filter(constructor -> constructor.isAnnotationPresent(Inject.class))
             .toList();
 
-        return injectableConstructors.isEmpty() ? constructors : injectableConstructors.toArray(new Constructor<?>[0]);
+        return requestedConstructors.isEmpty() ? constructors : requestedConstructors.toArray(new Constructor<?>[0]);
     }
 }
