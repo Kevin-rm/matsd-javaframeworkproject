@@ -54,6 +54,7 @@ public abstract class AbstractXmlResourceContainer extends ManagedInstanceFactor
                 "ne peut pas être \"null\" et doit être disponible (non fermée)");
 
             XMLConfigurationLoader.doLoadManagedInstances(this, resource);
+            eagerInitSingletonManagedInstances();
         }
     }
 

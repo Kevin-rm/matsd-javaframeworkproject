@@ -108,7 +108,7 @@ public class ManagedInstanceDefinitionRegistry {
             managedInstancesCurrentlyInCreation.add(managedInstanceId);
 
             managedInstance.getConstructorArguments().stream()
-                .filter(constructorArgument -> constructorArgument.getValue() != null)
+                .filter(constructorArgument -> constructorArgument.getValue() == null)
                 .forEachOrdered(constructorArgument -> {
                     String reference = constructorArgument.getReference();
                     Class<?> constructorArgumentType = constructorArgument.getType();

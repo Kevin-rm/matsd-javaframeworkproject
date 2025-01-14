@@ -23,7 +23,6 @@ public abstract class ManagedInstanceFactory {
         singletonsMap = new HashMap<>();
 
         defineCustomConfiguration();
-        eagerInitSingletonManagedInstances();
     }
 
     public ManagedInstanceFactory setComponentScanBasePackage(String componentScanBasePackage) {
@@ -138,6 +137,12 @@ public abstract class ManagedInstanceFactory {
         throw new UnsupportedOperationException("La méthode \"getManagedInstanceForWebScope\" n'est disponible que dans un contexte web");
     }
 
+    protected void eagerInitSingletonManagedInstances() {
+        managedInstanceDefinitionRegistry.getManagedInstances().stream()
+            .filter(managedInstance -> !managedInstance.getLazy())
+            .forEachOrdered(this::getManagedInstance);
+    }
+
     private Object getManagedInstance(ManagedInstance managedInstance) {
         String managedInstanceId = managedInstance.getId();
 
@@ -145,7 +150,7 @@ public abstract class ManagedInstanceFactory {
             throw new ManagedInstanceCurrentlyInCreationException(managedInstanceId);
         if (
             isSingleton(managedInstanceId) &&
-            singletonsMap.containsKey(managedInstanceId)
+                singletonsMap.containsKey(managedInstanceId)
         ) return singletonsMap.get(managedInstanceId);
 
         managedInstanceDefinitionRegistry.resolveDependencies(managedInstance);
@@ -157,12 +162,6 @@ public abstract class ManagedInstanceFactory {
             singletonsMap.put(managedInstanceId, instance);
 
         return instance;
-    }
-
-    private void eagerInitSingletonManagedInstances() {
-        managedInstanceDefinitionRegistry.getManagedInstances().stream()
-            .filter(managedInstance -> !managedInstance.getLazy())
-            .forEachOrdered(this::getManagedInstance);
     }
 
     private static void validateId(String id) {
