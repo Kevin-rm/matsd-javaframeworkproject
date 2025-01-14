@@ -43,7 +43,7 @@ public class FrontServlet extends HttpServlet {
     @Override
     public void init() {
         try {
-            LOGGER.info("Démarrage du conteneur de \"ManagedInstance\"");
+            LOGGER.info("Démarrage du conteneur des \"ManagedInstance\"");
             webApplicationContainer = new WebApplicationContainer(
                 getServletContext(),
                 getServletConfig().getInitParameter("containerConfigLocation")
@@ -115,7 +115,7 @@ public class FrontServlet extends HttpServlet {
         response.setCharacterEncoding("UTF-8");
         if (throwableOnInit != null) {
             ResponseRenderer.doRenderError(throwableOnInit, response);
-            LOGGER.fatal("Erreur durant l'initialisation du \"FrontServlet\"", throwableOnInit);
+            LOGGER.fatal("Une erreur s'est produite durant l'initialisation du \"FrontServlet\"", throwableOnInit);
             return;
         }
 
@@ -139,7 +139,7 @@ public class FrontServlet extends HttpServlet {
 
             if (exceptionHandler == null) {
                 ResponseRenderer.doRenderError(throwable, response);
-                LOGGER.error("Erreur non capturée", throwable);
+                LOGGER.error("", throwable);
             } else responseRenderer.doRender(request, response, session, exceptionHandler, throwableTrace);
         } finally {
             RequestContextHolder.clear();
