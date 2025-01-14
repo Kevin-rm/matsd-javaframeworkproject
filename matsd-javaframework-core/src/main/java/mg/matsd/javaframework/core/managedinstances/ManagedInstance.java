@@ -53,7 +53,8 @@ public class ManagedInstance {
     public ManagedInstance(@Nullable String id, String clazz, @Nullable String scope) {
         this.setClazz(clazz)
             .setId(id)
-            .setScope(scope);
+            .setScope(scope)
+            .setLazy((String) null);
     }
 
     private ManagedInstance(
@@ -144,10 +145,9 @@ public class ManagedInstance {
     }
 
     private ManagedInstance setLazy(@Nullable String isLazy) {
-        if (isLazy == null || StringUtils.isBlank(isLazy)) return this;
-
         try {
-            return setLazy(StringConverter.convert(isLazy, Boolean.class));
+            return setLazy(isLazy == null || StringUtils.isBlank(isLazy) ? null :
+                StringConverter.convert(isLazy, Boolean.class));
         } catch (TypeMismatchException e) {
             throw new ManagedInstanceCreationException("La valeur de l'argument \"isLazy\" donné n'est pas un \"boolean\" : " + this.isLazy);
         }
