@@ -32,7 +32,7 @@ import java.lang.reflect.Modifier;
 import java.util.*;
 
 public class FrontServlet extends HttpServlet {
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = LogManager.getLogger(FrontServlet.class);
 
     private static Throwable throwableOnInit;
     private WebApplicationContainer webApplicationContainer;
@@ -115,7 +115,7 @@ public class FrontServlet extends HttpServlet {
         response.setCharacterEncoding("UTF-8");
         if (throwableOnInit != null) {
             ResponseRenderer.doRenderError(throwableOnInit, response);
-            LOGGER.fatal(throwableOnInit);
+            LOGGER.fatal("Erreur durant l'initialisation du \"FrontServlet\"", throwableOnInit);
             return;
         }
 
@@ -139,7 +139,7 @@ public class FrontServlet extends HttpServlet {
 
             if (exceptionHandler == null) {
                 ResponseRenderer.doRenderError(throwable, response);
-                LOGGER.error(throwable);
+                LOGGER.error("Erreur non capturée", throwable);
             } else responseRenderer.doRender(request, response, session, exceptionHandler, throwableTrace);
         } finally {
             RequestContextHolder.clear();
