@@ -253,18 +253,19 @@ public final class UtilFunctions {
         HttpServletRequest httpServletRequest
     ) {
         int index = 0;
-        try (Stream<String> parameterMapStream = httpServletRequest.getParameterMap().keySet().stream()) {
-            while (true) {
-                String indexedRequestParameterName = String.format("%s[%d]", requestParameterName, index);
-                String indexedRequestParameterValue = httpServletRequest.getParameter(indexedRequestParameterName);
 
-                if (indexedRequestParameterValue == null && parameterMapStream.noneMatch(
-                    key -> key.startsWith(indexedRequestParameterName + "."))) break;
-                collection.add(ClassUtils.isSimpleOrStandardClass(clazz) ? indexedRequestParameterValue :
-                    populateModelFromRequest(clazz, null, indexedRequestParameterName, httpServletRequest));
+        Set<String> parameterMapKeySet = httpServletRequest.getParameterMap().keySet();
+        while (true) {
+            String indexedRequestParameterName  = String.format("%s[%d]", requestParameterName, index);
+            String indexedRequestParameterValue = httpServletRequest.getParameter(indexedRequestParameterName);
 
-                index++;
-            }
+            if (indexedRequestParameterValue == null &&
+                parameterMapKeySet.stream().noneMatch(key -> key.startsWith(indexedRequestParameterName + "."))
+            ) break;
+            collection.add(ClassUtils.isSimpleOrStandardClass(clazz) ? indexedRequestParameterValue :
+                populateModelFromRequest(clazz, null, indexedRequestParameterName, httpServletRequest));
+
+            index++;
         }
 
         return collection;
