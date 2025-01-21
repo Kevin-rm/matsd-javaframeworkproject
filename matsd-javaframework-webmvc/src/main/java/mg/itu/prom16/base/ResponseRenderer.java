@@ -19,6 +19,219 @@ import java.io.StringWriter;
 import java.lang.reflect.Method;
 
 class ResponseRenderer {
+    private static final String ERROR_PAGE_TEMPLATE = """
+        <!DOCTYPE html>
+        <html lang="fr">
+        <head>
+            <meta charset="UTF-8">
+            <meta content="width=device-width, initial-scale=1.0" name="viewport">
+            <title>Erreur</title>
+            <style>
+                @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+                @keyframes pulse { 0%% { transform: scale(1); } 50%% { transform: scale(1.05); } 100%% { transform: scale(1); } }
+                @keyframes gradientBG { 0%% { background-position: 0 50%%; } 50%% { background-position: 100%% 50%%; } 100%% { background-position: 0 50%%; } }
+                :root {
+                    --bg-primary: #0f172a;
+                    --bg-secondary: #1e293b;
+                    --bg-tertiary: #334155;
+                    --text-primary: #f8fafc;
+                    --text-secondary: #94a3b8;
+                    --accent: #3b82f6;
+                    --error: #ef4444;
+                    --error-gradient: linear-gradient(135deg, #ef4444 0%%, #b91c1c 100%%);
+                    --border: #475569;
+                }
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body {
+                    font-family: 'Nunito', sans-serif;
+                    background: linear-gradient(135deg, var(--bg-primary) 0%%, #162544 100%%);
+                    background-size: 400%% 400%%;
+                    animation: gradientBG 15s ease infinite;
+                    color: var(--text-primary);
+                    line-height: 1.6;
+                    min-height: 100vh;
+                    padding: 2rem;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .container {
+                    width: 100%%;
+                    max-width: 1000px;
+                    animation: slideIn 0.6s ease-out;
+                    background: var(--bg-secondary);
+                    border-radius: 1rem;
+                    overflow: hidden;
+                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+                    border: 1px solid var(--border);
+                    backdrop-filter: blur(10px);
+                }
+                .header {
+                    background: var(--error-gradient);
+                    padding: 2rem;
+                    position: relative;
+                    overflow: hidden;
+                }
+                .header::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: linear-gradient(45deg, transparent 0%%, rgba(255, 255, 255, 0.1) 100%%);
+                }
+                .header h1 {
+                    font-size: 1.8rem;
+                    font-weight: 700;
+                    margin: 0;
+                    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                }
+                .header p {
+                    font-size: 1rem;
+                    color: rgba(255, 255, 255, 0.9);
+                    margin-top: 0.5rem;
+                }
+                .content {
+                    padding: 2rem;
+                    animation: fadeIn 0.6s ease-out 0.3s both;
+                }
+                .content h2 {
+                    font-size: 1.5rem;
+                    font-weight: 600;
+                    margin-bottom: 1rem;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                }
+                .content h2::before {
+                    content: '';
+                    width: 3px;
+                    height: 1.25rem;
+                    background: var(--accent);
+                    border-radius: 4px;
+                }
+                .error-details {
+                    background: var(--bg-tertiary);
+                    border-radius: 0.75rem;
+                    padding: 1.5rem;
+                    margin-bottom: 1.5rem;
+                    border: 1px solid var(--border);
+                    transition: border-color 0.3s ease;
+                }
+                .error-details:hover {
+                    border-color: var(--accent);
+                }
+                .detail-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 1rem;
+                    padding: 1rem 0;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                    transition: background-color 0.2s ease;
+                }
+                .detail-item:hover {
+                    background-color: rgba(255, 255, 255, 0.05);
+                }
+                .detail-item:last-child {
+                    border-bottom: none;
+                }
+                .detail-label {
+                    color: var(--text-secondary);
+                    font-size: 0.875rem;
+                    min-width: 140px;
+                    font-weight: 500;
+                }
+                .detail-value {
+                    color: var(--text-primary);
+                    font-size: 1rem;
+                    word-break: break-word;
+                }
+                .stacktrace {
+                    background: var(--bg-tertiary);
+                    border-radius: 0.75rem;
+                    padding: 1.5rem;
+                    border: 1px solid var(--border);
+                    max-height: 400px;
+                    overflow-y: auto;
+                    transition: border-color 0.3s ease;
+                }
+                .stacktrace:hover {
+                    border-color: var(--accent);
+                }
+                .stacktrace::-webkit-scrollbar {
+                    width: 8px;
+                    height: 8px;
+                }
+                .stacktrace::-webkit-scrollbar-track {
+                    background: var(--bg-secondary);
+                }
+                .stacktrace::-webkit-scrollbar-thumb {
+                    background: var(--border);
+                    transition: background-color 0.3s ease;
+                }
+                .stacktrace::-webkit-scrollbar-thumb:hover {
+                    background: var(--accent);
+                }
+                pre {
+                    font-family: monospace;
+                    font-size: 0.875rem;
+                    color: var(--text-secondary);
+                    white-space: pre-wrap;
+                    word-break: break-all;
+                    margin: 0;
+                    line-height: 1.7;
+                }
+                @media (max-width: 640px) {
+                    body { padding: 1rem; }
+                    .container { margin: 0; }
+                    .header, .content { padding: 1.5rem; }
+                    .error-details {
+                        padding: 1rem;
+                        margin-bottom: 1rem;
+                    }
+                    .detail-item {
+                        flex-direction: column;
+                        gap: 0.5rem;
+                        padding: 0.75rem 0;
+                    }
+                    .detail-label { min-width: auto; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>Une erreur s'est produite</h1>
+                    <p>Une exception a été rencontrée par le serveur. Veuillez examiner les informations ci-dessous pour le débogage.</p>
+                </div>
+                <div class="content">
+                    <h2>Détails de l'erreur</h2>
+                    <div class="error-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Type d'exception</span>
+                            <span class="detail-value">%s</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Message</span>
+                            <span class="detail-value">%s</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Code d'état HTTP</span>
+                            <span class="detail-value">%d</span>
+                        </div>
+                    </div>
+                    <h2>Pile d'appels</h2>
+                    <div class="stacktrace">
+                        <pre>%s</pre>
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
+    """;
+
     private final WebApplicationContainer webApplicationContainer;
 
     ResponseRenderer(final WebApplicationContainer webApplicationContainer) {
@@ -30,273 +243,16 @@ class ResponseRenderer {
         httpServletResponse.setStatus(throwable instanceof NotFoundHttpException ?
             NotFoundHttpException.statusCode : HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 
-        PrintWriter printWriter = httpServletResponse.getWriter();
-        printWriter.println("<!DOCTYPE html>");
-        printWriter.println("<html lang=\"fr\">");
-        printWriter.println("<head>");
-        printWriter.println("   <meta charset=\"UTF-8\">");
-        printWriter.println("   <meta content=\"width=device-width, initial-scale=1.0\" name=\"viewport\">");
-        printWriter.println("   <title>Erreur</title>");
-        printWriter.println("   <style>");
-        printWriter.println("       @keyframes slideIn {");
-        printWriter.println("           from {");
-        printWriter.println("               transform: translateY(-20px);");
-        printWriter.println("               opacity: 0;");
-        printWriter.println("           }");
-        printWriter.println("           to {");
-        printWriter.println("               transform: translateY(0);");
-        printWriter.println("               opacity: 1;");
-        printWriter.println("           }");
-        printWriter.println("       }");
-        printWriter.println("       @keyframes fadeIn {");
-        printWriter.println("           from {");
-        printWriter.println("               opacity: 0;");
-        printWriter.println("           }");
-        printWriter.println("           to {");
-        printWriter.println("               opacity: 1;");
-        printWriter.println("           }");
-        printWriter.println("       }");
-        printWriter.println("       @keyframes pulse {");
-        printWriter.println("           0% {");
-        printWriter.println("               transform: scale(1);");
-        printWriter.println("           }");
-        printWriter.println("           50% {");
-        printWriter.println("               transform: scale(1.05);");
-        printWriter.println("           }");
-        printWriter.println("           100% {");
-        printWriter.println("               transform: scale(1);");
-        printWriter.println("           }");
-        printWriter.println("       }");
-        printWriter.println("       @keyframes gradientBG {");
-        printWriter.println("           0% {");
-        printWriter.println("               background-position: 0 50%;");
-        printWriter.println("           }");
-        printWriter.println("           50% {");
-        printWriter.println("               background-position: 100% 50%;");
-        printWriter.println("           }");
-        printWriter.println("           100% {");
-        printWriter.println("               background-position: 0 50%;");
-        printWriter.println("           }");
-        printWriter.println("       }");
-        printWriter.println("       :root {");
-        printWriter.println("           --bg-primary: #0f172a;");
-        printWriter.println("           --bg-secondary: #1e293b;");
-        printWriter.println("           --bg-tertiary: #334155;");
-        printWriter.println("           --text-primary: #f8fafc;");
-        printWriter.println("           --text-secondary: #94a3b8;");
-        printWriter.println("           --accent: #3b82f6;");
-        printWriter.println("           --error: #ef4444;");
-        printWriter.println("           --error-gradient: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);");
-        printWriter.println("           --border: #475569;");
-        printWriter.println("       }");
-        printWriter.println("       * {");
-        printWriter.println("           margin: 0;");
-        printWriter.println("           padding: 0;");
-        printWriter.println("           box-sizing: border-box;");
-        printWriter.println("       }");
-        printWriter.println("       body {");
-        printWriter.println("           font-family: 'Nunito', sans-serif;");
-        printWriter.println("           background: linear-gradient(135deg, var(--bg-primary) 0%, #162544 100%);");
-        printWriter.println("           background-size: 400% 400%;");
-        printWriter.println("           animation: gradientBG 15s ease infinite;");
-        printWriter.println("           color: var(--text-primary);");
-        printWriter.println("           line-height: 1.6;");
-        printWriter.println("           min-height: 100vh;");
-        printWriter.println("           padding: 2rem;");
-        printWriter.println("           display: flex;");
-        printWriter.println("           align-items: center;");
-        printWriter.println("           justify-content: center;");
-        printWriter.println("       }");
-        printWriter.println("       .container {");
-        printWriter.println("           width: 100%;");
-        printWriter.println("           max-width: 1000px;");
-        printWriter.println("           animation: slideIn 0.6s ease-out;");
-        printWriter.println("           background: var(--bg-secondary);");
-        printWriter.println("           border-radius: 1rem;");
-        printWriter.println("           overflow: hidden;");
-        printWriter.println("           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);");
-        printWriter.println("           border: 1px solid var(--border);");
-        printWriter.println("           backdrop-filter: blur(10px);");
-        printWriter.println("       }");
-        printWriter.println("       .header {");
-        printWriter.println("           background: var(--error-gradient);");
-        printWriter.println("           padding: 2rem;");
-        printWriter.println("           position: relative;");
-        printWriter.println("           overflow: hidden;");
-        printWriter.println("       }");
-        printWriter.println("       .header::before {");
-        printWriter.println("           content: '';");
-        printWriter.println("           position: absolute;");
-        printWriter.println("           top: 0;");
-        printWriter.println("           left: 0;");
-        printWriter.println("           right: 0;");
-        printWriter.println("           bottom: 0;");
-        printWriter.println("           background: linear-gradient(45deg, transparent 0%, rgba(255, 255, 255, 0.1) 100%);");
-        printWriter.println("       }");
-        printWriter.println("       .header h1 {");
-        printWriter.println("           font-size: 1.8rem;");
-        printWriter.println("           font-weight: 700;");
-        printWriter.println("           margin: 0;");
-        printWriter.println("           text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);");
-        printWriter.println("       }");
-        printWriter.println("       .header p {");
-        printWriter.println("           font-size: 1rem;");
-        printWriter.println("           color: rgba(255, 255, 255, 0.9);");
-        printWriter.println("           margin-top: 0.5rem;");
-        printWriter.println("       }");
-        printWriter.println("       .content {");
-        printWriter.println("           padding: 2rem;");
-        printWriter.println("           animation: fadeIn 0.6s ease-out 0.3s both;");
-        printWriter.println("       }");
-        printWriter.println("       .content h2 {");
-        printWriter.println("           font-size: 1.5rem;");
-        printWriter.println("           font-weight: 600;");
-        printWriter.println("           margin-bottom: 1rem;");
-        printWriter.println("           display: flex;");
-        printWriter.println("           align-items: center;");
-        printWriter.println("           gap: 0.5rem;");
-        printWriter.println("       }");
-        printWriter.println("       .content h2::before {");
-        printWriter.println("           content: '';");
-        printWriter.println("           width: 3px;");
-        printWriter.println("           height: 1.25rem;");
-        printWriter.println("           background: var(--accent);");
-        printWriter.println("           border-radius: 4px;");
-        printWriter.println("       }");
-        printWriter.println("       .error-details {");
-        printWriter.println("           background: var(--bg-tertiary);");
-        printWriter.println("           border-radius: 0.75rem;");
-        printWriter.println("           padding: 1.5rem;");
-        printWriter.println("           margin-bottom: 1.5rem;");
-        printWriter.println("           border: 1px solid var(--border);");
-        printWriter.println("           transition: border-color 0.3s ease;");
-        printWriter.println("       }");
-        printWriter.println("       .error-details:hover {");
-        printWriter.println("           border-color: var(--accent);");
-        printWriter.println("       }");
-        printWriter.println("       .detail-item {");
-        printWriter.println("           display: flex;");
-        printWriter.println("           align-items: center;");
-        printWriter.println("           gap: 1rem;");
-        printWriter.println("           padding: 1rem 0;");
-        printWriter.println("           border-bottom: 1px solid rgba(255, 255, 255, 0.1);");
-        printWriter.println("           transition: background-color 0.2s ease;");
-        printWriter.println("       }");
-        printWriter.println("       .detail-item:hover {");
-        printWriter.println("           background-color: rgba(255, 255, 255, 0.05);");
-        printWriter.println("       }");
-        printWriter.println("       .detail-item:last-child {");
-        printWriter.println("           border-bottom: none;");
-        printWriter.println("       }");
-        printWriter.println("       .detail-label {");
-        printWriter.println("           color: var(--text-secondary);");
-        printWriter.println("           font-size: 0.875rem;");
-        printWriter.println("           min-width: 140px;");
-        printWriter.println("           font-weight: 500;");
-        printWriter.println("       }");
-        printWriter.println("       .detail-value {");
-        printWriter.println("           color: var(--text-primary);");
-        printWriter.println("           font-size: 1rem;");
-        printWriter.println("           word-break: break-word;");
-        printWriter.println("       }");
-        printWriter.println("       .stacktrace {");
-        printWriter.println("           background: var(--bg-tertiary);");
-        printWriter.println("           border-radius: 0.75rem;");
-        printWriter.println("           padding: 1.5rem;");
-        printWriter.println("           border: 1px solid var(--border);");
-        printWriter.println("           max-height: 400px;");
-        printWriter.println("           overflow-y: auto;");
-        printWriter.println("           transition: border-color 0.3s ease;");
-        printWriter.println("       }");
-        printWriter.println("       .stacktrace:hover {");
-        printWriter.println("           border-color: var(--accent);");
-        printWriter.println("       }");
-        printWriter.println("       .stacktrace::-webkit-scrollbar {");
-        printWriter.println("           width: 8px;");
-        printWriter.println("           height: 8px;");
-        printWriter.println("       }");
-        printWriter.println("       .stacktrace::-webkit-scrollbar-track {");
-        printWriter.println("           background: var(--bg-secondary);");
-        printWriter.println("       }");
-        printWriter.println("       .stacktrace::-webkit-scrollbar-thumb {");
-        printWriter.println("           background: var(--border);");
-        printWriter.println("           transition: background-color 0.3s ease;");
-        printWriter.println("       }");
-        printWriter.println("       .stacktrace::-webkit-scrollbar-thumb:hover {");
-        printWriter.println("           background: var(--accent);");
-        printWriter.println("       }");
-        printWriter.println("       pre {");
-        printWriter.println("           font-family: monospace;");
-        printWriter.println("           font-size: 0.875rem;");
-        printWriter.println("           color: var(--text-secondary);");
-        printWriter.println("           white-space: pre-wrap;");
-        printWriter.println("           word-break: break-all;");
-        printWriter.println("           margin: 0;");
-        printWriter.println("           line-height: 1.7;");
-        printWriter.println("       }");
-        printWriter.println("       @media (max-width: 640px) {");
-        printWriter.println("           body {");
-        printWriter.println("               padding: 1rem;");
-        printWriter.println("           }");
-        printWriter.println("           .container {");
-        printWriter.println("               margin: 0;");
-        printWriter.println("           }");
-        printWriter.println("           .header {");
-        printWriter.println("               padding: 1.5rem;");
-        printWriter.println("           }");
-        printWriter.println("           .content {");
-        printWriter.println("               padding: 1.5rem;");
-        printWriter.println("           }");
-        printWriter.println("           .error-details {");
-        printWriter.println("               padding: 1rem;");
-        printWriter.println("               margin-bottom: 1rem;");
-        printWriter.println("           }");
-        printWriter.println("           .detail-item {");
-        printWriter.println("               flex-direction: column;");
-        printWriter.println("               gap: 0.5rem;");
-        printWriter.println("               padding: 0.75rem 0;");
-        printWriter.println("           }");
-        printWriter.println("           .detail-label {");
-        printWriter.println("               min-width: auto;");
-        printWriter.println("           }");
-        printWriter.println("       }");
-        printWriter.println("   </style>");
-        printWriter.println("</head>");
-        printWriter.println("<body>");
-        printWriter.println("<div class=\"container\">");
-        printWriter.println("   <div class=\"header\">");
-        printWriter.println("       <h1>Une erreur s'est produite.</h1>");
-        printWriter.println("       <p>Une exception a été rencontrée par le serveur. Veuillez examiner les informations ci-dessous pour le débogage.</p>");
-        printWriter.println("   </div>");
-        printWriter.println("   <div class=\"content\">");
-        printWriter.println("       <h2>Détails de l'erreur</h2>");
-        printWriter.println("       <div class=\"error-details\">");
-        printWriter.println("           <div class=\"detail-item\">");
-        printWriter.println("               <span class=\"detail-label\">Type d'exception</span>");
-        printWriter.println(String.format("               <span class=\"detail-value\">%s</span>", throwable.getClass().getName()));
-        printWriter.println("           </div>");
-        printWriter.println("           <div class=\"detail-item\">");
-        printWriter.println("               <span class=\"detail-label\">Message</span>");
-        printWriter.println(String.format("               <span class=\"detail-value\">%s</span>", StringUtils.escapeHtml(throwable.getMessage())));
-        printWriter.println("           </div>");
-        printWriter.println("           <div class=\"detail-item\">");
-        printWriter.println("               <span class=\"detail-label\">Code d'état HTTP</span>");
-        printWriter.println(String.format("               <span class=\"detail-value\">%d</span>", httpServletResponse.getStatus()));
-        printWriter.println("           </div>");
-        printWriter.println("       </div>");
-        printWriter.println("       <h2>Pile d'appels</h2>");
-        printWriter.println("       <div class=\"stacktrace\">");
-        printWriter.println("           <pre>");
         StringWriter stringWriter = new StringWriter();
         throwable.printStackTrace(new PrintWriter(stringWriter));
-        printWriter.println(StringUtils.escapeHtml(stringWriter.toString()));
-        printWriter.println("           </pre>");
-        printWriter.println("       </div>");
-        printWriter.println("   </div>");
-        printWriter.println("</div>");
-        printWriter.println("</body>");
-        printWriter.println("</html>");
 
+        PrintWriter printWriter = httpServletResponse.getWriter();
+        printWriter.write(String.format(ERROR_PAGE_TEMPLATE,
+            throwable.getClass().getName(),
+            StringUtils.escapeHtml(throwable.getMessage()),
+            httpServletResponse.getStatus(),
+            StringUtils.escapeHtml(stringWriter.toString())
+        ));
         printWriter.flush();
     }
 
