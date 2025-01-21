@@ -197,7 +197,6 @@ public final class UtilFunctions {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private static Object populateModelFromRequest(
         Class<?> clazz, @Nullable Object modelInstance, String modelName, HttpServletRequest httpServletRequest
     ) {
@@ -216,6 +215,7 @@ public final class UtilFunctions {
                 String requestParameterName = modelName + "." + fieldAlias;
 
                 if (Collection.class.isAssignableFrom(fieldType)) {
+                    @SuppressWarnings("unchecked")
                     Collection<Object> collection = (Collection<Object>) field.get(modelInstance);
                     if (collection == null)
                         throw new ModelBindingException(new NonInitializedCollectionException(modelName, clazz, field));
