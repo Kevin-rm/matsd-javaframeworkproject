@@ -8,7 +8,7 @@ public class SimpleUserRoleImpl implements UserRole {
     protected String value;
 
     public SimpleUserRoleImpl(String value) {
-        this.setValue(value);
+        setValue(value);
     }
 
     @Override
@@ -16,11 +16,9 @@ public class SimpleUserRoleImpl implements UserRole {
         return value;
     }
 
-    public SimpleUserRoleImpl setValue(String value) {
+    public void setValue(String value) {
         Assert.notBlank(value, false, "La valeur d'une fonction d'un utilisateur ne peut pas être vide ou \"null\"");
         this.value = value;
-
-        return this;
     }
 
     @Override
