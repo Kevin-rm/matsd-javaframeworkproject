@@ -70,7 +70,7 @@ public abstract class ManagedInstanceFactory {
     }
 
     public void registerManagedInstance(ManagedInstance... managedInstances) {
-        Assert.notNull(managedInstances, "L'argument managedInstances ne peut pas être \"null\"");
+        Assert.notEmpty(managedInstances, "Le tableau de \"ManagedInstance\" ne peut pas être vide ou \"null\"");
         Assert.noNullElements(managedInstances, "Chaque \"ManagedInstance\" à enregistrer ne peut pas être \"null\"");
 
         Arrays.stream(managedInstances).forEachOrdered(m -> managedInstanceDefinitionRegistry.registerManagedInstance(m));
