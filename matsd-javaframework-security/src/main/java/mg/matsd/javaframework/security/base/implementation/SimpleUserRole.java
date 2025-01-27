@@ -1,13 +1,14 @@
-package mg.matsd.javaframework.security.base;
+package mg.matsd.javaframework.security.base.implementation;
 
 import mg.matsd.javaframework.core.utils.Assert;
+import mg.matsd.javaframework.security.base.UserRole;
 
 import java.util.Objects;
 
-public class SimpleUserRoleImpl implements UserRole {
+public class SimpleUserRole implements UserRole {
     protected String value;
 
-    public SimpleUserRoleImpl(String value) {
+    public SimpleUserRole(String value) {
         setValue(value);
     }
 
@@ -26,7 +27,7 @@ public class SimpleUserRoleImpl implements UserRole {
         if (this == object) return true;
         if (object == null || getClass() != object.getClass()) return false;
 
-        SimpleUserRoleImpl that = (SimpleUserRoleImpl) object;
+        SimpleUserRole that = (SimpleUserRole) object;
         return Objects.equals(value, that.value);
     }
 

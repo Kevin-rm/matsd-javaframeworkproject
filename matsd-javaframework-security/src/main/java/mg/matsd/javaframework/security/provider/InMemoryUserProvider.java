@@ -12,7 +12,7 @@ public class InMemoryUserProvider implements UserProvider {
     private final Map<String, User> usersMap;
 
     public InMemoryUserProvider(User... users) {
-        Assert.notNull(users, "Le tableau d'utilisateurs ne peut être \"null\"");
+        Assert.notEmpty(users, "Le tableau d'utilisateurs ne peut être vide ou \"null\"");
         Assert.noNullElements(users, "Chaque utilisateur du tableau ne peut être \"null\"");
 
         usersMap = new HashMap<>();
@@ -21,14 +21,19 @@ public class InMemoryUserProvider implements UserProvider {
 
     @Override
     public User loadUserByIdentifier(String identifier) throws UserNotFoundException {
-
+        Assert.notBlank(identifier, false, "L'identifiant de l'utilisateur ne peut être vide ou \"null\"");
 
         User user = usersMap.get(identifier);
-        return null;
+        if (user == null) throw new UserNotFoundException(identifier);
+
+        return user;
     }
 
     @Override
     public User refreshUser(User user) throws UserNotFoundException {
-        return null;
+        final String userIdentifier = user.getIdentifier();
+        if (!usersMap.containsKey(userIdentifier)) throw new UserNotFoundException(userIdentifier);
+
+        return usersMap.get(userIdentifier);
     }
 }
