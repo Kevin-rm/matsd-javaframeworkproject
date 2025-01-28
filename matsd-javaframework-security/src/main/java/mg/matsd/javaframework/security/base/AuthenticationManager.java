@@ -15,13 +15,13 @@ public final class AuthenticationManager {
     @Nullable
     private User currentUser;
 
-    AuthenticationManager(@Nullable String statefulStorageKey, UserProvider userProvider, PasswordHasher passwordHasher) {
+    public AuthenticationManager(@Nullable String statefulStorageKey, UserProvider userProvider, PasswordHasher passwordHasher) {
         this.setStatefulStorageKey(statefulStorageKey)
             .setUserProvider(userProvider)
             .setPasswordHasher(passwordHasher);
     }
 
-    AuthenticationManager(UserProvider userProvider, PasswordHasher passwordHasher) {
+    public AuthenticationManager(UserProvider userProvider, PasswordHasher passwordHasher) {
         this(null, userProvider, passwordHasher);
     }
 
