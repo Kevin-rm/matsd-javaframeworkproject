@@ -37,11 +37,19 @@ public final class AuthenticationManager {
         return this;
     }
 
+    public UserProvider getUserProvider() {
+        return userProvider;
+    }
+
     private AuthenticationManager setUserProvider(UserProvider userProvider) {
         Assert.notNull(userProvider, "L'argument userProvider ne peut pas être \"null\"");
 
         this.userProvider = userProvider;
         return this;
+    }
+
+    public PasswordHasher getPasswordHasher() {
+        return passwordHasher;
     }
 
     private AuthenticationManager setPasswordHasher(PasswordHasher passwordHasher) {
@@ -57,7 +65,7 @@ public final class AuthenticationManager {
     }
 
     public void useDefaultStatefulStorageKey() {
-        this.setStatefulStorageKey(DEFAULT_STATEFUL_STORAGE_KEY);
+        setStatefulStorageKey(DEFAULT_STATEFUL_STORAGE_KEY);
     }
 
     public boolean attempt(String identifier, String plainPassword) {
@@ -73,6 +81,7 @@ public final class AuthenticationManager {
     }
 
     public void removeCurrentUser() {
+        if (currentUser == null) return;
         currentUser = null;
     }
 }

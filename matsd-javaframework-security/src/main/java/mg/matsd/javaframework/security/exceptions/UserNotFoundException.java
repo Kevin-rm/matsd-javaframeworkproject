@@ -7,7 +7,7 @@ public class UserNotFoundException extends BaseException {
     private final String identifier;
 
     public UserNotFoundException(String identifier) {
-        super("Aucun utilisateur trouvé avec l'identifiant : " + identifier, PREFIX);
+        super(String.format("Aucun utilisateur trouvé avec l'identifiant : \"%s\"", identifier), PREFIX);
         this.identifier = identifier;
     }
 

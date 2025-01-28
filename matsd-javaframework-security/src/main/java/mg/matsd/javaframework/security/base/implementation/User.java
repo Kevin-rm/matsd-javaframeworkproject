@@ -13,14 +13,20 @@ import java.util.List;
 public class User implements mg.matsd.javaframework.security.base.User {
     private String username;
     private String password;
+    @Nullable
     private List<UserRole> roles;
     @Nullable
     private PasswordHasher passwordHasher;
 
-    public User(String username, String password, String... roles) {
+    public User(String username, String password, @Nullable PasswordHasher passwordHasher, String... roles) {
         this.setUsername(username)
+            .setPasswordHasher(passwordHasher)
             .setPassword(password)
             .setRoles(roles);
+    }
+
+    public User(String username, String password, String... roles) {
+        this(username, password, null, roles);
     }
 
     private User setUsername(String username) {
@@ -52,7 +58,7 @@ public class User implements mg.matsd.javaframework.security.base.User {
         return passwordHasher;
     }
 
-    public User setPasswordHasher(@Nullable PasswordHasher passwordHasher) {
+    private User setPasswordHasher(@Nullable PasswordHasher passwordHasher) {
         this.passwordHasher = passwordHasher;
         return this;
     }
@@ -67,8 +73,17 @@ public class User implements mg.matsd.javaframework.security.base.User {
         return password;
     }
 
+    @Nullable
     @Override
     public List<UserRole> getRoles() {
         return roles;
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+            "username='" + username + '\'' +
+            ", roles=" + roles +
+            '}';
     }
 }

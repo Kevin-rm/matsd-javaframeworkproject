@@ -11,7 +11,7 @@ import java.util.List;
 public class Security {
     private final List<Filter> filters;
 
-    private Security() {
+    public Security() {
         filters = new ArrayList<>();
     }
 
@@ -54,6 +54,10 @@ public class Security {
 
         Collections.addAll(this.filters, filters);
         return this;
+    }
+
+    public SecurityFilterChain buildFilterChain() {
+        return new SecurityFilterChain(Collections.unmodifiableList(filters));
     }
 
     private synchronized Security addFilter(Class<? extends Filter> filterClass, Filter filter, boolean before) {
