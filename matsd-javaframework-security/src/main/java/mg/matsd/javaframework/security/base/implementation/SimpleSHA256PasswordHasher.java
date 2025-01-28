@@ -28,9 +28,6 @@ public class SimpleSHA256PasswordHasher implements PasswordHasher {
         Assert.notNull(plainPassword, "Le mot de passe ne peut pas être null");
         Assert.notNull(hashedPassword, "Le mot de passe haché ne peut pas être null");
 
-        System.out.println(plainPassword);
-        System.out.println(hash(plainPassword));
-        System.out.println(hashedPassword);
         return hash(plainPassword).equals(hashedPassword);
     }
 }

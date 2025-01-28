@@ -7,10 +7,11 @@ import java.util.List;
 
 public class SecurityFilterChain implements FilterChain {
     private final List<Filter> filters;
-    private int currentFilterIndex = 0;
+    private int currentFilterIndex;
 
     SecurityFilterChain(List<Filter> filters) {
         this.filters = filters;
+        currentFilterIndex = 0;
     }
 
     @Override
