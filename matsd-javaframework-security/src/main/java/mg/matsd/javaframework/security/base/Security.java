@@ -9,9 +9,22 @@ import java.util.Collections;
 import java.util.List;
 
 public class Security {
-    private static final List<Filter> FILTERS = new ArrayList<>();
+    public static final List<Filter> FILTERS = new ArrayList<>();
 
-    public Security addFilter(@Nullable Filter... filters) {
+    @Nullable
+    private AuthenticationManager authenticationManager;
+
+    @Nullable
+    public AuthenticationManager getAuthenticationManager() {
+        return authenticationManager;
+    }
+
+    public Security setAuthenticationManager(@Nullable AuthenticationManager authenticationManager) {
+        this.authenticationManager = authenticationManager;
+        return this;
+    }
+
+    public Security appendFilter(@Nullable Filter... filters) {
         if (filters == null) return this;
         Assert.noNullElements(filters, "Chaque filtre du tableau de filtres ne peut être \"null\"");
 
