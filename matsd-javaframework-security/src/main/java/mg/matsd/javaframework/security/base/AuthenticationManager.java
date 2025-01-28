@@ -31,7 +31,7 @@ public final class AuthenticationManager {
     }
 
     private AuthenticationManager setStatefulStorageKey(@Nullable String statefulStorageKey) {
-        Assert.notBlank(statefulStorageKey, true, "La clé pour un stockage \"stateful\" ne peut être vide");
+        Assert.notBlank(statefulStorageKey, true, "L'argument statefulStorageKey ne peut être vide");
 
         this.statefulStorageKey = statefulStorageKey;
         return this;
@@ -56,10 +56,6 @@ public final class AuthenticationManager {
         return currentUser;
     }
 
-    public void setCurrentUser(@Nullable User currentUser) {
-        this.currentUser = currentUser;
-    }
-
     public void useDefaultStatefulStorageKey() {
         this.setStatefulStorageKey(DEFAULT_STATEFUL_STORAGE_KEY);
     }
@@ -74,5 +70,9 @@ public final class AuthenticationManager {
         if (!attempt(identifier, plainPassword)) throw new InvalidCredentialsException();
 
         currentUser = userProvider.loadUserByIdentifier(identifier);
+    }
+
+    public void removeCurrentUser() {
+        currentUser = null;
     }
 }

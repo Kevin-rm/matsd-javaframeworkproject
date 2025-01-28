@@ -1,6 +1,5 @@
 package mg.matsd.javaframework.security.base;
 
-import com.sun.jdi.InternalException;
 import jakarta.servlet.Filter;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
@@ -10,7 +9,11 @@ import java.util.Collections;
 import java.util.List;
 
 public class Security {
-    private static final List<Filter> FILTERS = new ArrayList<>();
+    private final List<Filter> filters;
+
+    private Security() {
+        filters = new ArrayList<>();
+    }
 
     @Nullable
     private AuthenticationManager authenticationManager;
@@ -29,43 +32,37 @@ public class Security {
         Assert.notNull(filter, "Le filtre ne peut pas être \"null\"");
 
         try {
-            FILTERS.add(index, filter);
+            filters.add(index, filter);
         } catch (IndexOutOfBoundsException e) {
-            throw new IllegalArgumentException(String.format("L'index spécifié (=%d) est invalide", index));
+            throw new IllegalArgumentException(String.format("Index spécifié invalide: %d", index));
         }
 
         return this;
     }
 
-    public synchronized Security addFilterBefore(Class<? extends Filter> filterClass) {
-        return addFilter(filterClass, "BEFORE");
+    public synchronized Security addFilterBefore(Class<? extends Filter> filterClass, Filter filter) {
+        return addFilter(filterClass, filter, true);
     }
 
-    public synchronized Security addFilterAfter(Class<? extends Filter> filterClass) {
-        return addFilter(filterClass, "AFTER");
+    public synchronized Security addFilterAfter(Class<? extends Filter> filterClass, Filter filter) {
+        return addFilter(filterClass, filter, false);
     }
 
     public synchronized Security appendFilter(@Nullable Filter... filters) {
         if (filters == null) return this;
         Assert.noNullElements(filters, "Chaque filtre du tableau de filtres ne peut être \"null\"");
 
-        Collections.addAll(FILTERS, filters);
+        Collections.addAll(this.filters, filters);
         return this;
     }
 
-    private synchronized Security addFilter(Class<? extends Filter> filterClass, String position) {
+    private synchronized Security addFilter(Class<? extends Filter> filterClass, Filter filter, boolean before) {
         Assert.notNull(filterClass, "La classe du filtre ne peut pas être \"null\"");
 
-        for (Filter filter : FILTERS) {
-            if (!filterClass.isInstance(filter)) continue;
+        for (Filter f : filters) {
+            if (!filterClass.isInstance(f)) continue;
 
-            final int index = FILTERS.indexOf(filter);
-            switch (position) {
-                case "BEFORE" -> FILTERS.add(index, filter);
-                case "AFTER"  -> FILTERS.add(index + 1, filter);
-                default       -> throw new InternalException();
-            }
-
+            filters.add(filters.indexOf(f) + (before ? 0 : 1), filter);
             return this;
         }
 
