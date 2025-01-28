@@ -67,7 +67,7 @@ public final class AuthenticationManager {
     }
 
     public void login(String identifier, String plainPassword) throws InvalidCredentialsException {
-        if (!attempt(identifier, plainPassword)) throw new InvalidCredentialsException();
+        if (!attempt(identifier, plainPassword)) throw new InvalidCredentialsException(identifier, plainPassword);
 
         currentUser = userProvider.loadUserByIdentifier(identifier);
     }

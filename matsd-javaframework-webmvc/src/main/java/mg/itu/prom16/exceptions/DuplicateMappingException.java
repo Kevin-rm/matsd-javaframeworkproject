@@ -7,9 +7,7 @@ public class DuplicateMappingException extends BaseException {
     private static final String PREFIX = "Configuration de mappage en double détectée";
 
     public DuplicateMappingException(RequestMappingInfo requestMappingInfo) {
-        super(
-            String.format("path : \"%s\", methods : %s",
-                requestMappingInfo.getPath(), requestMappingInfo.getMethods()
-            ), PREFIX);
+        super(String.format("path : \"%s\", methods : %s",
+            requestMappingInfo.getPath(), requestMappingInfo.getMethods()), PREFIX);
     }
 }
