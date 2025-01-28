@@ -23,17 +23,7 @@ public class InMemoryUserProvider implements UserProvider {
     public User loadUserByIdentifier(String identifier) throws UserNotFoundException {
         Assert.notBlank(identifier, false, "L'identifiant de l'utilisateur ne peut être vide ou \"null\"");
 
-        User user = usersMap.get(identifier);
-        if (user == null) throw new UserNotFoundException(identifier);
-
-        return user;
-    }
-
-    @Override
-    public User refreshUser(User user) throws UserNotFoundException {
-        final String userIdentifier = user.getIdentifier();
-        if (!usersMap.containsKey(userIdentifier)) throw new UserNotFoundException(userIdentifier);
-
-        return usersMap.get(userIdentifier);
+        if (!usersMap.containsKey(identifier)) throw new UserNotFoundException(identifier);
+        return usersMap.get(identifier);
     }
 }
