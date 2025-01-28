@@ -29,7 +29,7 @@ public class InMemoryUserProvider implements UserProvider {
         final String identifier = user.getIdentifier();
         Assert.notBlank(identifier, false, "L'identifiant de l'utilisateur ne peut être vide ou \"null\"");
 
-        if (usersMap.containsKey(identifier)) throw new DuplicateUserException("");
+        if (usersMap.containsKey(identifier)) throw new DuplicateUserException(identifier);
         usersMap.put(identifier, user);
     }
 

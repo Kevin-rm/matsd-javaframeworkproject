@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class Security {
-    public static final List<Filter> FILTERS = new ArrayList<>();
+    private static final List<Filter> FILTERS = new ArrayList<>();
 
     @Nullable
     private AuthenticationManager authenticationManager;
