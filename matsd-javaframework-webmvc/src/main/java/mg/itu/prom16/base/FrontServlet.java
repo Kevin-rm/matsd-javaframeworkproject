@@ -18,11 +18,15 @@ import mg.itu.prom16.exceptions.NotFoundHttpException;
 import mg.itu.prom16.http.RequestMethod;
 import mg.itu.prom16.http.Session;
 import mg.itu.prom16.support.WebApplicationContainer;
-import mg.itu.prom16.utils.JspUtils;
+import mg.itu.prom16.utils.AuthFacade;
 import mg.itu.prom16.utils.WebFacade;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.AnnotationUtils;
 import mg.matsd.javaframework.core.utils.Assert;
+import mg.matsd.javaframework.security.base.AuthenticationManager;
+import mg.matsd.javaframework.security.base.User;
+import mg.matsd.javaframework.security.base.UserRole;
+import mg.matsd.javaframework.security.exceptions.AccessDeniedException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -51,10 +55,14 @@ public class FrontServlet extends HttpServlet {
             responseRenderer = new ResponseRenderer(webApplicationContainer);
             initHandlers();
 
-            JspUtils.setFrontServlet(this);
+            WebFacade.setFrontServlet(this);
         } catch (Throwable throwable) {
             throwableOnInit = throwable;
         }
+    }
+
+    public WebApplicationContainer getWebApplicationContainer() {
+        return webApplicationContainer;
     }
 
     private void initHandlers() {
@@ -89,15 +97,13 @@ public class FrontServlet extends HttpServlet {
                         throw new DuplicateMappingException(requestMappingInfo);
 
                     mappingHandlerMap.put(requestMappingInfo,
-                        new MappingHandler(controllerClass, method, jsonResponse)
-                    );
+                        new MappingHandler(controllerClass, method, jsonResponse));
                 } else if (method.isAnnotationPresent(mg.itu.prom16.annotations.ExceptionHandler.class)) {
                     Class<? extends Throwable>[] exceptionClasses = method.getAnnotation(mg.itu.prom16.annotations.ExceptionHandler.class).value();
                     if (exceptionClasses.length == 0) continue;
 
                     exceptionHandlers.add(
-                        new ExceptionHandler(controllerClass, method, jsonResponse, exceptionClasses, false)
-                    );
+                        new ExceptionHandler(controllerClass, method, jsonResponse, exceptionClasses, false));
                 }
             }
         }
@@ -123,14 +129,38 @@ public class FrontServlet extends HttpServlet {
         Session session = ((Session) webApplicationContainer.getManagedInstance(Session.class))
             .setHttpSession(WebFacade.getCurrentHttpSession());
 
+        AuthenticationManager authenticationManager = AuthFacade.getAuthenticationManager();
+        final String statefulStorageKey = authenticationManager.getStatefulStorageKey();
+        if (AuthFacade.isUserConnected() && statefulStorageKey != null) {
+            User refreshedUser = authenticationManager.getUserProvider().refreshUser(authenticationManager.getCurrentUser());
+            session.put(statefulStorageKey, refreshedUser);
+        }
+
         MappingHandler mappingHandler = null;
         try {
             Map.Entry<RequestMappingInfo, MappingHandler> mappingHandlerEntry = resolveMappingHandler(request);
+            final String servletPath = request.getServletPath();
             if (mappingHandlerEntry == null)
                 throw new NotFoundHttpException(String.format("Aucun mapping trouvé pour le path : \"%s\" et method : \"%s\"",
-                    request.getServletPath(), request.getMethod()));
+                    servletPath, request.getMethod())
+                );
 
             mappingHandler = mappingHandlerEntry.getValue();
+            final boolean isUserConnected = AuthFacade.isUserConnected();
+            if (mappingHandler.isAnonymous() && isUserConnected)
+                throw new AccessDeniedException(String.format("Vous devez être anonyme " +
+                    "pour accéder à la ressource \"%s\"", servletPath), servletPath);
+
+            final List<String> allowedRoles = mappingHandler.getAllowedRoles();
+            if (allowedRoles != null) {
+                if (!isUserConnected) throw new AccessDeniedException(String.format("Vous devez être connecté " +
+                    "pour accéder à la ressource \"%s\"", servletPath), servletPath);
+                User currentUser = AuthFacade.getCurrentUser();
+
+                if (allowedRoles.stream().noneMatch(currentUser::hasRole))
+                    throw new AccessDeniedException(servletPath, allowedRoles);
+            }
+
             responseRenderer.doRender(request, response, session, mappingHandler, mappingHandlerEntry.getKey());
         } catch (Throwable throwable) {
             List<Throwable> throwableTrace = ExceptionHandler.getThrowableTrace(throwable, null);
