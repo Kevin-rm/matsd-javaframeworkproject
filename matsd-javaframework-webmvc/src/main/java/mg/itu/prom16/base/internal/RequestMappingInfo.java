@@ -127,9 +127,7 @@ public class RequestMappingInfo {
         Assert.notNull(httpServletRequest, "L'argument httpServletRequest ne peut pas être \"null\"");
 
         return pathPattern.matcher(httpServletRequest.getServletPath()).matches() &&
-               methods.contains(
-                   RequestMethod.valueOf(httpServletRequest.getMethod())
-               );
+               methods.contains(RequestMethod.valueOf(httpServletRequest.getMethod()));
     }
 
     public Map<String, String> extractPathVariablesValues(HttpServletRequest httpServletRequest) {

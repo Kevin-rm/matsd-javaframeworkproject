@@ -15,6 +15,7 @@ import mg.matsd.javaframework.core.io.Resource;
 import mg.matsd.javaframework.core.managedinstances.ManagedInstance;
 import mg.matsd.javaframework.core.managedinstances.ManagedInstanceUtils;
 import mg.matsd.javaframework.core.utils.Assert;
+import mg.matsd.javaframework.security.base.Security;
 import mg.matsd.javaframework.validation.base.ValidatorFactory;
 
 import java.util.ArrayList;
@@ -65,6 +66,7 @@ public class WebApplicationContainer extends AbstractXmlResourceContainer {
 
         registerManagedInstance(ThirdPartyConfiguration.JACKSON_OBJECT_MAPPER_ID, ObjectMapper.class, SINGLETON, null, ThirdPartyConfiguration.MANAGED_INSTANCE_ID, "objectMapper");
         registerManagedInstance(ThirdPartyConfiguration.VALIDATOR_FACTORY_ID, ValidatorFactory.class, SINGLETON, null, ThirdPartyConfiguration.MANAGED_INSTANCE_ID, "validatorFactory");
+        registerManagedInstance(ThirdPartyConfiguration.SECURITY_ID, Security.class, SINGLETON, null, ThirdPartyConfiguration.MANAGED_INSTANCE_ID, "security");
     }
 
     @Override

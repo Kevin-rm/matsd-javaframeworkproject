@@ -1,4 +1,4 @@
-package mg.itu.prom16.exceptions;
+package mg.itu.prom16.base.internal;
 
 import mg.matsd.javaframework.core.exceptions.BaseException;
 
@@ -10,7 +10,7 @@ public class NonInitializedCollectionException extends BaseException {
     private final Class<?> modelType;
     private final Field field;
 
-    public NonInitializedCollectionException(String modelName, Class<?> modelType, Field field) {
+    NonInitializedCollectionException(String modelName, Class<?> modelType, Field field) {
         super(String.format("La valeur du champ collection \"%s\" sur le modèle \"%s\" de type \"%s\" est \"null\"",
             field.getName(), modelName, modelType), PREFIX);
 
