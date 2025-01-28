@@ -7,6 +7,7 @@ import java.util.List;
 
 public class SecurityFilterChain implements FilterChain {
     private final List<Filter> filters;
+    private int currentFilterIndex = 0;
 
     SecurityFilterChain(List<Filter> filters) {
         this.filters = filters;
@@ -14,6 +15,7 @@ public class SecurityFilterChain implements FilterChain {
 
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse) throws IOException, ServletException {
-
+        if (currentFilterIndex < filters.size())
+            filters.get(++currentFilterIndex).doFilter(servletRequest, servletResponse, this);
     }
 }
