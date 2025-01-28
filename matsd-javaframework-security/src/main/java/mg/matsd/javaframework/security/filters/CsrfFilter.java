@@ -7,14 +7,15 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.util.UUID;
 
 public class CsrfFilter implements Filter {
-    private static final String CSRF_TOKEN_SESSION_KEY = "csrf_token";
-    private static final String CSRF_TOKEN_HEADER      = "X-CSRF-Token";
-    private static final String CSRF_TOKEN_PARAM_NAME  = "_csrf";
+    private static final String CSRF_TOKEN_SESSION_KEY    = "csrf_token";
+    private static final String CSRF_TOKEN_HEADER         = "X-CSRF-Token";
+    private static final String CSRF_TOKEN_PARAMETER_NAME = "_csrf";
 
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
@@ -37,20 +38,22 @@ public class CsrfFilter implements Filter {
     }
 
     private String getOrGenerateCsrfToken(HttpServletRequest httpServletRequest) {
-        String csrfToken = (String) httpServletRequest.getSession().getAttribute(CSRF_TOKEN_SESSION_KEY);
+        HttpSession httpSession = httpServletRequest.getSession();
+
+        String csrfToken = (String) httpSession.getAttribute(CSRF_TOKEN_SESSION_KEY);
         if (csrfToken == null) {
             csrfToken = UUID.randomUUID().toString();
-            httpServletRequest.getSession().setAttribute(CSRF_TOKEN_SESSION_KEY, csrfToken);
+            httpSession.setAttribute(CSRF_TOKEN_SESSION_KEY, csrfToken);
         }
 
         return csrfToken;
     }
 
     private static boolean validateCsrfToken(HttpServletRequest httpServletRequest, String csrfToken) {
-        String tokenFromHeader = httpServletRequest.getHeader(CSRF_TOKEN_HEADER);
-        String tokenFromParam  = httpServletRequest.getParameter(CSRF_TOKEN_PARAM_NAME);
+        String tokenFromRequestHeader    = httpServletRequest.getHeader(CSRF_TOKEN_HEADER);
+        String tokenFromRequestParameter = httpServletRequest.getParameter(CSRF_TOKEN_PARAMETER_NAME);
 
-        return csrfToken.equals(tokenFromHeader) || csrfToken.equals(tokenFromParam);
+        return csrfToken.equals(tokenFromRequestHeader) || csrfToken.equals(tokenFromRequestParameter);
     }
 
     private static boolean isStateChangingRequest(HttpServletRequest httpServletRequest) {
