@@ -10,8 +10,8 @@ public class AccessDeniedException extends BaseException {
     private List<String> necessaryRoles;
 
     public AccessDeniedException(String unreachableResource, List<String> necessaryRoles) {
-        super(String.format("Vous ne pouvez pas accéder à la ressource \"%s\"" +
-            "car vous n'avez pas les fonctions nécessaires : %s", unreachableResource, necessaryRoles), PREFIX);
+        super(String.format("Vous ne pouvez pas accéder à la ressource \"%s\" " +
+            "car vous n'avez pas les rôles nécessaires : %s", unreachableResource, necessaryRoles), PREFIX);
 
         this.unreachableResource = unreachableResource;
         this.necessaryRoles      = necessaryRoles;

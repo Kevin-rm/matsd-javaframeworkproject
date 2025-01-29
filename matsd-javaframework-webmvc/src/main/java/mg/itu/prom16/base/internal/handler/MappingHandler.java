@@ -28,7 +28,6 @@ public class MappingHandler extends AbstractHandler {
 
     public MappingHandler(Class<?> controllerClass, Method method, boolean jsonResponse) {
         super(controllerClass, method, jsonResponse);
-
         this.setAllowedRoles()
             .setAnonymous();
     }
@@ -42,9 +41,12 @@ public class MappingHandler extends AbstractHandler {
         if (!method.isAnnotationPresent(Authorize.class)) return this;
 
         allowedRoles = new ArrayList<>();
-        Arrays.stream(method.getAnnotation(Authorize.class).value()).forEachOrdered(roleValue -> {
-            Assert.notBlank(roleValue, false, "Chaque fonction d'utilisateur ne peut pas être vide ou \"null\"");
-            allowedRoles.add(roleValue);
+        final String[] roles = method.getAnnotation(Authorize.class).value();
+        if (roles.length == 0) return this;
+
+        Arrays.stream(roles).forEachOrdered(role -> {
+            Assert.notBlank(role, false, "Chaque rôle ne peut pas être vide ou \"null\"");
+            allowedRoles.add(role);
         });
 
         return this;

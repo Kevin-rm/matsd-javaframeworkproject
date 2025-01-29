@@ -131,7 +131,8 @@ public class FrontServlet extends HttpServlet {
 
         AuthenticationManager authenticationManager = AuthFacade.getAuthenticationManager();
         final String statefulStorageKey = authenticationManager.getStatefulStorageKey();
-        if (AuthFacade.isUserConnected() && statefulStorageKey != null) {
+        final boolean isUserConnected   = AuthFacade.isUserConnected();
+        if (isUserConnected && statefulStorageKey != null) {
             User refreshedUser = authenticationManager.getUserProvider().refreshUser(authenticationManager.getCurrentUser());
             session.put(statefulStorageKey, refreshedUser);
         }
@@ -146,7 +147,6 @@ public class FrontServlet extends HttpServlet {
                 );
 
             mappingHandler = mappingHandlerEntry.getValue();
-            final boolean isUserConnected = AuthFacade.isUserConnected();
             if (mappingHandler.isAnonymous() && isUserConnected)
                 throw new AccessDeniedException(String.format("Vous devez être anonyme " +
                     "pour accéder à la ressource \"%s\"", servletPath), servletPath);
@@ -157,7 +157,7 @@ public class FrontServlet extends HttpServlet {
                     "pour accéder à la ressource \"%s\"", servletPath), servletPath);
                 User currentUser = AuthFacade.getCurrentUser();
 
-                if (allowedRoles.stream().noneMatch(currentUser::hasRole))
+                if (allowedRoles.isEmpty() || allowedRoles.stream().noneMatch(currentUser::hasRole))
                     throw new AccessDeniedException(servletPath, allowedRoles);
             }
 
