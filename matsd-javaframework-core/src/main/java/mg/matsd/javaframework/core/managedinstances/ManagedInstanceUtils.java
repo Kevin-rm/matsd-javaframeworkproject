@@ -1,38 +1,37 @@
 package mg.matsd.javaframework.core.managedinstances;
 
 import mg.matsd.javaframework.core.annotations.Identifier;
+import mg.matsd.javaframework.core.annotations.Inject;
 import mg.matsd.javaframework.core.managedinstances.factory.ManagedInstanceFactory;
 import mg.matsd.javaframework.core.utils.Assert;
 
 import java.lang.reflect.*;
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.IntStream;
 
-public class ManagedInstanceUtils {
+public final class ManagedInstanceUtils {
     private ManagedInstanceUtils() { }
 
     public static Constructor<?> constructorToUse(ManagedInstance managedInstance) {
         Assert.notNull(managedInstance);
 
-        Constructor<?>[] constructors = managedInstance.getClazz().getDeclaredConstructors();
+        Constructor<?>[] constructors = getCandidateConstructors(managedInstance);
         if (constructors.length == 1) return constructors[0];
         Arrays.sort(constructors, (c1, c2) -> Integer.compare(c2.getParameterCount(), c1.getParameterCount()));
 
         return constructors[0];
     }
 
-    public static void processConstructorArguments(Executable executable, ManagedInstance managedInstance) {
+    public static void addConstructorArguments(Executable executable, ManagedInstance managedInstance) {
         Assert.notNull(executable);
         Assert.notNull(managedInstance);
 
         Parameter[] parameters = executable.getParameters();
         IntStream.range(0, parameters.length).forEachOrdered(i -> {
             Parameter parameter = parameters[i];
-            Class<?> parameterType = parameter.getType();
-
-            if (parameter.isAnnotationPresent(Identifier.class))
-                managedInstance.addConstructorArgument(i, parameterType, parameter.getAnnotation(Identifier.class).value());
-            else managedInstance.addConstructorArgument(i, parameterType, null);
+            managedInstance.addConstructorArgument(i, parameter.getType(), parameter.isAnnotationPresent(Identifier.class) ?
+                parameter.getAnnotation(Identifier.class).value() : null);
         });
     }
 
@@ -44,7 +43,7 @@ public class ManagedInstanceUtils {
         Object instance;
         try {
             Constructor<?> constructor = constructorToUse(managedInstance);
-            instance = constructor.newInstance(getConstructorArguments(constructor, managedInstance));
+            instance = constructor.newInstance(resolveConstructorArguments(constructor, managedInstance));
 
             for (Property property : managedInstance.getProperties()) {
                 Field field = property.getField();
@@ -55,8 +54,10 @@ public class ManagedInstanceUtils {
         } catch (IllegalAccessException e) {
             throw new ManagedInstanceException(String.format("Le constructeur de la \"ManagedInstance\" " +
                 "avec l'identifiant \"%s\" n'est pas accessible", managedInstance.getId()));
-        } catch (InvocationTargetException | InstantiationException e) {
+        } catch (InstantiationException e) {
             throw new ManagedInstanceException(e);
+        } catch (InvocationTargetException e) {
+            throw new RuntimeException(e.getCause());
         }
 
         return instance;
@@ -70,7 +71,7 @@ public class ManagedInstanceUtils {
         try {
             return factoryMethod.invoke(
                 managedInstanceFactory.getManagedInstance(managedInstance.getParent().getClazz()),
-                getConstructorArguments(factoryMethod, managedInstance)
+                resolveConstructorArguments(factoryMethod, managedInstance)
             );
         } catch (IllegalAccessException e) {
             throw new ManagedInstanceException(String.format(
@@ -78,15 +79,24 @@ public class ManagedInstanceUtils {
                 factoryMethod, managedInstance.getId()
             ));
         } catch (InvocationTargetException e) {
-            throw new ManagedInstanceException(e);
+            throw new ManagedInstanceException(e.getCause());
         }
     }
 
-    private static Object[] getConstructorArguments(Executable executable, ManagedInstance managedInstance) {
+    private static Object[] resolveConstructorArguments(Executable executable, ManagedInstance managedInstance) {
         Object[] args = new Object[executable.getParameterCount()];
-        for (ConstructorArgument constructorArgument : managedInstance.getConstructorArguments())
-            args[constructorArgument.getIndex()] = constructorArgument.getValue();
+        managedInstance.getConstructorArguments()
+            .forEach(constructorArgument -> args[constructorArgument.getIndex()] = constructorArgument.getValue());
 
         return args;
+    }
+
+    private static Constructor<?>[] getCandidateConstructors(ManagedInstance managedInstance) {
+        Constructor<?>[] constructors = managedInstance.getClazz().getDeclaredConstructors();
+        List<Constructor<?>> requestedConstructors = Arrays.stream(constructors)
+            .filter(constructor -> constructor.isAnnotationPresent(Inject.class))
+            .toList();
+
+        return requestedConstructors.isEmpty() ? constructors : requestedConstructors.toArray(new Constructor<?>[0]);
     }
 }

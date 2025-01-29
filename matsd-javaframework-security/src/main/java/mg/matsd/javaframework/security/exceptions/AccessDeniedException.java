@@ -1,27 +1,32 @@
 package mg.matsd.javaframework.security.exceptions;
 
 import mg.matsd.javaframework.core.exceptions.BaseException;
-import mg.matsd.javaframework.security.base.UserRole;
 
 import java.util.List;
 
 public class AccessDeniedException extends BaseException {
     private static final String PREFIX = "Accès refusé";
     private final String unreachableResource;
-    private final List<UserRole> necessaryUserRoles;
+    private List<String> necessaryRoles;
 
-    public AccessDeniedException(String unreachableResource, List<UserRole> necessaryUserRoles) {
-        super(String.format("Vous ne pouvez pas accéder à la ressource \"%s\"" +
-            "car vous n'avez pas les fonctions nécessaires : %s", unreachableResource, necessaryUserRoles), PREFIX);
+    public AccessDeniedException(String unreachableResource, List<String> necessaryRoles) {
+        super(String.format("Vous ne pouvez pas accéder à la ressource \"%s\" " +
+            "car vous n'avez pas les rôles nécessaires : %s", unreachableResource, necessaryRoles), PREFIX);
+
         this.unreachableResource = unreachableResource;
-        this.necessaryUserRoles  = necessaryUserRoles;
+        this.necessaryRoles      = necessaryRoles;
+    }
+
+    public AccessDeniedException(String message, String unreachableResource) {
+        super(message, PREFIX);
+        this.unreachableResource = unreachableResource;
     }
 
     public String getUnreachableResource() {
         return unreachableResource;
     }
 
-    public List<UserRole> getNecessaryUserRoles() {
-        return necessaryUserRoles;
+    public List<String> getNecessaryRoles() {
+        return necessaryRoles;
     }
 }

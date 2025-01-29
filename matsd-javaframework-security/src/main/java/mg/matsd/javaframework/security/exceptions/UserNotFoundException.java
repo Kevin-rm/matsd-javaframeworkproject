@@ -1,11 +1,13 @@
 package mg.matsd.javaframework.security.exceptions;
 
-public class UserNotFoundException extends RuntimeException {
+import mg.matsd.javaframework.core.exceptions.BaseException;
+
+public class UserNotFoundException extends BaseException {
     private static final String PREFIX = "Utilisateur non trouvé";
     private final String identifier;
 
     public UserNotFoundException(String identifier) {
-        super("Aucun utilisateur trouvé avec l'identifiant: " + identifier);
+        super(String.format("Aucun utilisateur trouvé avec l'identifiant : \"%s\"", identifier), PREFIX);
         this.identifier = identifier;
     }
 

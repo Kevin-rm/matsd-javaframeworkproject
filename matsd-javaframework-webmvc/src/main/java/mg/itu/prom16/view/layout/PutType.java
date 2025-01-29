@@ -5,7 +5,7 @@ import mg.matsd.javaframework.core.utils.Assert;
 import java.io.IOException;
 import java.io.Writer;
 
-enum PutType {
+public enum PutType {
     APPEND {
         @Override
         void write(Writer writer, String bodyResult, String putContents) throws IOException {

@@ -23,12 +23,10 @@ public final class AnnotationUtils {
     public static Annotation getAnnotation(Class<? extends Annotation> annotationClass, AnnotatedElement annotatedElement) {
         Assert.notNull(annotationClass, "La classe de l'annotation ne peut pas être \"null\"");
 
-        Set<Annotation> annotations = getAllAnnotations(annotatedElement);
-        for (Annotation annotation : annotations)
-            if (annotation.annotationType().equals(annotationClass))
-                return annotation;
-
-        return null;
+        return getAllAnnotations(annotatedElement).stream()
+            .filter(annotation -> annotation.annotationType().equals(annotationClass))
+            .findFirst()
+            .orElse(null);
     }
 
     public static boolean hasAnnotation(Class<? extends Annotation> annotationClass, AnnotatedElement annotatedElement) {

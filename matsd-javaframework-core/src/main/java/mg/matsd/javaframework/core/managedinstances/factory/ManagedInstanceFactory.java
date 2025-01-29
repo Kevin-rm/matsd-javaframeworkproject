@@ -42,8 +42,7 @@ public abstract class ManagedInstanceFactory {
         List<ManagedInstance> managedInstances = managedInstanceDefinitionRegistry.getManagedInstances();
 
         String[] names = new String[managedInstances.size()];
-        for (int i = 0; i < names.length; i++)
-            names[i] = managedInstances.get(i).getClazz().getName();
+        Arrays.setAll(names, i -> managedInstances.get(i).getClazz().getName());
 
         return names;
     }
@@ -60,18 +59,21 @@ public abstract class ManagedInstanceFactory {
         Assert.notNull(managedInstanceClass, "La classe de la \"ManagedInstance\" ne peut pas être \"null\"");
 
         return getManagedInstance(
-            managedInstanceDefinitionRegistry.getManagedInstanceByClass(managedInstanceClass)
-        );
+            managedInstanceDefinitionRegistry.getManagedInstanceByClass(managedInstanceClass));
     }
 
-    public Boolean containsManagedInstance(String id) {
+    public boolean containsManagedInstance(String id) {
         validateId(id);
-
         return managedInstanceDefinitionRegistry.containsManagedInstance(id);
     }
 
+    public boolean containsManagedInstance(Class<?> managedInstanceClass) {
+        Assert.notNull(managedInstanceClass, "La classe de la \"ManagedInstance\" ne peut pas être \"null\"");
+        return managedInstanceDefinitionRegistry.containsManagedInstance(managedInstanceClass);
+    }
+
     public void registerManagedInstance(ManagedInstance... managedInstances) {
-        Assert.notNull(managedInstances, "L'argument managedInstances ne peut pas être \"null\"");
+        Assert.notEmpty(managedInstances, "Le tableau de \"ManagedInstance\" ne peut pas être vide ou \"null\"");
         Assert.noNullElements(managedInstances, "Chaque \"ManagedInstance\" à enregistrer ne peut pas être \"null\"");
 
         Arrays.stream(managedInstances).forEachOrdered(m -> managedInstanceDefinitionRegistry.registerManagedInstance(m));
@@ -81,13 +83,14 @@ public abstract class ManagedInstanceFactory {
         @Nullable String id,
         Class<?> clazz,
         @Nullable Scope scope,
+        @Nullable Boolean isLazy,
         String parentId,
         String factoryMethodName
     ) {
         Assert.notBlank(parentId, false, "L'identifiant du parent ne peut pas être vide ou \"null\"");
         Assert.notBlank(factoryMethodName, false, "Le nom de la factoryMethod ne peut pas être vide ou \"null\"");
 
-        managedInstanceDefinitionRegistry.registerManagedInstance(id, clazz, scope, parentId, factoryMethodName);
+        managedInstanceDefinitionRegistry.registerManagedInstance(id, clazz, scope, isLazy, parentId, factoryMethodName);
     }
 
     public void registerManagedInstance(
@@ -137,20 +140,25 @@ public abstract class ManagedInstanceFactory {
         throw new UnsupportedOperationException("La méthode \"getManagedInstanceForWebScope\" n'est disponible que dans un contexte web");
     }
 
+    protected void eagerInitSingletonManagedInstances() {
+        managedInstanceDefinitionRegistry.getManagedInstances().stream()
+            .filter(managedInstance -> !managedInstance.getLazy())
+            .forEachOrdered(this::getManagedInstance);
+    }
+
     private Object getManagedInstance(ManagedInstance managedInstance) {
         String managedInstanceId = managedInstance.getId();
 
         if (isCurrentlyInCreation(managedInstanceId))
             throw new ManagedInstanceCurrentlyInCreationException(managedInstanceId);
-        managedInstanceDefinitionRegistry.resolveDependencies(managedInstance);
-
-        if (managedInstance.getScope() == Scope.REQUEST || managedInstance.getScope() == Scope.SESSION)
-            return getManagedInstanceForWebScope(managedInstance);
-
         if (
             isSingleton(managedInstanceId) &&
-            singletonsMap.containsKey(managedInstanceId)
+                singletonsMap.containsKey(managedInstanceId)
         ) return singletonsMap.get(managedInstanceId);
+
+        managedInstanceDefinitionRegistry.resolveDependencies(managedInstance);
+        if (managedInstance.getScope() == Scope.REQUEST || managedInstance.getScope() == Scope.SESSION)
+            return getManagedInstanceForWebScope(managedInstance);
 
         Object instance = ManagedInstanceUtils.instantiate(managedInstance, this);
         if (isSingleton(managedInstanceId))

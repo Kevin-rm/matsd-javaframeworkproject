@@ -16,16 +16,15 @@ class ManagedInstanceDefinitionScanner {
         ClassScanner.doScan(packageName, clazz -> {
             if (!isComponent(clazz)) return;
 
-            Component component = (Component) AnnotationUtils.getAnnotation(Component.class, clazz);
-            String scope = null;
-            if (clazz.isAnnotationPresent(Scope.class))
-                scope = clazz.getAnnotation(Scope.class).value();
+            String componentValue = ((Component) AnnotationUtils.getAnnotation(Component.class, clazz)).value();
 
             ManagedInstance managedInstance = new ManagedInstance(
-                StringUtils.isBlank(component.value()) ? null : component.value(),
-                clazz, scope, null, null
+                StringUtils.isBlank(componentValue) ? null : componentValue, clazz,
+                clazz.isAnnotationPresent(Scope.class) ? clazz.getAnnotation(Scope.class).value() : null,
+                clazz.isAnnotationPresent(Lazy.class)  ? "true" : null,
+                null, null
             );
-            ManagedInstanceUtils.processConstructorArguments(
+            ManagedInstanceUtils.addConstructorArguments(
                 ManagedInstanceUtils.constructorToUse(managedInstance), managedInstance);
 
             managedInstanceDefinitionRegistry.registerManagedInstance(managedInstance);
@@ -43,13 +42,14 @@ class ManagedInstanceDefinitionScanner {
             if (!method.isAnnotationPresent(mg.matsd.javaframework.core.annotations.ManagedInstance.class))
                 continue;
 
-            mg.matsd.javaframework.core.annotations.ManagedInstance m = method.getAnnotation(mg.matsd.javaframework.core.annotations.ManagedInstance.class);
+            String value = method.getAnnotation(mg.matsd.javaframework.core.annotations.ManagedInstance.class).value();
             ManagedInstance managedInstance = new ManagedInstance(
-                StringUtils.isBlank(m.value()) ? null : m.value(), method.getReturnType(),
+                StringUtils.isBlank(value) ? null : value, method.getReturnType(),
                 method.isAnnotationPresent(Scope.class) ? method.getAnnotation(Scope.class).value() : null,
+                method.isAnnotationPresent(Lazy.class)  ? "true" : null,
                 configuration, method
             );
-            ManagedInstanceUtils.processConstructorArguments(method, managedInstance);
+            ManagedInstanceUtils.addConstructorArguments(method, managedInstance);
 
             managedInstanceDefinitionRegistry.registerManagedInstance(managedInstance);
         }

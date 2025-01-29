@@ -1,9 +1,11 @@
 package mg.matsd.javaframework.core.managedinstances;
 
 import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.exceptions.TypeMismatchException;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.core.utils.ClassUtils;
 import mg.matsd.javaframework.core.utils.StringUtils;
+import mg.matsd.javaframework.core.utils.converter.StringConverter;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -14,6 +16,7 @@ public class ManagedInstance {
     private String   id;
     private Class<?> clazz;
     private Scope    scope;
+    private Boolean  isLazy;
     @Nullable
     private ManagedInstance parent;
     @Nullable
@@ -24,29 +27,34 @@ public class ManagedInstance {
     public ManagedInstance(
         @Nullable String id,
         Class<?> clazz,
-        @Nullable Scope scope,
+        @Nullable Scope   scope,
+        @Nullable Boolean isLazy,
         @Nullable ManagedInstance parent,
         @Nullable Method factoryMethod
     ) {
         this(id, clazz, parent, factoryMethod);
-        setScope(scope);
+        this.setScope(scope)
+            .setLazy(isLazy);
     }
 
     public ManagedInstance(
         @Nullable String id,
         Class<?> clazz,
         @Nullable String scope,
+        @Nullable String isLazy,
         @Nullable ManagedInstance parent,
         @Nullable Method factoryMethod
     ) {
         this(id, clazz, parent, factoryMethod);
-        setScope(scope);
+        this.setScope(scope)
+            .setLazy(isLazy);
     }
 
     public ManagedInstance(@Nullable String id, String clazz, @Nullable String scope) {
         this.setClazz(clazz)
             .setId(id)
-            .setScope(scope);
+            .setScope(scope)
+            .setLazy((String) null);
     }
 
     private ManagedInstance(
@@ -124,6 +132,24 @@ public class ManagedInstance {
             return setScope(Scope.valueOf(scope.strip().toUpperCase()));
         } catch (IllegalArgumentException e) {
             throw new ManagedInstanceCreationException(String.format("Scope non valide : %s", scope));
+        }
+    }
+
+    public Boolean getLazy() {
+        return isLazy;
+    }
+
+    private ManagedInstance setLazy(@Nullable Boolean isLazy) {
+        this.isLazy = scope != Scope.SINGLETON || (isLazy != null && isLazy);
+        return this;
+    }
+
+    private ManagedInstance setLazy(@Nullable String isLazy) {
+        try {
+            return setLazy(isLazy == null || StringUtils.isBlank(isLazy) ? null :
+                StringConverter.convert(isLazy, Boolean.class));
+        } catch (TypeMismatchException e) {
+            throw new ManagedInstanceCreationException("La valeur de l'argument \"isLazy\" donné n'est pas un \"boolean\" : " + this.isLazy);
         }
     }
 
@@ -216,12 +242,14 @@ public class ManagedInstance {
 
     private void addConstructorArgument(ConstructorArgument constructorArgument) {
         final int i = constructorArgument.getIndex();
-        constructorArguments.stream().filter(c -> i == c.getIndex()).forEachOrdered(c -> {
-            throw new ManagedInstanceCreationException(
-                String.format("L'argument de constructeur avec l'indice %d " +
-                    "est redondant pour la \"ManagedInstance\" avec l'ID \"%s\"", i, id)
-            );
-        });
+        constructorArguments.stream()
+            .filter(c -> i == c.getIndex())
+            .forEachOrdered(c -> {
+                throw new ManagedInstanceCreationException(
+                    String.format("L'argument de constructeur avec l'indice %d " +
+                        "est redondant pour la \"ManagedInstance\" avec l'ID \"%s\"", i, id)
+                );
+            });
 
         constructorArguments.add(constructorArgument);
     }
