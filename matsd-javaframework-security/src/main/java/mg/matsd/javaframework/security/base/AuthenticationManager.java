@@ -3,6 +3,7 @@ package mg.matsd.javaframework.security.base;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.security.exceptions.InvalidCredentialsException;
+import mg.matsd.javaframework.security.exceptions.UserNotFoundException;
 import mg.matsd.javaframework.security.provider.UserProvider;
 
 public final class AuthenticationManager {
@@ -69,9 +70,13 @@ public final class AuthenticationManager {
     }
 
     public boolean attempt(String identifier, String plainPassword) {
-        User user = userProvider.loadUserByIdentifier(identifier);
+        try {
+            User user = userProvider.loadUserByIdentifier(identifier);
 
-        return user.getIdentifier().equals(identifier) && passwordHasher.verify(plainPassword, user.getPassword());
+            return user.getIdentifier().equals(identifier) && passwordHasher.verify(plainPassword, user.getPassword());
+        } catch (UserNotFoundException e) {
+            return false;
+        }
     }
 
     public void login(String identifier, String plainPassword) throws InvalidCredentialsException {

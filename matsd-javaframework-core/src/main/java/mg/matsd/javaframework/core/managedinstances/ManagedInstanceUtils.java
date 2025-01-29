@@ -54,8 +54,10 @@ public final class ManagedInstanceUtils {
         } catch (IllegalAccessException e) {
             throw new ManagedInstanceException(String.format("Le constructeur de la \"ManagedInstance\" " +
                 "avec l'identifiant \"%s\" n'est pas accessible", managedInstance.getId()));
-        } catch (InvocationTargetException | InstantiationException e) {
+        } catch (InstantiationException e) {
             throw new ManagedInstanceException(e);
+        } catch (InvocationTargetException e) {
+            throw new RuntimeException(e.getCause());
         }
 
         return instance;
@@ -77,7 +79,7 @@ public final class ManagedInstanceUtils {
                 factoryMethod, managedInstance.getId()
             ));
         } catch (InvocationTargetException e) {
-            throw new ManagedInstanceException(e);
+            throw new ManagedInstanceException(e.getCause());
         }
     }
 

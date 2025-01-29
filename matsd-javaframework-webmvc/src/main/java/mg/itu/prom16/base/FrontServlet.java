@@ -23,9 +23,10 @@ import mg.itu.prom16.utils.WebFacade;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.AnnotationUtils;
 import mg.matsd.javaframework.core.utils.Assert;
+import mg.matsd.javaframework.security.annotation.Anonymous;
+import mg.matsd.javaframework.security.annotation.Authorize;
 import mg.matsd.javaframework.security.base.AuthenticationManager;
 import mg.matsd.javaframework.security.base.User;
-import mg.matsd.javaframework.security.base.UserRole;
 import mg.matsd.javaframework.security.exceptions.AccessDeniedException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -50,8 +51,7 @@ public class FrontServlet extends HttpServlet {
             LOGGER.info("Démarrage du conteneur des \"ManagedInstance\"");
             webApplicationContainer = new WebApplicationContainer(
                 getServletContext(),
-                getServletConfig().getInitParameter("containerConfigLocation")
-            );
+                getServletConfig().getInitParameter("containerConfigLocation"));
             responseRenderer = new ResponseRenderer(webApplicationContainer);
             initHandlers();
 
@@ -75,7 +75,6 @@ public class FrontServlet extends HttpServlet {
             String pathPrefix = "";
             String namePrefix = "";
             List<RequestMethod> sharedRequestMethods = new ArrayList<>();
-            boolean jsonResponse = AnnotationUtils.hasAnnotation(JsonResponse.class, controllerClass);
 
             if (controllerClass.isAnnotationPresent(RequestMapping.class)) {
                 RequestMapping requestMapping = controllerClass.getAnnotation(RequestMapping.class);
@@ -85,19 +84,23 @@ public class FrontServlet extends HttpServlet {
                 sharedRequestMethods = Arrays.asList(requestMapping.methods());
             }
 
+            final boolean jsonResponse = AnnotationUtils.hasAnnotation(JsonResponse.class, controllerClass);
+            final boolean isAnonymous  = AnnotationUtils.hasAnnotation(Anonymous.class, controllerClass);
+            final String[] sharedAllowedRoles = controllerClass.isAnnotationPresent(Authorize.class) ?
+                controllerClass.getAnnotation(Authorize.class).value() : null;
+
             for (Method method : controllerClass.getDeclaredMethods()) {
                 if (method.getModifiers() == Modifier.PRIVATE) continue;
 
                 if (AnnotationUtils.hasAnnotation(RequestMapping.class, method)) {
                     RequestMappingInfo requestMappingInfo = new RequestMappingInfo(
-                        pathPrefix, namePrefix, UtilFunctions.getRequestMappingInfoAttributes(method), sharedRequestMethods
-                    );
+                        pathPrefix, namePrefix, UtilFunctions.getRequestMappingInfoAttributes(method), sharedRequestMethods);
 
                     if (mappingHandlerMap.containsKey(requestMappingInfo))
                         throw new DuplicateMappingException(requestMappingInfo);
 
                     mappingHandlerMap.put(requestMappingInfo,
-                        new MappingHandler(controllerClass, method, jsonResponse));
+                        new MappingHandler(controllerClass, method, jsonResponse, sharedAllowedRoles, isAnonymous));
                 } else if (method.isAnnotationPresent(mg.itu.prom16.annotations.ExceptionHandler.class)) {
                     Class<? extends Throwable>[] exceptionClasses = method.getAnnotation(mg.itu.prom16.annotations.ExceptionHandler.class).value();
                     if (exceptionClasses.length == 0) continue;
@@ -129,14 +132,6 @@ public class FrontServlet extends HttpServlet {
         Session session = ((Session) webApplicationContainer.getManagedInstance(Session.class))
             .setHttpSession(WebFacade.getCurrentHttpSession());
 
-        AuthenticationManager authenticationManager = AuthFacade.getAuthenticationManager();
-        final String statefulStorageKey = authenticationManager.getStatefulStorageKey();
-        final boolean isUserConnected   = AuthFacade.isUserConnected();
-        if (isUserConnected && statefulStorageKey != null) {
-            User refreshedUser = authenticationManager.getUserProvider().refreshUser(authenticationManager.getCurrentUser());
-            session.put(statefulStorageKey, refreshedUser);
-        }
-
         MappingHandler mappingHandler = null;
         try {
             Map.Entry<RequestMappingInfo, MappingHandler> mappingHandlerEntry = resolveMappingHandler(request);
@@ -145,20 +140,29 @@ public class FrontServlet extends HttpServlet {
                 throw new NotFoundHttpException(String.format("Aucun mapping trouvé pour le path : \"%s\" et method : \"%s\"",
                     servletPath, request.getMethod())
                 );
-
             mappingHandler = mappingHandlerEntry.getValue();
-            if (mappingHandler.isAnonymous() && isUserConnected)
-                throw new AccessDeniedException(String.format("Vous devez être anonyme " +
-                    "pour accéder à la ressource \"%s\"", servletPath), servletPath);
 
-            final List<String> allowedRoles = mappingHandler.getAllowedRoles();
-            if (allowedRoles != null) {
-                if (!isUserConnected) throw new AccessDeniedException(String.format("Vous devez être connecté " +
-                    "pour accéder à la ressource \"%s\"", servletPath), servletPath);
-                User currentUser = AuthFacade.getCurrentUser();
+            AuthenticationManager authenticationManager = AuthFacade.getAuthenticationManager();
+            if (authenticationManager != null) {
+                final String statefulStorageKey = authenticationManager.getStatefulStorageKey();
+                final boolean isUserConnected   = AuthFacade.isUserConnected();
+                final User currentUser = authenticationManager.getCurrentUser();
 
-                if (allowedRoles.isEmpty() || allowedRoles.stream().noneMatch(currentUser::hasRole))
-                    throw new AccessDeniedException(servletPath, allowedRoles);
+                if (isUserConnected && statefulStorageKey != null) {
+                    User refreshedUser = authenticationManager.getUserProvider().refreshUser(currentUser);
+                    session.put(statefulStorageKey, refreshedUser);
+                }
+                if (mappingHandler.isAnonymous() && isUserConnected)
+                    throw new AccessDeniedException(String.format("Vous devez être anonyme " +
+                        "pour accéder à la ressource \"%s\"", servletPath), servletPath);
+
+                final List<String> allowedRoles = mappingHandler.getAllowedRoles();
+                if (allowedRoles != null) {
+                    if (!isUserConnected) throw new AccessDeniedException(String.format("Vous devez être connecté " +
+                        "pour accéder à la ressource \"%s\"", servletPath), servletPath);
+                    if (!allowedRoles.isEmpty() && allowedRoles.stream().noneMatch(currentUser::hasRole))
+                        throw new AccessDeniedException(servletPath, allowedRoles);
+                }
             }
 
             responseRenderer.doRender(request, response, session, mappingHandler, mappingHandlerEntry.getKey());

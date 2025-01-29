@@ -23,9 +23,18 @@ public class ManagedInstanceDefinitionRegistry {
         return managedInstances;
     }
 
-    Boolean containsManagedInstance(String id) {
+    boolean containsManagedInstance(String id) {
         try {
             getManagedInstanceById(id);
+            return true;
+        } catch (NoSuchManagedInstanceException e) {
+            return false;
+        }
+    }
+
+    boolean containsManagedInstance(Class<?> clazz) {
+        try {
+            getManagedInstanceByClass(clazz);
             return true;
         } catch (NoSuchManagedInstanceException e) {
             return false;

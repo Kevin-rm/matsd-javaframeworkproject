@@ -20,16 +20,23 @@ import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class MappingHandler extends AbstractHandler {
     @Nullable
     private List<String> allowedRoles;
     private boolean anonymous;
 
-    public MappingHandler(Class<?> controllerClass, Method method, boolean jsonResponse) {
+    public MappingHandler(
+        Class<?> controllerClass,
+        Method method,
+        boolean jsonResponse,
+        @Nullable String[] sharedAllowedRoles,
+        boolean anonymous
+    ) {
         super(controllerClass, method, jsonResponse);
-        this.setAllowedRoles()
-            .setAnonymous();
+        this.setAllowedRoles(sharedAllowedRoles)
+            .setAnonymous(anonymous);
     }
 
     @Nullable
@@ -37,14 +44,17 @@ public class MappingHandler extends AbstractHandler {
         return allowedRoles;
     }
 
-    private MappingHandler setAllowedRoles() {
-        if (!method.isAnnotationPresent(Authorize.class)) return this;
+    private MappingHandler setAllowedRoles(@Nullable String[] sharedAllowedRoles) {
+        if (sharedAllowedRoles == null && !method.isAnnotationPresent(Authorize.class)) return this;
 
         allowedRoles = new ArrayList<>();
-        final String[] roles = method.getAnnotation(Authorize.class).value();
-        if (roles.length == 0) return this;
 
-        Arrays.stream(roles).forEachOrdered(role -> {
+        String[] roles = method.getAnnotation(Authorize.class).value();
+        final String[] finalRoles = sharedAllowedRoles != null ? Stream.concat(Arrays.stream(roles), Arrays.stream(sharedAllowedRoles))
+            .toArray(String[]::new) : roles;
+        if (finalRoles.length == 0) return this;
+
+        Arrays.stream(finalRoles).forEachOrdered(role -> {
             Assert.notBlank(role, false, "Chaque rôle ne peut pas être vide ou \"null\"");
             allowedRoles.add(role);
         });
@@ -56,10 +66,10 @@ public class MappingHandler extends AbstractHandler {
         return anonymous;
     }
 
-    private MappingHandler setAnonymous() {
+    private MappingHandler setAnonymous(boolean anonymous) {
         if (allowedRoles != null) return this;
 
-        anonymous = method.isAnnotationPresent(Anonymous.class);
+        this.anonymous = anonymous || method.isAnnotationPresent(Anonymous.class);
         return this;
     }
 

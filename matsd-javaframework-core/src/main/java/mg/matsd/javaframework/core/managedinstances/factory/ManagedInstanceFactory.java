@@ -59,14 +59,17 @@ public abstract class ManagedInstanceFactory {
         Assert.notNull(managedInstanceClass, "La classe de la \"ManagedInstance\" ne peut pas être \"null\"");
 
         return getManagedInstance(
-            managedInstanceDefinitionRegistry.getManagedInstanceByClass(managedInstanceClass)
-        );
+            managedInstanceDefinitionRegistry.getManagedInstanceByClass(managedInstanceClass));
     }
 
-    public Boolean containsManagedInstance(String id) {
+    public boolean containsManagedInstance(String id) {
         validateId(id);
-
         return managedInstanceDefinitionRegistry.containsManagedInstance(id);
+    }
+
+    public boolean containsManagedInstance(Class<?> managedInstanceClass) {
+        Assert.notNull(managedInstanceClass, "La classe de la \"ManagedInstance\" ne peut pas être \"null\"");
+        return managedInstanceDefinitionRegistry.containsManagedInstance(managedInstanceClass);
     }
 
     public void registerManagedInstance(ManagedInstance... managedInstances) {
