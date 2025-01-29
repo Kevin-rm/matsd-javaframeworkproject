@@ -41,10 +41,7 @@ public class CsrfFilter implements Filter {
         HttpSession httpSession = httpServletRequest.getSession();
 
         String csrfToken = (String) httpSession.getAttribute(CSRF_TOKEN_SESSION_KEY);
-        if (csrfToken == null) {
-            csrfToken = UUID.randomUUID().toString();
-            httpSession.setAttribute(CSRF_TOKEN_SESSION_KEY, csrfToken);
-        }
+        if (csrfToken == null) httpSession.setAttribute(CSRF_TOKEN_SESSION_KEY, UUID.randomUUID().toString());
 
         return csrfToken;
     }

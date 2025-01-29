@@ -8,6 +8,8 @@ import mg.matsd.javaframework.security.exceptions.UserNotFoundException;
 public interface UserProvider {
     void addUser(User user) throws DuplicateUserException;
 
+    void removeUser(User user) throws UserNotFoundException;
+
     User loadUserByIdentifier(String identifier) throws UserNotFoundException;
 
     default User refreshUser(User user) throws UserNotFoundException {
