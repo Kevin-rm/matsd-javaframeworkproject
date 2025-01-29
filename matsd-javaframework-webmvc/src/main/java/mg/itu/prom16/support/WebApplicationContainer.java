@@ -56,15 +56,15 @@ public class WebApplicationContainer extends AbstractXmlResourceContainer {
     @Override
     protected void defineCustomConfiguration() {
         registerManagedInstance(
-            new ManagedInstance(SessionImpl.MANAGED_INSTANCE_ID, SessionImpl.class, "session", null, null),
-            new ManagedInstance(Model.MANAGED_INSTANCE_ID, Model.class, "request", null, null),
-            new ManagedInstance(ThirdPartyConfiguration.MANAGED_INSTANCE_ID, ThirdPartyConfiguration.class, "singleton", null, null),
-            new ManagedInstance(ModelBindingResult.MANAGED_INSTANCE_ID, ModelBindingResult.class, "request", null, null),
-            new ManagedInstance(RedirectData.MANAGED_INSTANCE_ID, RedirectData.class, "request", null, null)
+            new ManagedInstance(SessionImpl.MANAGED_INSTANCE_ID, SessionImpl.class, SESSION, null, null, null),
+            new ManagedInstance(Model.MANAGED_INSTANCE_ID, Model.class, REQUEST, null, null, null),
+            new ManagedInstance(ThirdPartyConfiguration.MANAGED_INSTANCE_ID, ThirdPartyConfiguration.class, SINGLETON, null, null, null),
+            new ManagedInstance(ModelBindingResult.MANAGED_INSTANCE_ID, ModelBindingResult.class, REQUEST, null, null, null),
+            new ManagedInstance(RedirectData.MANAGED_INSTANCE_ID, RedirectData.class, REQUEST, null, null, null)
         );
 
-        registerManagedInstance(ThirdPartyConfiguration.JACKSON_OBJECT_MAPPER_ID, ObjectMapper.class, SINGLETON, ThirdPartyConfiguration.MANAGED_INSTANCE_ID, "objectMapper");
-        registerManagedInstance(ThirdPartyConfiguration.VALIDATOR_FACTORY_ID, ValidatorFactory.class, SINGLETON, ThirdPartyConfiguration.MANAGED_INSTANCE_ID, "validatorFactory");
+        registerManagedInstance(ThirdPartyConfiguration.JACKSON_OBJECT_MAPPER_ID, ObjectMapper.class, SINGLETON, null, ThirdPartyConfiguration.MANAGED_INSTANCE_ID, "objectMapper");
+        registerManagedInstance(ThirdPartyConfiguration.VALIDATOR_FACTORY_ID, ValidatorFactory.class, SINGLETON, null, ThirdPartyConfiguration.MANAGED_INSTANCE_ID, "validatorFactory");
     }
 
     @Override

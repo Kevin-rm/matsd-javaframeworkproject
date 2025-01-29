@@ -3,6 +3,7 @@ package mg.matsd.javaframework.core.utils.converter;
 import mg.matsd.javaframework.core.exceptions.TypeMismatchException;
 import mg.matsd.javaframework.core.utils.Assert;
 
+import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -47,6 +48,8 @@ public final class StringConverter {
                 result = (T) Timestamp.valueOf(value);
             else if (type == Time.class)
                 result = (T) Time.valueOf(value);
+            else if (type == BigDecimal.class)
+                result = (T) new BigDecimal(value);
             else throw new UnsupportedTypeConversionException(type);
         } catch (IllegalArgumentException e) {
             throw new TypeMismatchException(String.format(

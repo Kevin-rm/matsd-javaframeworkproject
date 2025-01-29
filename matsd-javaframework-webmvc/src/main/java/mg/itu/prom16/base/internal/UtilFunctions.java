@@ -6,11 +6,8 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
 import mg.itu.prom16.annotations.*;
 import mg.itu.prom16.base.Model;
+import mg.itu.prom16.exceptions.*;
 import mg.itu.prom16.validation.ModelBindingResult;
-import mg.itu.prom16.exceptions.MissingServletRequestParameterException;
-import mg.itu.prom16.exceptions.ModelBindingException;
-import mg.itu.prom16.exceptions.UndefinedPathVariableException;
-import mg.itu.prom16.exceptions.UnexpectedParameterException;
 import mg.itu.prom16.support.WebApplicationContainer;
 import mg.itu.prom16.upload.FileUploadException;
 import mg.itu.prom16.upload.UploadedFile;
@@ -24,19 +21,18 @@ import mg.matsd.javaframework.validation.base.ValidatorFactory;
 
 import java.io.IOException;
 import java.lang.reflect.*;
+import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public final class UtilFunctions {
     private static final Set<Class<?>> ALLOWED_CLASSES = Set.of(
-        LocalDate.class, LocalDateTime.class, LocalTime.class, Date.class, Timestamp.class, Time.class);
+        LocalDate.class, LocalDateTime.class, LocalTime.class, Date.class, Timestamp.class, Time.class, BigDecimal.class);
 
     private UtilFunctions() { }
 
@@ -205,7 +201,7 @@ public final class UtilFunctions {
     ) {
         if (modelInstance == null) modelInstance = instantiateModel(clazz);
         try {
-            for (Field field : clazz.getDeclaredFields()) {
+            for (Field field : ClassUtils.getAllFields(clazz)) {
                 if (Modifier.isFinal(field.getModifiers())) continue;
 
                 field.setAccessible(true);
@@ -216,6 +212,21 @@ public final class UtilFunctions {
                     bindRequestParameter.value() : field.getName();
 
                 String requestParameterName = modelName + "." + fieldAlias;
+
+                if (Collection.class.isAssignableFrom(fieldType)) {
+                    @SuppressWarnings("unchecked")
+                    Collection<Object> collection = (Collection<Object>) field.get(modelInstance);
+                    if (collection == null)
+                        throw new ModelBindingException(new NonInitializedCollectionException(modelName, clazz, field));
+
+                    field.set(modelInstance,
+                        populateCollectionFromRequest(collection,
+                            field.getGenericType() instanceof ParameterizedType parameterizedType ?
+                            (Class<?>) parameterizedType.getActualTypeArguments()[0] : Object.class,
+                        requestParameterName, httpServletRequest));
+                    continue;
+                }
+
                 if (fieldType == UploadedFile.class) {
                     UploadedFile uploadedFile = getUploadedFile(requestParameterName, httpServletRequest);
                     if (uploadedFile != null) field.set(modelInstance, uploadedFile);
@@ -223,13 +234,8 @@ public final class UtilFunctions {
                     continue;
                 }
 
-                String requestParameterValue = httpServletRequest.getParameter(requestParameterName);
-                if (
-                    ClassUtils.isPrimitiveOrWrapper(fieldType) ||
-                    ClassUtils.isStandardClass(fieldType)      ||
-                    fieldType == String.class
-                ) field.set(modelInstance, requestParameterValue == null || StringUtils.isBlank(requestParameterValue)
-                    ? null : StringConverter.convert(requestParameterValue, fieldType));
+                if (ClassUtils.isSimpleOrStandardClass(fieldType))
+                    setSimpleField(field, fieldType, modelInstance, httpServletRequest.getParameter(requestParameterName));
                 else field.set(modelInstance, populateModelFromRequest(fieldType, null, fieldAlias, httpServletRequest));
             }
 
@@ -237,6 +243,44 @@ public final class UtilFunctions {
         } catch (ServletException | IllegalAccessException e) {
             throw new ModelBindingException(e);
         }
+    }
+
+    private static Collection<Object> populateCollectionFromRequest(
+        Collection<Object> collection,
+        Class<?> clazz,
+        String requestParameterName,
+        HttpServletRequest httpServletRequest
+    ) {
+        int index = 0;
+
+        Set<String> parameterMapKeySet = httpServletRequest.getParameterMap().keySet();
+        while (true) {
+            String indexedRequestParameterName  = String.format("%s[%d]", requestParameterName, index);
+            String indexedRequestParameterValue = httpServletRequest.getParameter(indexedRequestParameterName);
+
+            if (indexedRequestParameterValue == null &&
+                parameterMapKeySet.stream().noneMatch(key -> key.startsWith(indexedRequestParameterName + "."))
+            ) break;
+            collection.add(ClassUtils.isSimpleOrStandardClass(clazz) ? indexedRequestParameterValue :
+                populateModelFromRequest(clazz, null, indexedRequestParameterName, httpServletRequest));
+
+            index++;
+        }
+
+        return collection;
+    }
+
+    private static void setSimpleField(
+        Field    field,
+        Class<?> fieldType,
+        Object   modelInstance,
+        String   requestParameterValue
+    ) throws IllegalAccessException {
+        boolean requestParameterValueIsNullOrBlank = requestParameterValue == null || StringUtils.isBlank(requestParameterValue);
+        if (fieldType.isPrimitive() && requestParameterValueIsNullOrBlank) return;
+
+        field.set(modelInstance, requestParameterValueIsNullOrBlank ? null :
+            StringConverter.convert(requestParameterValue, fieldType));
     }
 
     @Nullable

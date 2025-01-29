@@ -23,9 +23,18 @@ public class ManagedInstanceDefinitionRegistry {
         return managedInstances;
     }
 
-    Boolean containsManagedInstance(String id) {
+    boolean containsManagedInstance(String id) {
         try {
             getManagedInstanceById(id);
+            return true;
+        } catch (NoSuchManagedInstanceException e) {
+            return false;
+        }
+    }
+
+    boolean containsManagedInstance(Class<?> clazz) {
+        try {
+            getManagedInstanceByClass(clazz);
             return true;
         } catch (NoSuchManagedInstanceException e) {
             return false;
@@ -59,14 +68,14 @@ public class ManagedInstanceDefinitionRegistry {
     }
 
     void registerManagedInstance(
-        String id, Class<?> clazz, Scope scope, String parentId, String factoryMethodName
+        String id, Class<?> clazz, Scope scope, Boolean isLazy, String parentId, String factoryMethodName
     ) {
         ManagedInstance parent = getManagedInstanceById(parentId);
         Class<?> parentClass   = parent.getClazz();
         try {
             Method method = parentClass.getMethod(factoryMethodName);
-            ManagedInstance managedInstance = new ManagedInstance(id, clazz, scope, parent, method);
-            ManagedInstanceUtils.processConstructorArguments(method, managedInstance);
+            ManagedInstance managedInstance = new ManagedInstance(id, clazz, scope, isLazy, parent, method);
+            ManagedInstanceUtils.addConstructorArguments(method, managedInstance);
 
             registerManagedInstance(managedInstance);
         } catch (NoSuchMethodException e) {
@@ -107,15 +116,14 @@ public class ManagedInstanceDefinitionRegistry {
         try {
             managedInstancesCurrentlyInCreation.add(managedInstanceId);
 
-            for (ConstructorArgument constructorArgument : managedInstance.getConstructorArguments()) {
-                if (constructorArgument.getValue() != null) continue;
+            managedInstance.getConstructorArguments().stream()
+                .filter(constructorArgument -> constructorArgument.getValue() == null)
+                .forEachOrdered(constructorArgument -> {
+                    String reference = constructorArgument.getReference();
+                    Class<?> constructorArgumentType = constructorArgument.getType();
 
-                String reference = constructorArgument.getReference();
-                Class<?> constructorArgumentType = constructorArgument.getType();
-
-                Object value;
-                if (reference == null)
-                    try {
+                    Object value;
+                    if (reference == null) try {
                         value = managedInstanceFactory.getManagedInstance(constructorArgumentType);
                     } catch (NoSuchManagedInstanceException e) {
                         throw new ManagedInstanceDefinitionException(new NoSuchManagedInstanceException(
@@ -124,9 +132,7 @@ public class ManagedInstanceDefinitionRegistry {
                                     "aucune \"ManagedInstance\" n'a été trouvée pour le type \"%s\"",
                                 managedInstanceId, constructorArgumentType)
                         ));
-                    }
-                else
-                    try {
+                    } else try {
                         value = managedInstanceFactory.getManagedInstance(reference);
                     } catch (NoSuchManagedInstanceException e) {
                         throw new ManagedInstanceDefinitionException(new NoSuchManagedInstanceException(
@@ -134,8 +140,8 @@ public class ManagedInstanceDefinitionRegistry {
                         ));
                     }
 
-                constructorArgument.setValue(value);
-            }
+                    constructorArgument.setValue(value);
+                });
         } finally {
             managedInstancesCurrentlyInCreation.remove(managedInstanceId);
         }

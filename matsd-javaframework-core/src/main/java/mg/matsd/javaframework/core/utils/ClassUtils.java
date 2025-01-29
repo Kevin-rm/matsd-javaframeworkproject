@@ -2,11 +2,10 @@ package mg.matsd.javaframework.core.utils;
 
 import mg.matsd.javaframework.core.annotations.Nullable;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
-import java.util.IdentityHashMap;
-import java.util.Map;
+import java.util.*;
 
 public final class ClassUtils {
     private static final Map<Class<?>, Class<?>> WRAPPER_CLASS_TO_PRIMITIVE_TYPE_MAP = new IdentityHashMap<>(8);
@@ -70,6 +69,30 @@ public final class ClassUtils {
         return Modifier.isAbstract(clazz.getModifiers());
     }
 
+    public static boolean isStandardClass(@Nullable Class<?> clazz) {
+        if (clazz == null) return false;
+
+        return clazz.getClassLoader() == null;
+    }
+
+    public static boolean isSimpleOrStandardClass(Class<?> clazz) {
+        Assert.notNull(clazz, "La classe ne peut pas être \"null\"");
+
+        return isPrimitiveOrWrapper(clazz) || isStandardClass(clazz) || clazz == String.class;
+    }
+
+    public static Field[] getAllFields(Class<?> clazz) {
+        Assert.notNull(clazz, "La classe ne peut pas être \"null\"");
+
+        List<Field> fields = new ArrayList<>();
+        while (clazz != null && clazz != Object.class) {
+            Collections.addAll(fields, clazz.getDeclaredFields());
+            clazz = clazz.getSuperclass();
+        }
+
+        return fields.toArray(new Field[0]);
+    }
+
     public static boolean isAFieldOfClass(Class<?> clazz, String fieldName) {
         Assert.notNull(clazz, "La classe ne peut pas être \"null\"");
         Assert.notBlank(fieldName, false, "Le nom de l'attribut ne peut pas être vide ou \"null\"");
@@ -80,12 +103,6 @@ public final class ClassUtils {
         } catch (NoSuchFieldException e) {
             return false;
         }
-    }
-
-    public static boolean isStandardClass(@Nullable Class<?> clazz) {
-        if (clazz == null) return false;
-
-        return clazz.getClassLoader() == null;
     }
 
     public static boolean hasMethod(Class<?> clazz, String methodName) {

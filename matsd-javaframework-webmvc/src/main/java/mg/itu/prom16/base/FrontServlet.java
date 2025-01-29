@@ -4,6 +4,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.jsp.JspException;
 import mg.itu.prom16.annotations.JsonResponse;
 import mg.itu.prom16.annotations.RequestMapping;
 import mg.itu.prom16.base.internal.RequestMappingInfo;
@@ -17,11 +18,18 @@ import mg.itu.prom16.exceptions.NotFoundHttpException;
 import mg.itu.prom16.http.RequestMethod;
 import mg.itu.prom16.http.Session;
 import mg.itu.prom16.support.WebApplicationContainer;
-import mg.itu.prom16.utils.JspUtils;
+import mg.itu.prom16.utils.AuthFacade;
 import mg.itu.prom16.utils.WebFacade;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.AnnotationUtils;
 import mg.matsd.javaframework.core.utils.Assert;
+import mg.matsd.javaframework.security.annotation.Anonymous;
+import mg.matsd.javaframework.security.annotation.Authorize;
+import mg.matsd.javaframework.security.base.AuthenticationManager;
+import mg.matsd.javaframework.security.base.User;
+import mg.matsd.javaframework.security.exceptions.AccessDeniedException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -29,6 +37,8 @@ import java.lang.reflect.Modifier;
 import java.util.*;
 
 public class FrontServlet extends HttpServlet {
+    private static final Logger LOGGER = LogManager.getLogger(FrontServlet.class);
+
     private static Throwable throwableOnInit;
     private WebApplicationContainer webApplicationContainer;
     private ResponseRenderer responseRenderer;
@@ -38,17 +48,21 @@ public class FrontServlet extends HttpServlet {
     @Override
     public void init() {
         try {
+            LOGGER.info("Démarrage du conteneur des \"ManagedInstance\"");
             webApplicationContainer = new WebApplicationContainer(
                 getServletContext(),
-                getServletConfig().getInitParameter("containerConfigLocation")
-            );
+                getServletConfig().getInitParameter("containerConfigLocation"));
             responseRenderer = new ResponseRenderer(webApplicationContainer);
             initHandlers();
 
-            JspUtils.setFrontServlet(this);
+            WebFacade.setFrontServlet(this);
         } catch (Throwable throwable) {
             throwableOnInit = throwable;
         }
+    }
+
+    public WebApplicationContainer getWebApplicationContainer() {
+        return webApplicationContainer;
     }
 
     private void initHandlers() {
@@ -61,7 +75,6 @@ public class FrontServlet extends HttpServlet {
             String pathPrefix = "";
             String namePrefix = "";
             List<RequestMethod> sharedRequestMethods = new ArrayList<>();
-            boolean jsonResponse = AnnotationUtils.hasAnnotation(JsonResponse.class, controllerClass);
 
             if (controllerClass.isAnnotationPresent(RequestMapping.class)) {
                 RequestMapping requestMapping = controllerClass.getAnnotation(RequestMapping.class);
@@ -71,37 +84,39 @@ public class FrontServlet extends HttpServlet {
                 sharedRequestMethods = Arrays.asList(requestMapping.methods());
             }
 
+            final boolean jsonResponse = AnnotationUtils.hasAnnotation(JsonResponse.class, controllerClass);
+            final boolean isAnonymous  = AnnotationUtils.hasAnnotation(Anonymous.class, controllerClass);
+            final String[] sharedAllowedRoles = controllerClass.isAnnotationPresent(Authorize.class) ?
+                controllerClass.getAnnotation(Authorize.class).value() : null;
+
             for (Method method : controllerClass.getDeclaredMethods()) {
                 if (method.getModifiers() == Modifier.PRIVATE) continue;
 
                 if (AnnotationUtils.hasAnnotation(RequestMapping.class, method)) {
                     RequestMappingInfo requestMappingInfo = new RequestMappingInfo(
-                        pathPrefix, namePrefix, UtilFunctions.getRequestMappingInfoAttributes(method), sharedRequestMethods
-                    );
+                        pathPrefix, namePrefix, UtilFunctions.getRequestMappingInfoAttributes(method), sharedRequestMethods);
 
                     if (mappingHandlerMap.containsKey(requestMappingInfo))
                         throw new DuplicateMappingException(requestMappingInfo);
 
                     mappingHandlerMap.put(requestMappingInfo,
-                        new MappingHandler(controllerClass, method, jsonResponse)
-                    );
+                        new MappingHandler(controllerClass, method, jsonResponse, sharedAllowedRoles, isAnonymous));
                 } else if (method.isAnnotationPresent(mg.itu.prom16.annotations.ExceptionHandler.class)) {
                     Class<? extends Throwable>[] exceptionClasses = method.getAnnotation(mg.itu.prom16.annotations.ExceptionHandler.class).value();
                     if (exceptionClasses.length == 0) continue;
 
                     exceptionHandlers.add(
-                        new ExceptionHandler(controllerClass, method, jsonResponse, exceptionClasses, false)
-                    );
+                        new ExceptionHandler(controllerClass, method, jsonResponse, exceptionClasses, false));
                 }
             }
         }
     }
 
-    public RequestMappingInfo getRequestMappingInfoByName(String name) throws ServletException {
+    public RequestMappingInfo getRequestMappingInfoByName(String name) throws JspException {
         return mappingHandlerMap.entrySet().stream()
             .filter(entry -> name.equals(entry.getKey().getName()))
             .findFirst().map(Map.Entry::getKey)
-            .orElseThrow(() -> new ServletException(String.format("Aucun \"RequestMapping\" trouvé avec le nom : \"%s\"", name)));
+            .orElseThrow(() -> new JspException(String.format("Aucun \"RequestMapping\" trouvé avec le nom : \"%s\"", name)));
     }
 
     protected final void processRequest(HttpServletRequest request, HttpServletResponse response)
@@ -109,30 +124,57 @@ public class FrontServlet extends HttpServlet {
         response.setCharacterEncoding("UTF-8");
         if (throwableOnInit != null) {
             ResponseRenderer.doRenderError(throwableOnInit, response);
+            LOGGER.fatal("Une erreur s'est produite durant l'initialisation du \"FrontServlet\"", throwableOnInit);
             return;
         }
 
         RequestContextHolder.setServletRequestAttributes(new ServletRequestAttributes(request, response));
         Session session = ((Session) webApplicationContainer.getManagedInstance(Session.class))
-            .setHttpSession(WebFacade.getCurrentSession());
+            .setHttpSession(WebFacade.getCurrentHttpSession());
 
         MappingHandler mappingHandler = null;
         try {
             Map.Entry<RequestMappingInfo, MappingHandler> mappingHandlerEntry = resolveMappingHandler(request);
+            final String servletPath = request.getServletPath();
             if (mappingHandlerEntry == null)
                 throw new NotFoundHttpException(String.format("Aucun mapping trouvé pour le path : \"%s\" et method : \"%s\"",
-                    request.getServletPath(), request.getMethod()));
-
+                    servletPath, request.getMethod())
+                );
             mappingHandler = mappingHandlerEntry.getValue();
+
+            AuthenticationManager authenticationManager = AuthFacade.getAuthenticationManager();
+            if (authenticationManager != null) {
+                final String statefulStorageKey = authenticationManager.getStatefulStorageKey();
+                final boolean isUserConnected   = AuthFacade.isUserConnected();
+                final User currentUser = authenticationManager.getCurrentUser();
+
+                if (isUserConnected && statefulStorageKey != null) {
+                    User refreshedUser = authenticationManager.getUserProvider().refreshUser(currentUser);
+                    session.put(statefulStorageKey, refreshedUser);
+                }
+                if (mappingHandler.isAnonymous() && isUserConnected)
+                    throw new AccessDeniedException(String.format("Vous devez être anonyme " +
+                        "pour accéder à la ressource \"%s\"", servletPath), servletPath);
+
+                final List<String> allowedRoles = mappingHandler.getAllowedRoles();
+                if (allowedRoles != null) {
+                    if (!isUserConnected) throw new AccessDeniedException(String.format("Vous devez être connecté " +
+                        "pour accéder à la ressource \"%s\"", servletPath), servletPath);
+                    if (!allowedRoles.isEmpty() && allowedRoles.stream().noneMatch(currentUser::hasRole))
+                        throw new AccessDeniedException(servletPath, allowedRoles);
+                }
+            }
+
             responseRenderer.doRender(request, response, session, mappingHandler, mappingHandlerEntry.getKey());
         } catch (Throwable throwable) {
             List<Throwable> throwableTrace = ExceptionHandler.getThrowableTrace(throwable, null);
             ExceptionHandler exceptionHandler = resolveExceptionHandler(throwableTrace,
                 mappingHandler == null ? null : mappingHandler.getControllerClass());
 
-            if (exceptionHandler == null)
-                 ResponseRenderer.doRenderError(throwable, response);
-            else responseRenderer.doRender(request, response, session, exceptionHandler, throwableTrace);
+            if (exceptionHandler == null) {
+                ResponseRenderer.doRenderError(throwable, response);
+                LOGGER.error("", throwable);
+            } else responseRenderer.doRender(request, response, session, exceptionHandler, throwableTrace);
         } finally {
             RequestContextHolder.clear();
         }
@@ -148,7 +190,13 @@ public class FrontServlet extends HttpServlet {
     private Map.Entry<RequestMappingInfo, MappingHandler> resolveMappingHandler(HttpServletRequest request) {
         return mappingHandlerMap.isEmpty() ? null : mappingHandlerMap.entrySet().stream()
             .filter(entry -> entry.getKey().matches(request))
-            .findFirst()
+            .min((entry1, entry2) -> {
+                String servletPath = request.getServletPath();
+                boolean isStatic1  = entry1.getKey().getPath().equals(servletPath);
+                boolean isStatic2  = entry2.getKey().getPath().equals(servletPath);
+
+                return isStatic1 && !isStatic2 ? -1 : isStatic2 && !isStatic1 ? 1 : 0;
+            })
             .orElse(null);
     }
 
