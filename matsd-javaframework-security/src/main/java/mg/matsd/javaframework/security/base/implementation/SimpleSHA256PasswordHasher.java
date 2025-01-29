@@ -13,7 +13,7 @@ public class SimpleSHA256PasswordHasher implements PasswordHasher {
 
     @Override
     public String hash(String plainPassword) {
-        Assert.notNull(plainPassword, "Le mot de passe ne peut pas être null");
+        Assert.notNull(plainPassword, "Le mot de passe ne peut pas être \"null\"");
 
         try {
             return Base64.getEncoder().encodeToString(MessageDigest.getInstance(ALGORITHM)
@@ -25,8 +25,8 @@ public class SimpleSHA256PasswordHasher implements PasswordHasher {
 
     @Override
     public boolean verify(String plainPassword, String hashedPassword) {
-        Assert.notNull(plainPassword, "Le mot de passe ne peut pas être null");
-        Assert.notNull(hashedPassword, "Le mot de passe haché ne peut pas être null");
+        Assert.notNull(plainPassword, "Le mot de passe ne peut pas être \"null\"");
+        Assert.notNull(hashedPassword, "Le mot de passe haché ne peut pas être \"null\"");
 
         return hash(plainPassword).equals(hashedPassword);
     }

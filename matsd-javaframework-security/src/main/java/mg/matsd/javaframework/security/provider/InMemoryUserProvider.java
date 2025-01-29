@@ -25,12 +25,18 @@ public class InMemoryUserProvider implements UserProvider {
 
     @Override
     public void addUser(User user) throws DuplicateUserException {
-        Assert.notNull(user, "L'utilisateur ne peut pas être \"null\"");
-        final String identifier = user.getIdentifier();
-        Assert.notBlank(identifier, false, "L'identifiant de l'utilisateur ne peut être vide ou \"null\"");
+        final String identifier = validateUser(user);
 
         if (usersMap.containsKey(identifier)) throw new DuplicateUserException(identifier);
         usersMap.put(identifier, user);
+    }
+
+    @Override
+    public void removeUser(User user) throws UserNotFoundException {
+        final String identifier = validateUser(user);
+
+        if (!usersMap.containsKey(identifier)) throw new UserNotFoundException(identifier);
+        usersMap.remove(identifier);
     }
 
     @Override
@@ -39,5 +45,13 @@ public class InMemoryUserProvider implements UserProvider {
 
         if (!usersMap.containsKey(identifier)) throw new UserNotFoundException(identifier);
         return usersMap.get(identifier);
+    }
+
+    private static String validateUser(User user) {
+        Assert.notNull(user, "L'utilisateur ne peut pas être \"null\"");
+        String identifier = user.getIdentifier();
+        Assert.notBlank(identifier, false, "L'identifiant de l'utilisateur ne peut être vide ou \"null\"");
+
+        return identifier;
     }
 }
