@@ -125,8 +125,7 @@ public class ManagedInstance {
     }
 
     private ManagedInstance setScope(@Nullable String scope) {
-        if (scope == null || StringUtils.isBlank(scope))
-            scope = "singleton";
+        if (StringUtils.isNullOrBlank(scope)) scope = "singleton";
 
         try {
             return setScope(Scope.valueOf(scope.strip().toUpperCase()));
@@ -146,7 +145,7 @@ public class ManagedInstance {
 
     private ManagedInstance setLazy(@Nullable String isLazy) {
         try {
-            return setLazy(isLazy == null || StringUtils.isBlank(isLazy) ? null :
+            return setLazy(StringUtils.isNullOrBlank(isLazy) ? null :
                 StringConverter.convert(isLazy, Boolean.class));
         } catch (TypeMismatchException e) {
             throw new ManagedInstanceCreationException("La valeur de l'argument \"isLazy\" donné n'est pas un \"boolean\" : " + this.isLazy);
@@ -187,8 +186,7 @@ public class ManagedInstance {
     }
 
     private ManagedInstance setFactoryMethod(@Nullable String factoryMethod) {
-        if (factoryMethod == null || StringUtils.isBlank(factoryMethod))
-            return this;
+        if (StringUtils.isNullOrBlank(factoryMethod)) return this;
 
         try {
             return setFactoryMethod(ClassUtils.findMethod(clazz, factoryMethod));
@@ -204,11 +202,12 @@ public class ManagedInstance {
     public void addProperty(String name, String value, String ref) {
         Property property = new Property(name, value, ref, this);
 
-        for (Property p : properties)
-            if (property.getField() == p.getField())
-                throw new ManagedInstanceCreationException(
-                    String.format("La propriété \"%s\" est redondante pour la \"ManagedInstance\" avec l'ID \"%s\"", property.getField().getName(), id)
-                );
+        properties.stream()
+            .filter(p -> property.getField() == p.getField())
+            .forEachOrdered(p -> {
+                throw new ManagedInstanceCreationException(String.format("La propriété \"%s\" est redondante " +
+                    "pour la \"ManagedInstance\" avec l'ID \"%s\"", property.getField().getName(), id));
+            });
 
         properties.add(property);
     }
@@ -245,10 +244,8 @@ public class ManagedInstance {
         constructorArguments.stream()
             .filter(c -> i == c.getIndex())
             .forEachOrdered(c -> {
-                throw new ManagedInstanceCreationException(
-                    String.format("L'argument de constructeur avec l'indice %d " +
-                        "est redondant pour la \"ManagedInstance\" avec l'ID \"%s\"", i, id)
-                );
+                throw new ManagedInstanceCreationException(String.format("L'argument de constructeur avec l'indice %d " +
+                    "est redondant pour la \"ManagedInstance\" avec l'ID \"%s\"", i, id));
             });
 
         constructorArguments.add(constructorArgument);

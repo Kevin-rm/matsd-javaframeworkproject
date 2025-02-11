@@ -4,6 +4,7 @@ import mg.matsd.javaframework.core.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -34,8 +35,8 @@ public final class AnnotationUtils {
     }
 
     private static void doCollectAnnotations(AnnotatedElement annotatedElement, Set<Annotation> annotations) {
-        for (Annotation annotation : annotatedElement.getAnnotations())
-            if (annotations.add(annotation))
-                doCollectAnnotations(annotation.annotationType(), annotations);
+        Arrays.stream(annotatedElement.getAnnotations())
+            .filter(annotations::add)
+            .forEachOrdered(annotation -> doCollectAnnotations(annotation.annotationType(), annotations));
     }
 }

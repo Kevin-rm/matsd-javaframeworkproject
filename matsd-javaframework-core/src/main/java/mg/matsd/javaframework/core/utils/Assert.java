@@ -25,8 +25,7 @@ public final class Assert {
             if (!allowNull) throw new IllegalArgumentException(message);
             return;
         }
-        if (StringUtils.isBlank(string))
-            throw new IllegalArgumentException(message);
+        if (StringUtils.isBlank(string)) throw new IllegalArgumentException(message);
     }
 
     public static void notBlank(String string, boolean allowNull) {

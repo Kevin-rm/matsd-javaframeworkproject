@@ -11,6 +11,7 @@ import java.lang.reflect.Field;
 
 public class Property {
     private Field  field;
+    @Nullable
     private Object value;
     @Nullable
     private String reference;
@@ -42,28 +43,27 @@ public class Property {
         Assert.notBlank(fieldName, false, "Le nom d'une propriété ne peut pas être vide ou \"null\"");
 
         fieldName = fieldName.strip();
+        final Class<?> c = managedInstance.getClazz();
         try {
-            return setField(managedInstance.getClazz().getDeclaredField(fieldName));
+            return setField(c.getDeclaredField(fieldName));
         } catch (NoSuchFieldException e) {
-            throw new InvalidPropertyException(
-                String.format("\"%s\" n'est pas une propriété de la classe \"%s\"", fieldName, managedInstance.getClazz().getName())
-            );
+            throw new InvalidPropertyException(String.format("\"%s\" n'est pas une propriété de la classe \"%s\"",
+                fieldName, c.getName()
+            ));
         }
     }
 
+    @Nullable
     public Object getValue() {
         return value;
     }
 
     public Property setValue(@Nullable Object value) {
-        if (!ClassUtils.isAssignable(field.getType(), value)) {
-            throw new TypeMismatchException(
-                String.format(
-                    "La valeur spécifiée \"%s\" ne correspond pas au type attendu \"%s\" pour la propriété \"%s\"",
-                    value, field.getType().getSimpleName(), field.getName()
-                )
-            );
-        }
+        final Class<?> fieldType = field.getType();
+        if (!ClassUtils.isAssignable(fieldType, value)) throw new TypeMismatchException(
+            String.format("La valeur spécifiée \"%s\" ne correspond pas au type attendu \"%s\" pour la propriété \"%s\"",
+                value, fieldType.getSimpleName(), field.getName()
+            ));
 
         this.value = value;
         return this;
@@ -71,17 +71,14 @@ public class Property {
 
     private Property setValue(@Nullable String value) {
         Object obj = null;
-        if (value != null && StringUtils.hasText(value)) {
-            try {
-               obj = StringConverter.convert(value, field.getType());
-            } catch (TypeMismatchException e) {
-                throw new TypeMismatchException(
-                    String.format(
-                        "La valeur \"%s\" fournie pour la propriété \"%s\" ne correspond pas au type \"%s\" attendu",
-                        value, field.getName(), field.getType().getSimpleName()
-                    )
-                );
-            }
+        final Class<?> fieldType = field.getType();
+        if (value != null && StringUtils.hasText(value)) try {
+            obj = StringConverter.convert(value, fieldType);
+        } catch (TypeMismatchException e) {
+            throw new TypeMismatchException(String.format(
+                "La valeur \"%s\" fournie pour la propriété \"%s\" ne correspond pas au type \"%s\" attendu",
+                value, field.getName(), fieldType.getSimpleName()
+            ));
         }
 
         return setValue(obj);

@@ -29,10 +29,9 @@ public abstract class ManagedInstanceFactory {
         Assert.notBlank(componentScanBasePackage, false,
             "Le nom de package des \"component\" à scanner ne peut pas être vide ou \"null\"");
         Assert.state(StringUtils.isValidPackageName(componentScanBasePackage),
-            () -> new InvalidPackageException(
-                String.format("Le nom de package des \"component\" \"%s\" à scanner n'est pas valide", componentScanBasePackage)
-            )
-        );
+            () -> new InvalidPackageException(String.format("Le nom de package des components \"%s\" " +
+                "à scanner n'est pas valide", componentScanBasePackage), componentScanBasePackage
+            ));
 
         this.componentScanBasePackage = componentScanBasePackage.strip();
         return this;
@@ -50,16 +49,13 @@ public abstract class ManagedInstanceFactory {
     public Object getManagedInstance(String id) throws NoSuchManagedInstanceException {
         validateId(id);
 
-        return getManagedInstance(
-            managedInstanceDefinitionRegistry.getManagedInstanceById(id)
-        );
+        return getManagedInstance(managedInstanceDefinitionRegistry.getManagedInstanceById(id));
     }
 
     public Object getManagedInstance(Class<?> managedInstanceClass) throws NoSuchManagedInstanceException {
         Assert.notNull(managedInstanceClass, "La classe de la \"ManagedInstance\" ne peut pas être \"null\"");
 
-        return getManagedInstance(
-            managedInstanceDefinitionRegistry.getManagedInstanceByClass(managedInstanceClass));
+        return getManagedInstance(managedInstanceDefinitionRegistry.getManagedInstanceByClass(managedInstanceClass));
     }
 
     public boolean containsManagedInstance(String id) {
@@ -151,9 +147,8 @@ public abstract class ManagedInstanceFactory {
 
         if (isCurrentlyInCreation(managedInstanceId))
             throw new ManagedInstanceCurrentlyInCreationException(managedInstanceId);
-        if (
-            isSingleton(managedInstanceId) &&
-                singletonsMap.containsKey(managedInstanceId)
+        if (isSingleton(managedInstanceId) &&
+            singletonsMap.containsKey(managedInstanceId)
         ) return singletonsMap.get(managedInstanceId);
 
         managedInstanceDefinitionRegistry.resolveDependencies(managedInstance);

@@ -12,9 +12,10 @@ import java.lang.reflect.Constructor;
 public class ConstructorArgument {
     private int index;
     private Class<?> type;
-    private Object   value;
     @Nullable
-    private String   reference;
+    private Object value;
+    @Nullable
+    private String reference;
     private final ManagedInstance managedInstance;
 
     ConstructorArgument(int index, Class<?> type, @Nullable String reference, ManagedInstance managedInstance) {
@@ -40,13 +41,11 @@ public class ConstructorArgument {
     private void initValueAndReference(@Nullable String value, @Nullable String reference) {
         if (value == null && reference == null)
             throw new ManagedInstanceCreationException(String.format("La valeur et la référence ne peuvent pas être toutes les deux \"null\" " +
-                "pour l'argument du constructeur à l'indice %d", this.index)
-            );
+                "pour l'argument du constructeur à l'indice %d", this.index));
 
         if (value != null && reference != null)
             throw new ManagedInstanceCreationException(String.format("Un argument de constructeur doit avoir soit une valeur, " +
-                "soit une référence, mais pas les deux en même temps. Indice : %d", this.index)
-            );
+                "soit une référence, mais pas les deux en même temps. Indice : %d", this.index));
 
         this.setValue(value)
             .setReference(reference);
@@ -93,6 +92,7 @@ public class ConstructorArgument {
         return this;
     }
 
+    @Nullable
     public Object getValue() {
         return value;
     }

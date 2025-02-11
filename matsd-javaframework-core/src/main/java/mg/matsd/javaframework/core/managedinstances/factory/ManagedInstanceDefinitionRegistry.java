@@ -58,11 +58,12 @@ public class ManagedInstanceDefinitionRegistry {
     }
 
     void registerManagedInstance(ManagedInstance managedInstance) {
-        for (ManagedInstance m : this.managedInstances)
-            if (managedInstance.getId().equals(m.getId()))
-                throw new ManagedInstanceDefinitionException(
-                    String.format("L'identifiant d'une \"ManagedInstance\" doit être unique, \"%s\" est redondant", managedInstance.getId())
-                );
+        managedInstances.stream()
+            .filter(m -> managedInstance.getId().equals(m.getId()))
+            .forEachOrdered(m -> {
+                throw new ManagedInstanceDefinitionException(String.format("L'identifiant d'une \"ManagedInstance\" doit être unique, " +
+                    "\"%s\" est redondant", managedInstance.getId()));
+            });
 
         managedInstances.add(managedInstance);
     }

@@ -120,8 +120,8 @@ public final class ClassUtils {
         Assert.notBlank(methodName, false, "Le nom de la méthode ne peut pas être vide ou \"null\"");
 
         if (parameterTypes != null)
-            for (Class<?> parameterType : parameterTypes)
-                Assert.notNull(parameterType, "Chaque type de paramètre ne peut pas être \"null\"");
+            Arrays.stream(parameterTypes).forEachOrdered(parameterType ->
+                Assert.notNull(parameterType, "Chaque type de paramètre ne peut pas être \"null\""));
 
         try {
             return clazz.getDeclaredMethod(methodName, parameterTypes);
@@ -131,22 +131,21 @@ public final class ClassUtils {
                 : String.format("avec le(s) type(s) de paramètre suivant(s) : %s", Arrays.toString(parameterTypes));
 
             throw new NoSuchMethodException(String.format("La classe \"%s\" ne possède aucune méthode nommée \"%s\" %s",
-                clazz.getName(), methodName, parameterTypesMessage)
-            );
+                clazz.getName(), methodName, parameterTypesMessage));
         }
     }
 
     public static Object getPrimitiveDefaultValue(Class<?> primitiveType) {
         Assert.notNull(primitiveType, "L'argument primitiveType ne peut pas être \"null\"");
 
-        if (primitiveType == int.class)          return 0;
-        else if (primitiveType == boolean.class) return false;
-        else if (primitiveType == long.class)    return 0L;
-        else if (primitiveType == double.class)  return 0.0;
-        else if (primitiveType == float.class)   return 0.0f;
-        else if (primitiveType == char.class)    return '\u0000';
-        else if (primitiveType == byte.class)    return (byte) 0;
-        else if (primitiveType == short.class)   return (short) 0;
+        if (primitiveType == int.class)     return 0;
+        if (primitiveType == boolean.class) return false;
+        if (primitiveType == long.class)    return 0L;
+        if (primitiveType == double.class)  return 0.0;
+        if (primitiveType == float.class)   return 0.0f;
+        if (primitiveType == char.class)    return '\u0000';
+        if (primitiveType == byte.class)    return (byte) 0;
+        if (primitiveType == short.class)   return (short) 0;
 
         throw new IllegalArgumentException(String.format(
             "La classe \"%s\" n'est pas une classe primitive", primitiveType.getName()

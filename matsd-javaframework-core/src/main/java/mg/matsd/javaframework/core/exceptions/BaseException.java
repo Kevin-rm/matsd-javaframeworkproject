@@ -31,8 +31,7 @@ public abstract class BaseException extends RuntimeException {
     }
 
     private static String formatMessage(@Nullable String message, @Nullable String prefix) {
-        if (prefix == null)              return message;
-        if (StringUtils.isBlank(prefix)) return message;
+        if (StringUtils.isNullOrBlank(prefix)) return message;
 
         String formattedMessage = prefix;
         if (message != null && StringUtils.hasText(message))

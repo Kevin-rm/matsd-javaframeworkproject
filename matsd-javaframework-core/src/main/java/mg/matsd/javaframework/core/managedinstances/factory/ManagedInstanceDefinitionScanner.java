@@ -17,16 +17,13 @@ class ManagedInstanceDefinitionScanner {
             if (!isComponent(clazz)) return;
 
             String componentValue = ((Component) AnnotationUtils.getAnnotation(Component.class, clazz)).value();
-
             ManagedInstance managedInstance = new ManagedInstance(
                 StringUtils.isBlank(componentValue) ? null : componentValue, clazz,
                 clazz.isAnnotationPresent(Scope.class) ? clazz.getAnnotation(Scope.class).value() : null,
                 clazz.isAnnotationPresent(Lazy.class)  ? "true" : null,
-                null, null
-            );
-            ManagedInstanceUtils.addConstructorArguments(
-                ManagedInstanceUtils.constructorToUse(managedInstance), managedInstance);
+                null, null);
 
+            ManagedInstanceUtils.addConstructorArguments(ManagedInstanceUtils.constructorToUse(managedInstance), managedInstance);
             managedInstanceDefinitionRegistry.registerManagedInstance(managedInstance);
 
             if (clazz.isAnnotationPresent(Configuration.class))
@@ -47,8 +44,7 @@ class ManagedInstanceDefinitionScanner {
                 StringUtils.isBlank(value) ? null : value, method.getReturnType(),
                 method.isAnnotationPresent(Scope.class) ? method.getAnnotation(Scope.class).value() : null,
                 method.isAnnotationPresent(Lazy.class)  ? "true" : null,
-                configuration, method
-            );
+                configuration, method);
             ManagedInstanceUtils.addConstructorArguments(method, managedInstance);
 
             managedInstanceDefinitionRegistry.registerManagedInstance(managedInstance);

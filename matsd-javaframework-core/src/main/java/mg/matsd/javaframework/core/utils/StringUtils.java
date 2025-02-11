@@ -17,6 +17,10 @@ public final class StringUtils {
         return string != null && string.isBlank();
     }
 
+    public static boolean isNullOrBlank(@Nullable final String string) {
+        return string == null || string.isBlank();
+    }
+
     public static boolean hasLength(String string, int length) {
         Assert.notNull(string, "L'argument de type \"String\" de la fonction hasLength ne peut pas être \"null\"");
 
