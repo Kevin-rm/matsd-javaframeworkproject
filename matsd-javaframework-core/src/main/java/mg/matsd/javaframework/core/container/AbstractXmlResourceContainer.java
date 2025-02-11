@@ -39,12 +39,12 @@ public abstract class AbstractXmlResourceContainer extends ManagedInstanceFactor
     protected void registerSchemas(@Nullable String... schemas) {
         if (schemas == null) return;
 
-        for (String schema : schemas) {
+        Arrays.stream(schemas).forEachOrdered(schema -> {
             Assert.notBlank(schema, false, "Chaque schéma ne peut pas être vide ou \"null\"");
             Assert.state(schema.endsWith(".xsd"), () -> new IllegalArgumentException(
                 String.format("Le schéma donné \"%s\" n'est pas un fichier XSD", schema))
             );
-        }
+        });
         this.schemas.addAll(List.of(schemas));
     }
 
