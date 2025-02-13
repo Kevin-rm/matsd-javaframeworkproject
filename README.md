@@ -17,22 +17,17 @@ A lightweight, modular Java framework that simplifies development through indepe
 4.  **security**: Comprehensive security suite including authentication, authorization, and common security patterns.
 5.  **validation**: Flexible validation framework supporting both built-in and custom validation rules for data integrity.
 
-## Getting Started
+## Contributions
 
-To use this framework, follow the below steps:
+I welcome contributions to the framework! If you're interested, please follow these guidelines:
 
-1.  Clone the repository:
-
-    ```bash
-    git clone https://github.com/Kevin-rm/matsd-javaframeworkproject.git
-    ```
-2.  Build each project using Maven:
-
-    ```bash
-    mvn clean install
-    ```
-3.  Then, include the desired projects as dependencies in your project.
+1.  Fork the repository.
+2.  Create a new branch for your feature or bug fix.
+3.  Write tests for your changes.
+4.  Ensure all tests pass.
+5.  Submit a pull request with a clear description of your changes.
 
 ## Requirements
 
 - Java 19 or higher
+- Maven (optional if you use an IDE with built-in Maven support)
