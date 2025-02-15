@@ -31,7 +31,6 @@ To start using this framework you have several options, but here are two of them
 #### Option 1: Add as Maven Dependency (Recommended)
 
 1. Add the GitHub Package Registry to your `pom.xml`:
-
    ```xml
    <repositories>
        <repository>
