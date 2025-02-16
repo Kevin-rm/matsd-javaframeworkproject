@@ -43,15 +43,13 @@ To start using this framework you have several options, but here are two of them
    - Generate a [Personal Access Token (PAT)](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) with the ``read:packages`` scope.
    - Add the credentials to your ``~/.m2/settings.xml``:
    ```xml
-    <settings>
-        <servers>
-            <server>
-                <id>github</id>
-                <username>your-github-username</username>
-                <password>your-PAT</password>
-            </server>
-        </servers>
-    </settings>
+    <servers>
+        <server>
+            <id>github</id>
+            <username>your-github-username</username>
+            <password>your-PAT</password>
+        </server>
+    </servers>
     ```
 3. Add dependencies to your project.
 
