@@ -8,6 +8,8 @@ import java.util.Objects;
 public class SimpleUserRole implements UserRole {
     protected String value;
 
+    public SimpleUserRole() { }
+
     public SimpleUserRole(String value) {
         setValue(value);
     }
