@@ -10,12 +10,12 @@ public interface User {
 
     String getPassword();
 
-    List<UserRole> getRoles();
+    List<? extends UserRole> getRoles();
 
     default boolean hasRole(@Nullable String roleValue, boolean ignoreCase) {
         if (roleValue == null || StringUtils.isBlank(roleValue)) return false;
 
-        List<UserRole> userRoles = getRoles();
+        List<? extends UserRole> userRoles = getRoles();
         if (userRoles == null) return false;
 
         return userRoles.stream().anyMatch(userRole -> {
