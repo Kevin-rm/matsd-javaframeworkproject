@@ -46,6 +46,6 @@ public final class AuthFacade {
         WebApplicationContainer webApplicationContainer = getWebApplicationContainer();
 
         return webApplicationContainer.containsManagedInstance(Security.class) ?
-            ((Security) webApplicationContainer.getManagedInstance(Security.class)).getAuthenticationManager() : null;
+            webApplicationContainer.getManagedInstance(Security.class).getAuthenticationManager() : null;
     }
 }

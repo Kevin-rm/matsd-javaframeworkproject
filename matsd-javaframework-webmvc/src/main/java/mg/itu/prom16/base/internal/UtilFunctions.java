@@ -151,8 +151,8 @@ public final class UtilFunctions {
 
             result = populateModelFromRequest(parameterType, modelInstance, modelName, httpServletRequest);
             if (parameter.isAnnotationPresent(Validate.class))
-                modelBindingResult.addValidationErrors(modelName, ((ValidatorFactory) webApplicationContainer
-                        .getManagedInstance(ValidatorFactory.class))
+                modelBindingResult.addValidationErrors(modelName, webApplicationContainer
+                        .getManagedInstance(ValidatorFactory.class)
                         .getValidator()
                         .doValidate(modelInstance))
                     .getFieldErrorsMap().forEach(httpServletRequest::setAttribute);

@@ -52,9 +52,9 @@ public class ManagedInstanceDefinitionRegistry {
         for (ManagedInstance managedInstance : managedInstances)
             if (clazz.isAssignableFrom(managedInstance.getClazz())) return managedInstance;
 
-        throw new NoSuchManagedInstanceException(String.format(
-            "Aucune \"ManagedInstance\" trouvée ayant comme nom de classe : %s", clazz.getName())
-        );
+        throw new NoSuchManagedInstanceException(String.format("Aucune \"ManagedInstance\" trouvée ayant " +
+            "comme nom de classe : %s", clazz.getName()
+        ));
     }
 
     void registerManagedInstance(ManagedInstance managedInstance) {

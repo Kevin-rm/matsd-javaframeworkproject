@@ -96,9 +96,9 @@ public abstract class AbstractHandler {
                 else if (parameter.isAnnotationPresent(SessionAttribute.class))
                     args[i] = UtilFunctions.getSessionAttributeValue(parameterType, parameter, httpServletRequest.getSession());
                 else if (parameterType == Validator.class)
-                    args[i] = ((ValidatorFactory) webApplicationContainer.getManagedInstance(ValidatorFactory.class)).getValidator();
+                    args[i] = webApplicationContainer.getManagedInstance(ValidatorFactory.class).getValidator();
                 else if (parameterType == AuthenticationManager.class)
-                    args[i] = ((Security) webApplicationContainer.getManagedInstance(Security.class)).getAuthenticationManager();
+                    args[i] = webApplicationContainer.getManagedInstance(Security.class).getAuthenticationManager();
                 else {
                     try {
                         args[i] = resolveAdditionalParameter(parameterType, parameter, webApplicationContainer, httpServletRequest, additionalParameter);

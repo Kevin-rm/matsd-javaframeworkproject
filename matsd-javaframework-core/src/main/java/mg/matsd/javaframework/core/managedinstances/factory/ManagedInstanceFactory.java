@@ -52,10 +52,11 @@ public abstract class ManagedInstanceFactory {
         return getManagedInstance(managedInstanceDefinitionRegistry.getManagedInstanceById(id));
     }
 
-    public Object getManagedInstance(Class<?> managedInstanceClass) throws NoSuchManagedInstanceException {
+    @SuppressWarnings("unchecked")
+    public <T> T getManagedInstance(Class<T> managedInstanceClass) throws NoSuchManagedInstanceException {
         Assert.notNull(managedInstanceClass, "La classe de la \"ManagedInstance\" ne peut pas être \"null\"");
 
-        return getManagedInstance(managedInstanceDefinitionRegistry.getManagedInstanceByClass(managedInstanceClass));
+        return (T) getManagedInstance(managedInstanceDefinitionRegistry.getManagedInstanceByClass(managedInstanceClass));
     }
 
     public boolean containsManagedInstance(String id) {
