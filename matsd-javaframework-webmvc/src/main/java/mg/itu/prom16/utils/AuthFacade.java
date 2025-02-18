@@ -11,6 +11,8 @@ import mg.matsd.javaframework.security.exceptions.InvalidCredentialsException;
 import static mg.itu.prom16.utils.WebFacade.*;
 
 public abstract class AuthFacade {
+    @Nullable
+    private static AuthenticationManager authenticationManager;
 
     public static void login(String identifier, String password) throws InvalidCredentialsException {
         AuthenticationManager authenticationManager = getAuthenticationManager();
@@ -42,9 +44,12 @@ public abstract class AuthFacade {
 
     @Nullable
     public static AuthenticationManager getAuthenticationManager() {
-        WebApplicationContainer webApplicationContainer = getWebApplicationContainer();
+        if (authenticationManager != null) return authenticationManager;
 
-        return webApplicationContainer.containsManagedInstance(Security.class) ?
+        WebApplicationContainer webApplicationContainer = getWebApplicationContainer();
+        authenticationManager = webApplicationContainer.containsManagedInstance(Security.class) ?
             webApplicationContainer.getManagedInstance(Security.class).getAuthenticationManager() : null;
+
+        return authenticationManager;
     }
 }
