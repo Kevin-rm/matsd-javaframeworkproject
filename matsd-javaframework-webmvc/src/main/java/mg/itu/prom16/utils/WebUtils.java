@@ -3,9 +3,8 @@ package mg.itu.prom16.utils;
 import jakarta.servlet.http.HttpServletRequest;
 import mg.matsd.javaframework.core.utils.Assert;
 
-public final class WebUtils {
-    private WebUtils() { }
-
+public abstract class WebUtils {
+    
     public static String baseUrl() {
         HttpServletRequest request = WebFacade.getCurrentRequest();
 

@@ -2,10 +2,8 @@ package mg.matsd.javaframework.core.utils;
 
 import mg.matsd.javaframework.core.annotations.Nullable;
 
-public final class StringUtils {
+public abstract class StringUtils {
     private static final String PACKAGE_NAME_REGEX = "^[a-zA-Z_][a-zA-Z0-9_]*(\\.[a-zA-Z_][a-zA-Z0-9_]*)*$";
-
-    private StringUtils() { }
 
     public static boolean hasText(String string) {
         Assert.notNull(string, "L'argument de la fonction hasText ne peut pas être \"null\"");

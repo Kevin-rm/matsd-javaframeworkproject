@@ -13,8 +13,7 @@ import java.util.List;
 
 import static mg.itu.prom16.utils.WebFacade.*;
 
-public final class JspUtils {
-    private JspUtils() { }
+public abstract class JspUtils {
 
     public static String routeTo(String name) throws JspException {
         Assert.notBlank(name, false, "Le nom de la route ne peut pas être vide ou \"null\"");

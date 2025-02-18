@@ -6,8 +6,7 @@ import java.io.File;
 import java.net.URL;
 import java.util.function.Consumer;
 
-public final class ClassScanner {
-    private ClassScanner() { }
+public abstract class ClassScanner {
 
     public static void doScan(String packageName, Consumer<Class<?>> action) throws PackageNotFoundException {
         Assert.notBlank(packageName, false);

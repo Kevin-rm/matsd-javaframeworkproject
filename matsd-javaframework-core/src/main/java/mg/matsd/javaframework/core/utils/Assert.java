@@ -6,8 +6,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-public final class Assert {
-    private Assert() { }
+public abstract class Assert {
 
     public static void notNull(@Nullable Object object, @Nullable String exceptionMessage) {
         if (object == null)

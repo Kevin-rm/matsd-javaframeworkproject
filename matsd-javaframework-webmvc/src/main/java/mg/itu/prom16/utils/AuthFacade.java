@@ -10,8 +10,7 @@ import mg.matsd.javaframework.security.exceptions.InvalidCredentialsException;
 
 import static mg.itu.prom16.utils.WebFacade.*;
 
-public class AuthFacade {
-    private AuthFacade() { }
+public abstract class AuthFacade {
 
     public static void login(String identifier, String password) throws InvalidCredentialsException {
         AuthenticationManager authenticationManager = getAuthenticationManager();

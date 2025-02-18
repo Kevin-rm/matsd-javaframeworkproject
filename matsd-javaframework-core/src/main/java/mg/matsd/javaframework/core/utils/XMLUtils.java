@@ -20,10 +20,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public final class XMLUtils {
+public abstract class XMLUtils {
     private static final SchemaFactory SCHEMA_FACTORY = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-
-    private XMLUtils() { }
 
     public static Element buildDocumentElement(ClassLoader classLoader, Resource resource, String... schemas) {
         Assert.notNull(classLoader, "L'argument classLoader ne peut pas être \"null\"");

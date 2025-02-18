@@ -11,10 +11,8 @@ import mg.itu.prom16.http.SessionImpl;
 import mg.itu.prom16.support.WebApplicationContainer;
 import mg.matsd.javaframework.core.utils.Assert;
 
-public class WebFacade {
+public abstract class WebFacade {
     static FrontServlet frontServlet;
-
-    private WebFacade() { }
 
     public static void setFrontServlet(final FrontServlet frontServlet) {
         Assert.notNull(frontServlet);

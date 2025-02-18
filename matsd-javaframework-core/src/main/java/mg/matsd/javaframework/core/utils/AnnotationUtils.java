@@ -8,8 +8,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public final class AnnotationUtils {
-    private AnnotationUtils() { }
+public abstract class AnnotationUtils {
 
     public static Set<Annotation> getAllAnnotations(AnnotatedElement annotatedElement) {
         Assert.notNull(annotatedElement, "L'argument annotatedElement ne peut pas être \"null\"");

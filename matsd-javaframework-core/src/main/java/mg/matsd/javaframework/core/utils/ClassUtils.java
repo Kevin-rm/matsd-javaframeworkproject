@@ -7,7 +7,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
 
-public final class ClassUtils {
+public abstract class ClassUtils {
     private static final Map<Class<?>, Class<?>> WRAPPER_CLASS_TO_PRIMITIVE_TYPE_MAP = new IdentityHashMap<>(8);
     private static final Map<Class<?>, Class<?>> PRIMITIVE_TYPE_TO_WRAPPER_CLASS_MAP = new IdentityHashMap<>(8);
 
@@ -24,8 +24,6 @@ public final class ClassUtils {
         for (Map.Entry<Class<?>, Class<?>> entry : WRAPPER_CLASS_TO_PRIMITIVE_TYPE_MAP.entrySet())
             PRIMITIVE_TYPE_TO_WRAPPER_CLASS_MAP.put(entry.getValue(), entry.getKey());
     }
-
-    private ClassUtils() { }
 
     public static boolean isAssignable(Class<?> c1, Class<?> c2) {
         Assert.notNull(c1);
