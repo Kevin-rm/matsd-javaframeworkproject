@@ -15,18 +15,14 @@ public abstract class AuthFacade {
     private static AuthenticationManager authenticationManager;
 
     public static void login(String identifier, String password) throws InvalidCredentialsException {
-        AuthenticationManager authenticationManager = getAuthenticationManager();
-        Assert.state(authenticationManager != null, "Le gestionnaire de sécurité doit être configuré " +
-            "avant de pouvoir utiliser la méthode \"login\"");
+        AuthenticationManager authenticationManager = statefulWellConfiguredAuthenticationManager();
 
         authenticationManager.login(identifier, password);
         getCurrentSession().put(authenticationManager.getStatefulStorageKey(), authenticationManager.getCurrentUser());
     }
 
     public static void logout() {
-        AuthenticationManager authenticationManager = getAuthenticationManager();
-        Assert.state(authenticationManager != null, "Le gestionnaire de sécurité doit être configuré " +
-            "avant de pouvoir utiliser la méthode \"logout\"");
+        AuthenticationManager authenticationManager = statefulWellConfiguredAuthenticationManager();
 
         authenticationManager.removeCurrentUser();
         getCurrentSession().remove(authenticationManager.getStatefulStorageKey());
@@ -49,6 +45,15 @@ public abstract class AuthFacade {
         WebApplicationContainer webApplicationContainer = getWebApplicationContainer();
         authenticationManager = webApplicationContainer.containsManagedInstance(Security.class) ?
             webApplicationContainer.getManagedInstance(Security.class).getAuthenticationManager() : null;
+
+        return authenticationManager;
+    }
+
+    private static AuthenticationManager statefulWellConfiguredAuthenticationManager() {
+        AuthenticationManager authenticationManager = getAuthenticationManager();
+        Assert.state(authenticationManager != null && authenticationManager.getStatefulStorageKey() != null,
+            "Le gestionnaire de sécurité et sa clé de stockage de session doivent être configurés " +
+                "avant de pouvoir utiliser cette méthode");
 
         return authenticationManager;
     }
