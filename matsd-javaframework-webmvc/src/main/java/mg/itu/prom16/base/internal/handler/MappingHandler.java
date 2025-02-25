@@ -49,7 +49,8 @@ public class MappingHandler extends AbstractHandler {
 
         allowedRoles = new ArrayList<>();
 
-        String[] roles = method.getAnnotation(Authorize.class).value();
+        String[] roles = method.isAnnotationPresent(Authorize.class) ?
+            method.getAnnotation(Authorize.class).value() : new String[0];
         final String[] finalRoles = sharedAllowedRoles != null ? Stream.concat(Arrays.stream(roles), Arrays.stream(sharedAllowedRoles))
             .toArray(String[]::new) : roles;
         if (finalRoles.length == 0) return this;
