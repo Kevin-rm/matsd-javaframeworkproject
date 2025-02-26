@@ -32,4 +32,9 @@
         <function-class>mg.itu.prom16.utils.WebUtils</function-class>
         <function-signature>java.lang.String baseUrl()</function-signature>
     </function>
+    <function>
+        <name>currentUser</name>
+        <function-class>mg.itu.prom16.utils.AuthFacade</function-class>
+        <function-signature>mg.matsd.javaframework.security.base.User getCurrentUser()</function-signature>
+    </function>
 </taglib>
