@@ -30,6 +30,10 @@ public abstract class JspUtils {
         return (List<FieldError>) getCurrentRequest().getAttribute(key);
     }
 
+    public static boolean hasFlash(String key) {
+        return getFlashBag().has(key);
+    }
+
     @Nullable
     public static Object flash(String key) {
         return getFlashBag().get(key);

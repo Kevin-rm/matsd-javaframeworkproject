@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<taglib xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="https://jakarta.ee/xml/ns/jakartaee"
+        xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee
+                            https://jakarta.ee/xml/ns/jakartaee/web-jsptaglibrary_3_1.xsd"
+        version="3.1">
+    <tlib-version>3.1</tlib-version>
+    <short-name>auth</short-name>
+    <uri>http://www.matsd.mg/javaframework/tags/auth-helpers</uri>
+    <function>
+        <name>currentUser</name>
+        <function-class>mg.itu.prom16.utils.AuthFacade</function-class>
+        <function-signature>mg.matsd.javaframework.security.base.User getCurrentUser()</function-signature>
+    </function>
+    <function>
+        <name>connected</name>
+        <function-class>mg.itu.prom16.utils.AuthFacade</function-class>
+        <function-signature>boolean isUserConnected()</function-signature>
+    </function>
+</taglib>
