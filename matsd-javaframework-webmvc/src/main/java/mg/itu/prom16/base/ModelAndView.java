@@ -45,6 +45,11 @@ public class ModelAndView {
         return this;
     }
 
+    public ModelAndView addData(Map<String, ?> map) {
+        model.addData(map);
+        return this;
+    }
+
     @Nullable
     public Object getData(String key) {
         return model.getData(key);

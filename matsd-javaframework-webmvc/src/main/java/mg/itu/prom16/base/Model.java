@@ -25,6 +25,13 @@ public class Model {
         return this;
     }
 
+    public Model addData(Map<String, ?> map) {
+        Assert.notNull(map, "L'argument map ne peut pas être \"null\"");
+
+        map.forEach(this::addData);
+        return this;
+    }
+
     public boolean hasData(String key) {
         Assert.notBlank(key, false, "La clé de la donnée ne peut pas être vide ou \"null\"");
 
