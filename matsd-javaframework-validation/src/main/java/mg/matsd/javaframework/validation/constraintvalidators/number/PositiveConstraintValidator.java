@@ -3,6 +3,8 @@ package mg.matsd.javaframework.validation.constraintvalidators.number;
 import mg.matsd.javaframework.validation.constraints.number.Positive;
 import mg.matsd.javaframework.validation.base.ConstraintValidator;
 
+import java.math.BigDecimal;
+
 public class PositiveConstraintValidator implements ConstraintValidator<Positive, Number> {
 
     @Override
@@ -18,6 +20,8 @@ public class PositiveConstraintValidator implements ConstraintValidator<Positive
         if (value instanceof Float)   return value.floatValue()  > 0;
         if (value instanceof Short)   return value.shortValue()  > 0;
         if (value instanceof Byte)    return value.byteValue()   > 0;
+        if (value instanceof BigDecimal bigDecimal)
+            return bigDecimal.compareTo(BigDecimal.ZERO) > 0;
 
         return false;
     }
