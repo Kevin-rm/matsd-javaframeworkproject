@@ -3,6 +3,7 @@ package mg.matsd.javaframework.security.base;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.security.exceptions.InvalidCredentialsException;
+import mg.matsd.javaframework.security.exceptions.UnauthenticatedUserException;
 import mg.matsd.javaframework.security.exceptions.UserNotFoundException;
 import mg.matsd.javaframework.security.provider.UserProvider;
 
@@ -63,6 +64,30 @@ public final class AuthenticationManager {
     @Nullable
     public User getCurrentUser() {
         return currentUser;
+    }
+
+    @Nullable
+    public <U extends User> U getCurrentUser(final Class<U> expectedType) {
+        Assert.notNull(expectedType, "Le type de l'utilisateur attendu ne peut pas être \"null\"");
+
+        if (currentUser == null) return null;
+        Assert.state(expectedType.isInstance(currentUser), String.format("L'utilisateur actuel n'est pas de type \"%s\"",
+            expectedType.getName()));
+
+        return expectedType.cast(currentUser);
+    }
+
+    public User requireCurrentUser() {
+        if (currentUser == null) throw new UnauthenticatedUserException();
+
+        return currentUser;
+    }
+
+    public <U extends User> U requireCurrentUser(final Class<U> expectedType) {
+        U u = getCurrentUser(expectedType);
+        if (u == null) throw new UnauthenticatedUserException();
+
+        return u;
     }
 
     public void useDefaultStatefulStorageKey() {

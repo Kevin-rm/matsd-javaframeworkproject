@@ -144,21 +144,21 @@ public class FrontServlet extends HttpServlet {
 
             AuthenticationManager authenticationManager = AuthFacade.getAuthenticationManager();
             if (authenticationManager != null) {
-                final String statefulStorageKey = authenticationManager.getStatefulStorageKey();
-                final boolean isUserConnected   = AuthFacade.isUserConnected();
+                final String statefulStorageKey   = authenticationManager.getStatefulStorageKey();
+                final boolean isUserAuthenticated = AuthFacade.isUserAuthenticated();
                 final User currentUser = authenticationManager.getCurrentUser();
 
-                if (isUserConnected && statefulStorageKey != null) {
+                if (isUserAuthenticated && statefulStorageKey != null) {
                     User refreshedUser = authenticationManager.getUserProvider().refreshUser(currentUser);
                     session.put(statefulStorageKey, refreshedUser);
                 }
-                if (mappingHandler.isAnonymous() && isUserConnected)
+                if (mappingHandler.isAnonymous() && isUserAuthenticated)
                     throw new AccessDeniedException(String.format("Vous devez être anonyme " +
                         "pour accéder à la ressource \"%s\"", servletPath), servletPath);
 
                 final List<String> allowedRoles = mappingHandler.getAllowedRoles();
                 if (allowedRoles != null) {
-                    if (!isUserConnected) throw new AccessDeniedException(String.format("Vous devez être connecté " +
+                    if (!isUserAuthenticated) throw new AccessDeniedException(String.format("Vous devez être authentifié " +
                         "pour accéder à la ressource \"%s\"", servletPath), servletPath);
                     if (!allowedRoles.isEmpty() && allowedRoles.stream().noneMatch(currentUser::hasRole))
                         throw new AccessDeniedException(servletPath, allowedRoles);

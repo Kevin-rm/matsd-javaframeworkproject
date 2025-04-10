@@ -13,8 +13,23 @@
         <function-signature>mg.matsd.javaframework.security.base.User getCurrentUser()</function-signature>
     </function>
     <function>
-        <name>isUserConnected</name>
+        <name>currentUserAs</name>
         <function-class>mg.itu.prom16.utils.AuthFacade</function-class>
-        <function-signature>boolean isUserConnected()</function-signature>
+        <function-signature>U getCurrentUser(java.lang.Class)</function-signature>
+    </function>
+    <function>
+        <name>requireCurrentUser</name>
+        <function-class>mg.itu.prom16.utils.AuthFacade</function-class>
+        <function-signature>mg.matsd.javaframework.security.base.User requireCurrentUser()</function-signature>
+    </function>
+    <function>
+        <name>requireCurrentUserAs</name>
+        <function-class>mg.itu.prom16.utils.AuthFacade</function-class>
+        <function-signature>U requireCurrentUser(java.lang.Class)</function-signature>
+    </function>
+    <function>
+        <name>isUserAuthenticated</name>
+        <function-class>mg.itu.prom16.utils.AuthFacade</function-class>
+        <function-signature>boolean isUserAuthenticated()</function-signature>
     </function>
 </taglib>
