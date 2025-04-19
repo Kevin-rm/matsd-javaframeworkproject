@@ -23,11 +23,8 @@ public abstract class AbstractXmlResourceContainer extends ManagedInstanceFactor
 
     protected void setXmlResourceName(String xmlResourceName) {
         Assert.notBlank(xmlResourceName, false, "Le fichier de ressource XML ne doit pas être vide ou \"null\"");
-        Assert.state(xmlResourceName.endsWith(".xml"),
-            () -> new IllegalArgumentException(String.format(
-                "La ressource \"%s\" n'est pas un fichier XML", xmlResourceName
-            ))
-        );
+        Assert.isTrue(xmlResourceName.endsWith(".xml"),
+            String.format("La ressource \"%s\" n'est pas un fichier XML", xmlResourceName));
 
         this.xmlResourceName = xmlResourceName;
     }
@@ -41,9 +38,7 @@ public abstract class AbstractXmlResourceContainer extends ManagedInstanceFactor
 
         Arrays.stream(schemas).forEachOrdered(schema -> {
             Assert.notBlank(schema, false, "Chaque schéma ne peut pas être vide ou \"null\"");
-            Assert.state(schema.endsWith(".xsd"), () -> new IllegalArgumentException(
-                String.format("Le schéma donné \"%s\" n'est pas un fichier XSD", schema))
-            );
+            Assert.isTrue(schema.endsWith(".xsd"), String.format("Le schéma donné \"%s\" n'est pas un fichier XSD", schema));
         });
         this.schemas.addAll(List.of(schemas));
     }

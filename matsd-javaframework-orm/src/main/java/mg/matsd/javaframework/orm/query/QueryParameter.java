@@ -47,10 +47,10 @@ public class QueryParameter {
         String sql = query.getSql();
 
         Assert.notBlank(name, false, "Le nom d'un paramètre ne peut pas être vide ou \"null\"");
-        Assert.state(!name.contains(":") && !name.contains("?"),
+        Assert.isTrue(!name.contains(":") && !name.contains("?"),
             () -> new QueryParameterException("Le nom d'un paramètre ne peut pas contenir les caractères suivants : \":\" et \"?\"")
         );
-        Assert.state(sql.contains(String.format(":%s", name)),
+        Assert.isTrue(sql.contains(String.format(":%s", name)),
             () -> new QueryParameterException(String.format("Aucun paramètre nommé \"%s\" n'est pas présent dans la requête : \"%s\"", name, sql))
         );
 

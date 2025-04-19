@@ -39,9 +39,8 @@ public abstract class AbstractHandler {
 
     private AbstractHandler setControllerClass(Class<?> controllerClass) {
         Assert.notNull(controllerClass, "La classe du contrôleur ne peut pas être \"null\"");
-        Assert.state(UtilFunctions.isController(controllerClass),
-            () -> new IllegalArgumentException("La classe passée en argument n'est pas un contrôleur")
-        );
+        Assert.isTrue(UtilFunctions.isController(controllerClass),
+            "La classe passée en argument n'est pas un contrôleur");
 
         this.controllerClass = controllerClass;
         return this;
@@ -53,10 +52,9 @@ public abstract class AbstractHandler {
 
     private AbstractHandler setMethod(Method method) {
         Assert.notNull(method, "La méthode ne peut pas être \"null\"");
-        Assert.state(method.getDeclaringClass() == controllerClass,
-            () -> new IllegalArgumentException(
-                String.format("Le contrôleur \"%s\" ne dispose pas d'une méthode nommée \"%s\"", controllerClass.getName(), method.getName())
-            ));
+        Assert.isTrue(method.getDeclaringClass() == controllerClass,
+            String.format("Le contrôleur \"%s\" ne dispose pas d'une méthode nommée \"%s\"", controllerClass.getName(), method.getName()
+        ));
 
         this.method = method;
         return this;

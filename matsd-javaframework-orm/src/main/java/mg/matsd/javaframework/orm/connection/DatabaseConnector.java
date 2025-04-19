@@ -74,9 +74,8 @@ public class DatabaseConnector {
     }
 
     private DatabaseConnector setUser(String user) {
-        Assert.state(user != null && StringUtils.hasText(user),
-            () -> new IllegalArgumentException("Le nom d'utilisateur ne peut pas être vide ou \"null\"")
-        );
+        Assert.isTrue(user != null && StringUtils.hasText(user),
+            "Le nom d'utilisateur ne peut pas être vide ou \"null\"");
 
         this.user = user.strip();
         return this;
@@ -148,9 +147,8 @@ public class DatabaseConnector {
     }
 
     public synchronized void releaseConnection(Connection connection) {
-        Assert.state(usedConnections.contains(connection),
-            () -> new IllegalArgumentException("La connexion fournie n'est pas dans le pool de connexions utilisées")
-        );
+        Assert.isTrue(usedConnections.contains(connection),
+            "La connexion fournie n'est pas dans le pool de connexions utilisées");
 
         try {
             Assert.state(!connection.isClosed(), "La connexion retournée au pool ne doit pas être fermée");

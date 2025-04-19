@@ -28,7 +28,7 @@ public abstract class ManagedInstanceFactory {
     public ManagedInstanceFactory setComponentScanBasePackage(String componentScanBasePackage) {
         Assert.notBlank(componentScanBasePackage, false,
             "Le nom de package des \"component\" à scanner ne peut pas être vide ou \"null\"");
-        Assert.state(StringUtils.isValidPackageName(componentScanBasePackage),
+        Assert.isTrue(StringUtils.isValidPackageName(componentScanBasePackage),
             () -> new InvalidPackageException(String.format("Le nom de package des components \"%s\" " +
                 "à scanner n'est pas valide", componentScanBasePackage), componentScanBasePackage
             ));

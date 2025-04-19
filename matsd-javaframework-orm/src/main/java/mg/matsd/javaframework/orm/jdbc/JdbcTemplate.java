@@ -32,7 +32,7 @@ public class JdbcTemplate implements JdbcOperations {
     }
 
     public void setMaxRows(int maxRows) {
-        Assert.state(maxRows >= 0, () -> new IllegalArgumentException("maxRows doit être un nombre positif ou nul"));
+        Assert.isTrue(maxRows >= 0, "maxRows doit être un nombre positif ou nul");
 
         this.maxRows = maxRows;
     }

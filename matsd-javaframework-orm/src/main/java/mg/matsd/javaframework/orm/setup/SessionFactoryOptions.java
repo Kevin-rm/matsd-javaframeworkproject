@@ -93,7 +93,7 @@ public class SessionFactoryOptions {
         if (this.entityScanPackage != null) return;
 
         Assert.notBlank(entityScanPackage, false, "Le nom de package des entités à scanner ne peut pas être vide ou \"null\"");
-        Assert.state(StringUtils.isValidPackageName(entityScanPackage),
+        Assert.isTrue(StringUtils.isValidPackageName(entityScanPackage),
             () -> new IllegalArgumentException(String.format("Le nom de package des entités à scanner fourni \"%s\" n'est pas valide", entityScanPackage))
         );
 
@@ -153,7 +153,7 @@ public class SessionFactoryOptions {
     }
 
     private void validatePropertyKey(String key) {
-        Assert.state(VALID_PROPERTY_NAMES.contains(key),
+        Assert.isTrue(VALID_PROPERTY_NAMES.contains(key),
             () -> new ConfigurationException(String.format("Le nom de propriété \"%s\" n'est pas valide", key)
         ));
 

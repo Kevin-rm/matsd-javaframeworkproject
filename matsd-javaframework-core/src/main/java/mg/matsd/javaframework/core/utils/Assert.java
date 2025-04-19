@@ -46,17 +46,30 @@ public abstract class Assert {
         });
     }
 
-    public static void state(boolean expression, @Nullable Supplier<? extends RuntimeException> runtimeExceptionSupplier) {
+    public static void state(boolean expression, @Nullable Supplier<String> messageSupplier) {
         if (!expression)
-            throw nullSafeGet(runtimeExceptionSupplier);
+            throw messageSupplier == null ? new IllegalStateException() : new IllegalStateException(messageSupplier.get());
     }
 
     public static void state(boolean expression, @Nullable String exceptionMessageIfFalse) {
-        state(expression, () -> new IllegalStateException(exceptionMessageIfFalse));
+        if (!expression) throw new IllegalStateException(exceptionMessageIfFalse);
     }
 
     public static void state(boolean expression) {
-        state(expression, (String) null);
+        state(expression, "État invalide");
+    }
+
+    public static void isTrue(boolean expression, @Nullable Supplier<? extends RuntimeException> runtimeExceptionSupplier) {
+        if (!expression)
+            throw runtimeExceptionSupplier == null ? new IllegalArgumentException() : runtimeExceptionSupplier.get();
+    }
+
+    public static void isTrue(boolean expression, @Nullable String exceptionMessageIfFalse) {
+        if (!expression) throw new IllegalArgumentException(exceptionMessageIfFalse);
+    }
+
+    public static void isTrue(boolean expression) {
+        isTrue(expression, "L'expression est fausse");
     }
 
     public static void positive(int number, @Nullable String exceptionMessage) {
@@ -92,12 +105,5 @@ public abstract class Assert {
             throw new IllegalArgumentException(
                 exceptionMessage == null ? String.format("Le nombre \"%d\" n'est pas compris entre \"%d\" et \"%d\"", number, min, max) : exceptionMessage
             );
-    }
-
-    private static RuntimeException nullSafeGet(Supplier<? extends RuntimeException> runtimeExceptionSupplier) {
-        if (runtimeExceptionSupplier == null)
-            return new IllegalStateException();
-
-        return runtimeExceptionSupplier.get();
     }
 }

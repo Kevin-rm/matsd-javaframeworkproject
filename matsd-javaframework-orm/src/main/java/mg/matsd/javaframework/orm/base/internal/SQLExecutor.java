@@ -306,10 +306,10 @@ public final class SQLExecutor {
         Assert.notBlank(sql, false, "La requête SQL ne peut pas être vide ou \"null\"");
 
         String[] sqlParts = sql.strip().split("\\s+");
-        Assert.state(sqlParts.length >= 2,
+        Assert.isTrue(sqlParts.length >= 2,
             () -> new BadQueryException("Requête trop courte. Une requête \"DQL (SELECT)\" doit comporter au moins 2 mots")
         );
-        Assert.state(sqlParts[0].equalsIgnoreCase("SELECT"),
+        Assert.isTrue(sqlParts[0].equalsIgnoreCase("SELECT"),
             () -> new BadQueryException("La requête fournie n'est pas une requête DQL (SELECT)")
         );
     }
@@ -318,10 +318,10 @@ public final class SQLExecutor {
         Assert.notBlank(sql, false, "La requête SQL ne peut pas être vide ou \"null\"");
 
         String[] sqlParts = sql.strip().split("\\s+");
-        Assert.state(sqlParts.length >= 3,
+        Assert.isTrue(sqlParts.length >= 3,
             () -> new BadQueryException(String.format("Requête trop courte. Une requête \"DML %s\" doit comporter au moins 3 mots", DML_QUERY_STARTS))
         );
-        Assert.state(DML_QUERY_STARTS.contains(sqlParts[0].toUpperCase()),
+        Assert.isTrue(DML_QUERY_STARTS.contains(sqlParts[0].toUpperCase()),
             () -> new BadQueryException(String.format("La requête fournie n'est pas une requête DML %s", DML_QUERY_STARTS))
         );
     }
@@ -330,17 +330,17 @@ public final class SQLExecutor {
         Assert.notBlank(sql, false, "La requête SQL ne peut pas être vide ou \"null\"");
 
         String[] sqlParts = sql.strip().split("\\s+");
-        Assert.state(sqlParts.length >= 3,
+        Assert.isTrue(sqlParts.length >= 3,
             () -> new BadQueryException(String.format("Requête trop courte. Une requête \"DDL %s\" doit comporter au moins 3 mots", DDL_QUERY_STARTS))
         );
-        Assert.state(DDL_QUERY_STARTS.contains(sqlParts[0].toUpperCase()),
+        Assert.isTrue(DDL_QUERY_STARTS.contains(sqlParts[0].toUpperCase()),
             () -> new BadQueryException(String.format("La requête fournie n'est pas une requête DDL %s", DDL_QUERY_STARTS))
         );
     }
 
     private static void validationForUniqueColumn(String sql, Class<?> resultType) {
         validateDQLQuery(sql);
-        Assert.state(ClassUtils.isStandardClass(resultType),
+        Assert.isTrue(ClassUtils.isStandardClass(resultType),
             () -> new IllegalArgumentException(String.format("La classe \"%s\" n'est pas une classe standard de JAVA", resultType.getName()))
         );
     }

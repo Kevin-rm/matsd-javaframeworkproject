@@ -67,7 +67,7 @@ public final class Configuration {
                 .filter(propertyName -> propertyName.startsWith(PROPERTIES_KEY_PREFIX))
                 .forEachOrdered(propertyName -> {
                     String[] propertyNameParts = propertyName.substring(PROPERTIES_KEY_PREFIX.length()).split("\\.");
-                    Assert.state(propertyNameParts.length >= 1,
+                    Assert.isTrue(propertyNameParts.length >= 1,
                         () -> new ConfigurationException(String.format("La déclaration des informations dans un fichier .properties " +
                             "doit être de la forme : %s.[session_factory_name] (optionnel).[property_name]", PROPERTIES_KEY_PREFIX))
                     );
