@@ -44,7 +44,7 @@ class ResponseRenderer {
     static void doRenderError(Throwable throwable, HttpServletResponse httpServletResponse) throws IOException {
         httpServletResponse.setContentType("text/html");
         httpServletResponse.setStatus(throwable instanceof HttpStatusException httpStatusException ?
-            httpStatusException.getStatusCode() : HttpStatusCode.INTERNAL_SERVER_ERROR.getValue());
+            httpStatusException.getStatusCode() : HttpStatusCode.INTERNAL_SERVER_ERROR.value());
 
         StringWriter stringWriter = new StringWriter();
         throwable.printStackTrace(new PrintWriter(stringWriter));
