@@ -54,11 +54,11 @@ public enum HttpStatusCode {
         this.reason = reason;
     }
 
-    public int value() {
+    public int getValue() {
         return value;
     }
 
-    public String reason() {
+    public String getReason() {
         return reason;
     }
 
