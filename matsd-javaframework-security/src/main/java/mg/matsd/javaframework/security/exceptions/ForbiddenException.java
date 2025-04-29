@@ -6,6 +6,10 @@ public class ForbiddenException extends HttpStatusException {
         super(message);
     }
 
+    public ForbiddenException(String message, String prefix) {
+        super(message, prefix);
+    }
+
     @Override
     protected int defineStatusCode() {
         return 403;

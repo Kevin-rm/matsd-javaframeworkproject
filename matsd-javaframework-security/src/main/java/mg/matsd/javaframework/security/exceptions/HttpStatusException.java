@@ -9,7 +9,11 @@ public abstract class HttpStatusException extends BaseException {
         super(message);
     }
 
-    public final int getStatusCode() {
+    public HttpStatusException(String message, String prefix) {
+        super(message, prefix);
+    }
+
+    public int getStatusCode() {
         return statusCode;
     }
 

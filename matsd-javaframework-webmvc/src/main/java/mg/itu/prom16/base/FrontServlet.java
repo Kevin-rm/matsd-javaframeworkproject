@@ -14,7 +14,6 @@ import mg.itu.prom16.base.internal.handler.MappingHandler;
 import mg.itu.prom16.base.internal.request.RequestContextHolder;
 import mg.itu.prom16.base.internal.request.ServletRequestAttributes;
 import mg.itu.prom16.exceptions.DuplicateMappingException;
-import mg.itu.prom16.exceptions.NotFoundHttpException;
 import mg.itu.prom16.http.RequestMethod;
 import mg.itu.prom16.http.Session;
 import mg.itu.prom16.support.WebApplicationContainer;
@@ -28,6 +27,7 @@ import mg.matsd.javaframework.security.annotation.Authorize;
 import mg.matsd.javaframework.security.base.AuthenticationManager;
 import mg.matsd.javaframework.security.base.User;
 import mg.matsd.javaframework.security.exceptions.AccessDeniedException;
+import mg.matsd.javaframework.security.exceptions.NotFoundHttpException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

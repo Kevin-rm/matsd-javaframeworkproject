@@ -1,10 +1,8 @@
 package mg.matsd.javaframework.security.exceptions;
 
-import mg.matsd.javaframework.core.exceptions.BaseException;
-
 import java.util.List;
 
-public class AccessDeniedException extends BaseException {
+public class AccessDeniedException extends ForbiddenException {
     private static final String PREFIX = "Accès refusé";
     private final String unreachableResource;
     private List<String> necessaryRoles;
