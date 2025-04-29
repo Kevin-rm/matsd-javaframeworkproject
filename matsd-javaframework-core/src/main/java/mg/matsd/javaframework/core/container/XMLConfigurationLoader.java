@@ -27,8 +27,7 @@ class XMLConfigurationLoader {
             ManagedInstance managedInstance = new ManagedInstance(
                 getAttributeValue(element, "id"),
                 getAttributeValue(element, "class"),
-                getAttributeValue(element, "scope")
-            );
+                getAttributeValue(element, "scope"));
             abstractXmlResourceContainer.registerManagedInstance(managedInstance);
 
             for (Element childElement : getChildElements(element)) {

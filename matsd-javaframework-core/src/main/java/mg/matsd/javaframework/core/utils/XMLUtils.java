@@ -66,7 +66,7 @@ public abstract class XMLUtils {
     @Nullable
     public static Element getFirstChildElementByTagName(Element parentElement, String childElementTagName) {
         List<Element> childElements = getChildElementsByTagName(parentElement, childElementTagName);
-        if (childElements.size() == 0) return null;
+        if (childElements.isEmpty()) return null;
 
         return childElements.get(0);
     }
