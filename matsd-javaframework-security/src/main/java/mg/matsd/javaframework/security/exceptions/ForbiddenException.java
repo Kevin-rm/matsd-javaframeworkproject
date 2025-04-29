@@ -1,8 +1,8 @@
 package mg.matsd.javaframework.security.exceptions;
 
-public abstract class AbstractForbiddenException extends HttpStatusException {
+public class ForbiddenException extends HttpStatusException {
 
-    public AbstractForbiddenException(String message) {
+    public ForbiddenException(String message) {
         super(message);
     }
 
