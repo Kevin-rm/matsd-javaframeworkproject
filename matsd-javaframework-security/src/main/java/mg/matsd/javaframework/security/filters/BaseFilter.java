@@ -52,9 +52,7 @@ public abstract class BaseFilter implements Filter {
     public void postHandle(HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException { }
 
-    public boolean shouldIgnore(HttpServletRequest request) {
-        return false;
-    }
+    public boolean shouldIgnore(HttpServletRequest request) { return false; }
 
     public enum FilterChainDecision { CONTINUE, SKIP_CHAIN, STOP }
 }
