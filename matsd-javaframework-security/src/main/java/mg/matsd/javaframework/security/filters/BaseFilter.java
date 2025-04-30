@@ -45,10 +45,10 @@ public abstract class BaseFilter implements Filter {
                 default -> throw new IllegalStateException("Valeur de FilterChainDecision non reconnue: " + decision);
             }
         } catch (Exception e) {
-            if (e instanceof ServletException servletException) throw servletException;
+            if (e instanceof ServletException servletException)      throw servletException;
+            else if (e instanceof RuntimeException runtimeException) throw runtimeException;
 
-            Throwable cause = e.getCause();
-            throw new RuntimeException(cause != null ? cause : e);
+            throw new RuntimeException(e);
         }
     }
 
