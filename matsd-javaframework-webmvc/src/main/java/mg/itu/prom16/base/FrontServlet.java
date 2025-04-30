@@ -144,14 +144,12 @@ public class FrontServlet extends HttpServlet {
 
             AuthenticationManager authenticationManager = AuthFacade.getAuthenticationManager();
             if (authenticationManager != null) {
-                final String statefulStorageKey   = authenticationManager.getStatefulStorageKey();
-                final boolean isUserAuthenticated = AuthFacade.isUserAuthenticated();
                 final User currentUser = authenticationManager.getCurrentUser();
+                final boolean isUserAuthenticated = currentUser != null;
+                final String statefulStorageKey   = authenticationManager.getStatefulStorageKey();
 
-                if (isUserAuthenticated && statefulStorageKey != null) {
-                    User refreshedUser = authenticationManager.getUserProvider().refreshUser(currentUser);
-                    session.put(statefulStorageKey, refreshedUser);
-                }
+                if (isUserAuthenticated && statefulStorageKey != null)
+                    session.put(statefulStorageKey, authenticationManager.getUserProvider().refreshUser(currentUser));
                 if (mappingHandler.isAnonymous() && isUserAuthenticated)
                     throw new AccessDeniedException(String.format("Vous devez être anonyme " +
                         "pour accéder à la ressource \"%s\"", servletPath), servletPath);

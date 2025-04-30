@@ -64,7 +64,7 @@ public abstract class AuthFacade {
     }
 
     @Nullable
-    private static <T> T withAuthenticationManager(
+    public static <T> T withAuthenticationManager(
         final Function<AuthenticationManager, T> function, @Nullable final Boolean required
     ) {
         AuthenticationManager authenticationManager = getAuthenticationManager();
@@ -78,7 +78,7 @@ public abstract class AuthFacade {
     }
 
     @Nullable
-    private static <T> T withAuthenticationManager(final Function<AuthenticationManager, T> function) {
+    public static <T> T withAuthenticationManager(final Function<AuthenticationManager, T> function) {
         return withAuthenticationManager(function, false);
     }
 
