@@ -1,20 +1,17 @@
 package mg.matsd.javaframework.security.filters;
 
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import java.io.IOException;
-
 public abstract class OncePerRequestFilter extends BaseFilter {
-    protected final String alreadyFilteredAttrName = defineAlreadyFilteredAttrName();
+    protected final String alreadyFilteredAttrName = getClass().getName() + ".FILTERED";
 
     public String getAlreadyFilteredAttrName() {
         return alreadyFilteredAttrName;
     }
 
     @Override
-    public FilterChainDecision preHandle(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+    public FilterChainDecision preHandle(HttpServletRequest request, HttpServletResponse response) throws Exception {
         if (request.getAttribute(alreadyFilteredAttrName) != null) return FilterChainDecision.CONTINUE;
 
         request.setAttribute(alreadyFilteredAttrName, Boolean.TRUE);
@@ -27,7 +24,7 @@ public abstract class OncePerRequestFilter extends BaseFilter {
     }
 
     @Override
-    public void postHandle(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+    public void postHandle(HttpServletRequest request, HttpServletResponse response) throws Exception {
         try {
             doPostHandle(request, response);
         } finally {
@@ -37,10 +34,8 @@ public abstract class OncePerRequestFilter extends BaseFilter {
     }
 
     protected abstract FilterChainDecision doPreHandle(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException;
+        throws Exception;
 
-    protected abstract void doPostHandle(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException;
-
-    protected abstract String defineAlreadyFilteredAttrName();
+    protected void doPostHandle(HttpServletRequest request, HttpServletResponse response)
+        throws Exception { }
 }

@@ -33,24 +33,31 @@ public abstract class BaseFilter implements Filter {
             return;
         }
 
-        FilterChainDecision decision = preHandle(httpServletRequest, httpServletResponse);
-        switch (decision) {
-            case CONTINUE -> {
-                filterChain.doFilter(servletRequest, servletResponse);
-                postHandle(httpServletRequest, httpServletResponse);
+        try {
+            FilterChainDecision decision = preHandle(httpServletRequest, httpServletResponse);
+            switch (decision) {
+                case CONTINUE -> {
+                    filterChain.doFilter(servletRequest, servletResponse);
+                    postHandle(httpServletRequest, httpServletResponse);
+                }
+                case SKIP_CHAIN -> postHandle(httpServletRequest, httpServletResponse);
+                case STOP -> { }
+                default -> throw new IllegalStateException("Valeur de FilterChainDecision non reconnue: " + decision);
             }
-            case SKIP_CHAIN -> postHandle(httpServletRequest, httpServletResponse);
-            case STOP -> { }
-            default -> throw new IllegalStateException("Valeur de FilterChainDecision non reconnue: " + decision);
+        } catch (Exception e) {
+            if (e instanceof ServletException servletException) throw servletException;
+
+            Throwable cause = e.getCause();
+            throw new RuntimeException(cause != null ? cause : e);
         }
     }
 
     @Nullable
     public abstract FilterChainDecision preHandle(HttpServletRequest request, HttpServletResponse response)
-        throws IOException, ServletException;
+        throws Exception;
 
     public void postHandle(HttpServletRequest request, HttpServletResponse response)
-        throws IOException, ServletException { }
+        throws Exception { }
 
     public boolean shouldIgnore(HttpServletRequest request) { return false; }
 

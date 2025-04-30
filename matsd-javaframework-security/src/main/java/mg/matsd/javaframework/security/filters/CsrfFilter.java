@@ -1,47 +1,37 @@
 package mg.matsd.javaframework.security.filters;
 
-import jakarta.servlet.Filter;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import mg.matsd.javaframework.security.exceptions.ForbiddenException;
 
-import java.io.IOException;
 import java.util.UUID;
 
-public class CsrfFilter implements Filter {
-    private static final String CSRF_TOKEN_SESSION_KEY    = "csrf_token";
-    private static final String CSRF_TOKEN_HEADER         = "X-CSRF-Token";
-    private static final String CSRF_TOKEN_PARAMETER_NAME = "_csrf";
+public class CsrfFilter extends OncePerRequestFilter {
+    public static final String CSRF_TOKEN_SESSION_KEY    = "csrf_token";
+    public static final String CSRF_TOKEN_HEADER         = "X-CSRF-Token";
+    public static final String CSRF_TOKEN_PARAMETER_NAME = "_csrf";
 
     @Override
-    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
-        if (!(servletRequest  instanceof HttpServletRequest httpServletRequest) ||
-            !(servletResponse instanceof HttpServletResponse httpServletResponse)
-        ) {
-            filterChain.doFilter(servletRequest, servletResponse);
-            return;
-        }
+    protected FilterChainDecision doPreHandle(HttpServletRequest request, HttpServletResponse response)
+        throws Exception {
 
-        String csrfToken = getOrGenerateCsrfToken(httpServletRequest);
-        if (isStateChangingRequest(httpServletRequest) && !validateCsrfToken(httpServletRequest, csrfToken)) {
-            // TODO: Maybe throw an exception
+        final String csrfToken = getOrGenerateCsrfToken(request);
+        if (isStateChangingRequest(request) && !validateCsrfToken(request, csrfToken))
+            throw new ForbiddenException("Csrf token invalide");
 
-            return;
-        }
-        httpServletResponse.setHeader(CSRF_TOKEN_HEADER, csrfToken);
-
-        filterChain.doFilter(servletRequest, servletResponse);
+        response.setHeader(CSRF_TOKEN_HEADER, csrfToken);
+        return FilterChainDecision.CONTINUE;
     }
 
     private String getOrGenerateCsrfToken(HttpServletRequest httpServletRequest) {
         HttpSession httpSession = httpServletRequest.getSession();
 
         String csrfToken = (String) httpSession.getAttribute(CSRF_TOKEN_SESSION_KEY);
-        if (csrfToken == null) httpSession.setAttribute(CSRF_TOKEN_SESSION_KEY, UUID.randomUUID().toString());
+        if (csrfToken == null) {
+            csrfToken = UUID.randomUUID().toString();
+            httpSession.setAttribute(CSRF_TOKEN_SESSION_KEY, csrfToken);
+        }
 
         return csrfToken;
     }
