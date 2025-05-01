@@ -1,6 +1,5 @@
 package mg.matsd.javaframework.security.filters;
 
-import jakarta.servlet.annotation.WebListener;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -9,7 +8,6 @@ import mg.matsd.javaframework.security.exceptions.ForbiddenException;
 
 import java.util.UUID;
 
-@WebListener("/*")
 public class CsrfFilter extends BaseFilter {
     private String sessionKey;
     private String headerName;

@@ -4,15 +4,26 @@ import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.utils.Assert;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public abstract class BaseFilter implements Filter {
     protected static final Logger LOGGER = LogManager.getLogger(BaseFilter.class);
     protected final String alreadyFilteredAttrName = getClass().getName() + ".FILTERED";
-    private FilterConfig filterConfig;
+    protected final List<String> urlPatterns = new ArrayList<>();
+    private   FilterConfig filterConfig;
+
+    protected BaseFilter(@Nullable String... urlPatterns) {
+        if (urlPatterns == null) return;
+        Arrays.stream(urlPatterns).forEachOrdered(this::addUrlPattern);
+    }
 
     public String getAlreadyFilteredAttrName() {
         return alreadyFilteredAttrName;
@@ -20,6 +31,18 @@ public abstract class BaseFilter implements Filter {
 
     public FilterConfig getFilterConfig() {
         return filterConfig;
+    }
+
+    public List<String> getUrlPatterns() {
+        return Collections.unmodifiableList(urlPatterns);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <F extends BaseFilter> F addUrlPattern(String urlPattern) {
+        Assert.notBlank(urlPattern, false, "L'argument urlPattern ne peut pas être vide ou \"null\"");
+        urlPatterns.add(urlPattern);
+
+        return (F) this;
     }
 
     @Override
@@ -33,7 +56,7 @@ public abstract class BaseFilter implements Filter {
         if (!(servletRequest  instanceof HttpServletRequest httpServletRequest)   ||
             !(servletResponse instanceof HttpServletResponse httpServletResponse) ||
             httpServletRequest.getAttribute(alreadyFilteredAttrName) != null      ||
-            !shouldFilter(httpServletRequest)
+            shouldIgnore(httpServletRequest)
         ) {
             filterChain.doFilter(servletRequest, servletResponse);
             return;
@@ -69,7 +92,7 @@ public abstract class BaseFilter implements Filter {
     public void postHandle(HttpServletRequest request, HttpServletResponse response)
         throws Exception { }
 
-    public boolean shouldFilter(HttpServletRequest request) { return false; }
+    public boolean shouldIgnore(HttpServletRequest request) { return false; }
 
     public enum FilterChainDecision {
         CONTINUE, SKIP_CHAIN, STOP;
