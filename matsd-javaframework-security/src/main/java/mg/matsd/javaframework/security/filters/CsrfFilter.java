@@ -11,9 +11,15 @@ import java.util.UUID;
 
 @WebListener("/*")
 public class CsrfFilter extends BaseFilter {
-    private String sessionKey    = "csrf_token";
-    private String headerName    = "X-CSRF-Token";
-    private String parameterName = "_csrf";
+    private String sessionKey;
+    private String headerName;
+    private String parameterName;
+
+    public CsrfFilter() {
+        sessionKey    = "csrf_token";
+        headerName    = "X-CSRF-Token";
+        parameterName = "_csrf";
+    }
 
     public String getSessionKey() {
         return sessionKey;
