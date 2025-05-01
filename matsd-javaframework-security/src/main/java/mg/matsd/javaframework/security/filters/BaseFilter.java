@@ -11,7 +11,12 @@ import java.io.IOException;
 
 public abstract class BaseFilter implements Filter {
     protected static final Logger LOGGER = LogManager.getLogger(BaseFilter.class);
+    protected final String alreadyFilteredAttrName = getClass().getName() + ".FILTERED";
     private FilterConfig filterConfig;
+
+    public String getAlreadyFilteredAttrName() {
+        return alreadyFilteredAttrName;
+    }
 
     public FilterConfig getFilterConfig() {
         return filterConfig;
@@ -27,12 +32,14 @@ public abstract class BaseFilter implements Filter {
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
         if (!(servletRequest  instanceof HttpServletRequest httpServletRequest)   ||
             !(servletResponse instanceof HttpServletResponse httpServletResponse) ||
-            shouldIgnore(httpServletRequest)
+            httpServletRequest.getAttribute(alreadyFilteredAttrName) != null      ||
+            !shouldFilter(httpServletRequest)
         ) {
             filterChain.doFilter(servletRequest, servletResponse);
             return;
         }
 
+        httpServletRequest.setAttribute(alreadyFilteredAttrName, Boolean.TRUE);
         try {
             FilterChainDecision decision = preHandle(httpServletRequest, httpServletResponse);
             switch (decision) {
@@ -42,13 +49,16 @@ public abstract class BaseFilter implements Filter {
                 }
                 case SKIP_CHAIN -> postHandle(httpServletRequest, httpServletResponse);
                 case STOP -> { }
-                default -> throw new IllegalStateException("Valeur de FilterChainDecision non reconnue: " + decision);
+                default -> throw new IllegalStateException("Valeur de \"FilterChainDecision\" non reconnue: " + decision);
             }
         } catch (Exception e) {
             if (e instanceof ServletException servletException)      throw servletException;
             else if (e instanceof RuntimeException runtimeException) throw runtimeException;
 
             throw new RuntimeException(e);
+        } finally {
+            if (httpServletRequest.getAttribute(alreadyFilteredAttrName) != null)
+                httpServletRequest.removeAttribute(alreadyFilteredAttrName);
         }
     }
 
@@ -59,7 +69,11 @@ public abstract class BaseFilter implements Filter {
     public void postHandle(HttpServletRequest request, HttpServletResponse response)
         throws Exception { }
 
-    public boolean shouldIgnore(HttpServletRequest request) { return false; }
+    public boolean shouldFilter(HttpServletRequest request) { return false; }
 
-    public enum FilterChainDecision { CONTINUE, SKIP_CHAIN, STOP }
+    public enum FilterChainDecision {
+        CONTINUE, SKIP_CHAIN, STOP;
+
+        public static FilterChainDecision defaultValue() { return CONTINUE; }
+    }
 }
