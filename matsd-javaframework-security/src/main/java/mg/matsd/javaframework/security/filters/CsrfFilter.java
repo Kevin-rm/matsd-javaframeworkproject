@@ -28,7 +28,7 @@ public class CsrfFilter extends BaseFilter {
     public CsrfFilter setSessionKey(String sessionKey) {
         Assert.notBlank(sessionKey, false, "L'argument sessionKey ne peut pas être vide ou \"null\"");
 
-        this.sessionKey = sessionKey;
+        this.sessionKey = sessionKey.strip();
         return this;
     }
 
@@ -39,7 +39,7 @@ public class CsrfFilter extends BaseFilter {
     public CsrfFilter setHeaderName(String headerName) {
         Assert.notBlank(headerName, false, "L'argument headerName ne peut pas être vide ou \"null\"");
 
-        this.headerName = headerName;
+        this.headerName = headerName.strip();
         return this;
     }
 
@@ -50,7 +50,7 @@ public class CsrfFilter extends BaseFilter {
     public CsrfFilter setParameterName(String parameterName) {
         Assert.notBlank(parameterName, false, "L'argument parameterName ne peut pas être vide ou \"null\"");
 
-        this.parameterName = parameterName;
+        this.parameterName = parameterName.strip();
         return this;
     }
 
