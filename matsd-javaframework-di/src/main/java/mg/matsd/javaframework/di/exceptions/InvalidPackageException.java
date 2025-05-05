@@ -1,6 +1,7 @@
-package mg.matsd.javaframework.core.exceptions;
+package mg.matsd.javaframework.di.exceptions;
 
 import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.exceptions.BaseException;
 import mg.matsd.javaframework.core.utils.StringUtils;
 
 public class InvalidPackageException extends BaseException {

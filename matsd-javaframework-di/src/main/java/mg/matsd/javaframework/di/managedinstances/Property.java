@@ -5,7 +5,7 @@ import mg.matsd.javaframework.core.exceptions.TypeMismatchException;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.core.utils.ClassUtils;
 import mg.matsd.javaframework.core.utils.StringUtils;
-import mg.matsd.javaframework.core.utils.converter.StringConverter;
+import mg.matsd.javaframework.core.utils.converter.StringToTypeConverter;
 
 import java.lang.reflect.Field;
 
@@ -73,7 +73,7 @@ public class Property {
         Object obj = null;
         final Class<?> fieldType = field.getType();
         if (value != null && StringUtils.hasText(value)) try {
-            obj = StringConverter.convert(value, fieldType);
+            obj = StringToTypeConverter.convert(value, fieldType);
         } catch (TypeMismatchException e) {
             throw new TypeMismatchException(String.format(
                 "La valeur \"%s\" fournie pour la propriété \"%s\" ne correspond pas au type \"%s\" attendu",

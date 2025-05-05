@@ -8,9 +8,9 @@ import java.util.function.Consumer;
 
 public abstract class ClassScanner {
 
-    public static void doScan(String packageName, Consumer<Class<?>> action) throws PackageNotFoundException {
+    public static void doScan(String packageName, Consumer<Class<?>> consumer) throws PackageNotFoundException {
         Assert.notBlank(packageName, false);
-        Assert.notNull(action);
+        Assert.notNull(consumer);
 
         URL url = Thread.currentThread()
             .getContextClassLoader()
@@ -24,10 +24,10 @@ public abstract class ClassScanner {
         for (File file : files) {
             String fileName = file.getName();
 
-            if (file.isDirectory()) doScan(String.format("%s.%s", packageName, fileName), action);
+            if (file.isDirectory()) doScan(String.format("%s.%s", packageName, fileName), consumer);
             else if (fileName.endsWith(".class")) {
                 try {
-                    action.accept(Class.forName(
+                    consumer.accept(Class.forName(
                         String.format("%s.%s", packageName, fileName.replaceAll("\\.class$", ""))
                     ));
                 } catch (ClassNotFoundException ignored) { }

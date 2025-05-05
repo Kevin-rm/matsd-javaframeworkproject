@@ -15,7 +15,7 @@ import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.AnnotationUtils;
 import mg.matsd.javaframework.core.utils.ClassUtils;
 import mg.matsd.javaframework.core.utils.StringUtils;
-import mg.matsd.javaframework.core.utils.converter.StringConverter;
+import mg.matsd.javaframework.core.utils.converter.StringToTypeConverter;
 import mg.matsd.javaframework.validation.annotations.Validate;
 import mg.matsd.javaframework.validation.base.ValidatorFactory;
 
@@ -97,7 +97,7 @@ public final class UtilFunctions {
         String parameterValue = httpServletRequest.getParameter(parameterName);
         if (parameterValue == null || StringUtils.isBlank(parameterValue)) {
             if (StringUtils.hasText(requestParameter.defaultValue()))
-                return StringConverter.convert(requestParameter.defaultValue(), parameterType);
+                return StringToTypeConverter.convert(requestParameter.defaultValue(), parameterType);
             else if (requestParameter.required())
                 throw new MissingServletRequestParameterException(parameterName);
             else if (parameterType.isPrimitive())
@@ -110,7 +110,7 @@ public final class UtilFunctions {
             return null;
         }
 
-        return StringConverter.convert(parameterValue, parameterType);
+        return StringToTypeConverter.convert(parameterValue, parameterType);
     }
 
     public static Object getPathVariableValue(
@@ -126,7 +126,7 @@ public final class UtilFunctions {
         if (!pathVariables.containsKey(pathVariableName))
             throw new UndefinedPathVariableException(pathVariableName, requestMappingInfo);
 
-        return StringConverter.convert(pathVariables.get(pathVariableName), parameterType);
+        return StringToTypeConverter.convert(pathVariables.get(pathVariableName), parameterType);
     }
 
     @Nullable
@@ -280,7 +280,7 @@ public final class UtilFunctions {
         if (fieldType.isPrimitive() && requestParameterValueIsNullOrBlank) return;
 
         field.set(modelInstance, requestParameterValueIsNullOrBlank ? null :
-            StringConverter.convert(requestParameterValue, fieldType));
+            StringToTypeConverter.convert(requestParameterValue, fieldType));
     }
 
     @Nullable

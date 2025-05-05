@@ -12,11 +12,11 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Set;
 
-public final class StringConverter {
+public final class StringToTypeConverter {
     private static final Set<String> TRUE_VALUES  = Set.of("true", "yes", "1");
     private static final Set<String> FALSE_VALUES = Set.of("false", "no", "0");
 
-    private StringConverter() { }
+    private StringToTypeConverter() { }
 
     @SuppressWarnings("unchecked")
     public static <T> T convert(String value, Class<T> type) throws TypeMismatchException {

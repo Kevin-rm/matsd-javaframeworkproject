@@ -5,7 +5,7 @@ import mg.matsd.javaframework.core.exceptions.TypeMismatchException;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.core.utils.ClassUtils;
 import mg.matsd.javaframework.core.utils.StringUtils;
-import mg.matsd.javaframework.core.utils.converter.StringConverter;
+import mg.matsd.javaframework.core.utils.converter.StringToTypeConverter;
 
 import java.lang.reflect.Constructor;
 
@@ -72,7 +72,7 @@ public class ConstructorArgument {
     private ConstructorArgument setIndex(String index, @Nullable Constructor<?> constructor) {
         try {
             return setIndex(
-                index == null ? managedInstance.generateConstructorArgumentIndex() : StringConverter.convert(index, Integer.class),
+                index == null ? managedInstance.generateConstructorArgumentIndex() : StringToTypeConverter.convert(index, Integer.class),
                 constructor);
         } catch (TypeMismatchException e) {
             throw new TypeMismatchException(String.format(
@@ -111,7 +111,7 @@ public class ConstructorArgument {
     private ConstructorArgument setValue(@Nullable String value) {
         Object obj = null;
         if (value != null && StringUtils.hasText(value)) try {
-            obj = StringConverter.convert(value, type);
+            obj = StringToTypeConverter.convert(value, type);
         } catch (TypeMismatchException e) {
             throw new TypeMismatchException(String.format(
                 "La valeur fournie pour l'argument de constructeur à l'indice %d ne correspond pas au type \"%s\" attendu",

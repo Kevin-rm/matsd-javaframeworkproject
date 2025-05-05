@@ -5,7 +5,7 @@ import mg.matsd.javaframework.core.exceptions.TypeMismatchException;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.core.utils.ClassUtils;
 import mg.matsd.javaframework.core.utils.StringUtils;
-import mg.matsd.javaframework.core.utils.converter.StringConverter;
+import mg.matsd.javaframework.core.utils.converter.StringToTypeConverter;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -146,7 +146,7 @@ public class ManagedInstance {
     private ManagedInstance setLazy(@Nullable String isLazy) {
         try {
             return setLazy(StringUtils.isNullOrBlank(isLazy) ? null :
-                StringConverter.convert(isLazy, Boolean.class));
+                StringToTypeConverter.convert(isLazy, Boolean.class));
         } catch (TypeMismatchException e) {
             throw new ManagedInstanceCreationException("La valeur de l'argument \"isLazy\" donné n'est pas un \"boolean\" : " + this.isLazy);
         }

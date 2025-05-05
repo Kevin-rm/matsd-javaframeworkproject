@@ -5,7 +5,7 @@ import mg.matsd.javaframework.core.exceptions.TypeMismatchException;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.core.utils.ClassScanner;
 import mg.matsd.javaframework.core.utils.StringUtils;
-import mg.matsd.javaframework.core.utils.converter.StringConverter;
+import mg.matsd.javaframework.core.utils.converter.StringToTypeConverter;
 import mg.matsd.javaframework.orm.base.internal.UtilFunctions;
 import mg.matsd.javaframework.orm.connection.DatabaseConnector;
 import mg.matsd.javaframework.orm.mapping.Entity;
@@ -145,7 +145,7 @@ public class SessionFactoryOptions {
         if (value == null) return false;
 
         try {
-            return StringConverter.convert(value, boolean.class);
+            return StringToTypeConverter.convert(value, boolean.class);
         } catch (TypeMismatchException e) {
             throw new TypeMismatchException(String.format("La valeur de la propriété \"%s\" fournie " +
                 "n'est pas de type boolean : \"%s\"", key, value));

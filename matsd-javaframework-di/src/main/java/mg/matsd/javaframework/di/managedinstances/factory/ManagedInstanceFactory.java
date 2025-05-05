@@ -1,7 +1,7 @@
 package mg.matsd.javaframework.di.managedinstances.factory;
 
 import mg.matsd.javaframework.core.annotations.Nullable;
-import mg.matsd.javaframework.core.exceptions.InvalidPackageException;
+import mg.matsd.javaframework.di.exceptions.InvalidPackageException;
 import mg.matsd.javaframework.core.managedinstances.*;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.core.utils.StringUtils;
