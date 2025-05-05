@@ -20,8 +20,6 @@ import mg.matsd.javaframework.validation.base.ValidatorFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-import static mg.matsd.javaframework.core.managedinstances.Scope.*;
-
 public class WebApplicationContainer extends AbstractXmlResourceContainer {
     public static final String WEB_SCOPED_MANAGED_INSTANCES_KEY_PREFIX = "web_scoped_managedinstance";
 
