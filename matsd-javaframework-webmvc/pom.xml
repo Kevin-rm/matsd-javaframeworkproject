@@ -24,12 +24,14 @@
             <groupId>mg.matsd.javaframework</groupId>
             <artifactId>matsd-javaframework-validation</artifactId>
             <version>1.0-SNAPSHOT</version>
+            <optional>true</optional>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>mg.matsd.javaframework</groupId>
             <artifactId>matsd-javaframework-security</artifactId>
             <version>1.0-SNAPSHOT</version>
+            <optional>true</optional>
             <scope>provided</scope>
         </dependency>
         <dependency>
