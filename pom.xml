@@ -13,6 +13,7 @@
         <module>matsd-javaframework-core</module>
         <module>matsd-javaframework-orm</module>
         <module>matsd-javaframework-security</module>
+        <module>matsd-javaframework-tools</module>
         <module>matsd-javaframework-validation</module>
         <module>matsd-javaframework-webmvc</module>
     </modules>

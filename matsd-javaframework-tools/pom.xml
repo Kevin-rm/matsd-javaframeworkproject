@@ -11,13 +11,6 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>matsd-javaframework-core</artifactId>
+    <artifactId>matsd-javaframework-tools</artifactId>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-core</artifactId>
-            <version>2.24.3</version>
-        </dependency>
-    </dependencies>
 </project>
