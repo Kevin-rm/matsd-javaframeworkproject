@@ -1,6 +1,6 @@
 package mg.itu.prom16.annotations;
 
-import mg.matsd.javaframework.core.annotations.Component;
+import mg.matsd.javaframework.di.annotations.Component;
 
 import java.lang.annotation.*;
 
