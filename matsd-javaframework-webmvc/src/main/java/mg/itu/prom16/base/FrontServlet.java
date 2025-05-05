@@ -14,7 +14,6 @@ import mg.itu.prom16.base.internal.handler.MappingHandler;
 import mg.itu.prom16.base.internal.request.RequestContextHolder;
 import mg.itu.prom16.base.internal.request.ServletRequestAttributes;
 import mg.itu.prom16.exceptions.DuplicateMappingException;
-import mg.itu.prom16.exceptions.NotFoundHttpException;
 import mg.itu.prom16.http.RequestMethod;
 import mg.itu.prom16.http.Session;
 import mg.itu.prom16.support.WebApplicationContainer;
@@ -28,6 +27,7 @@ import mg.matsd.javaframework.security.annotation.Authorize;
 import mg.matsd.javaframework.security.base.AuthenticationManager;
 import mg.matsd.javaframework.security.base.User;
 import mg.matsd.javaframework.security.exceptions.AccessDeniedException;
+import mg.matsd.javaframework.security.exceptions.NotFoundHttpException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -144,14 +144,12 @@ public class FrontServlet extends HttpServlet {
 
             AuthenticationManager authenticationManager = AuthFacade.getAuthenticationManager();
             if (authenticationManager != null) {
-                final String statefulStorageKey   = authenticationManager.getStatefulStorageKey();
-                final boolean isUserAuthenticated = AuthFacade.isUserAuthenticated();
                 final User currentUser = authenticationManager.getCurrentUser();
+                final boolean isUserAuthenticated = currentUser != null;
+                final String statefulStorageKey   = authenticationManager.getStatefulStorageKey();
 
-                if (isUserAuthenticated && statefulStorageKey != null) {
-                    User refreshedUser = authenticationManager.getUserProvider().refreshUser(currentUser);
-                    session.put(statefulStorageKey, refreshedUser);
-                }
+                if (isUserAuthenticated && statefulStorageKey != null)
+                    session.put(statefulStorageKey, authenticationManager.getUserProvider().refreshUser(currentUser));
                 if (mappingHandler.isAnonymous() && isUserAuthenticated)
                     throw new AccessDeniedException(String.format("Vous devez être anonyme " +
                         "pour accéder à la ressource \"%s\"", servletPath), servletPath);

@@ -6,13 +6,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.base.internal.handler.AbstractHandler;
 import mg.itu.prom16.exceptions.InvalidReturnTypeException;
-import mg.itu.prom16.exceptions.NotFoundHttpException;
 import mg.itu.prom16.http.FlashBag;
+import mg.itu.prom16.http.HttpStatusCode;
 import mg.itu.prom16.http.Session;
 import mg.itu.prom16.support.ThirdPartyConfiguration;
 import mg.itu.prom16.support.WebApplicationContainer;
 import mg.matsd.javaframework.core.io.ClassPathResource;
 import mg.matsd.javaframework.core.utils.StringUtils;
+import mg.matsd.javaframework.security.exceptions.HttpStatusException;
 
 import java.io.*;
 import java.lang.reflect.Method;
@@ -42,8 +43,8 @@ class ResponseRenderer {
 
     static void doRenderError(Throwable throwable, HttpServletResponse httpServletResponse) throws IOException {
         httpServletResponse.setContentType("text/html");
-        httpServletResponse.setStatus(throwable instanceof NotFoundHttpException ?
-            NotFoundHttpException.statusCode : HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        httpServletResponse.setStatus(throwable instanceof HttpStatusException httpStatusException ?
+            httpStatusException.getStatusCode() : HttpStatusCode.INTERNAL_SERVER_ERROR.getValue());
 
         StringWriter stringWriter = new StringWriter();
         throwable.printStackTrace(new PrintWriter(stringWriter));

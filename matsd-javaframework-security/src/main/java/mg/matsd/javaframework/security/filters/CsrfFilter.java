@@ -1,54 +1,84 @@
 package mg.matsd.javaframework.security.filters;
 
-import jakarta.servlet.Filter;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import mg.matsd.javaframework.core.utils.Assert;
+import mg.matsd.javaframework.security.exceptions.ForbiddenException;
 
-import java.io.IOException;
 import java.util.UUID;
 
-public class CsrfFilter implements Filter {
-    private static final String CSRF_TOKEN_SESSION_KEY    = "csrf_token";
-    private static final String CSRF_TOKEN_HEADER         = "X-CSRF-Token";
-    private static final String CSRF_TOKEN_PARAMETER_NAME = "_csrf";
+public class CsrfFilter extends BaseFilter {
+    private String sessionKey;
+    private String headerName;
+    private String parameterName;
+
+    public CsrfFilter() {
+        sessionKey    = "csrf_token";
+        headerName    = "X-CSRF-Token";
+        parameterName = "_csrf";
+    }
+
+    public String getSessionKey() {
+        return sessionKey;
+    }
+
+    public CsrfFilter setSessionKey(String sessionKey) {
+        Assert.notBlank(sessionKey, false, "L'argument sessionKey ne peut pas être vide ou \"null\"");
+
+        this.sessionKey = sessionKey.strip();
+        return this;
+    }
+
+    public String getHeaderName() {
+        return headerName;
+    }
+
+    public CsrfFilter setHeaderName(String headerName) {
+        Assert.notBlank(headerName, false, "L'argument headerName ne peut pas être vide ou \"null\"");
+
+        this.headerName = headerName.strip();
+        return this;
+    }
+
+    public String getParameterName() {
+        return parameterName;
+    }
+
+    public CsrfFilter setParameterName(String parameterName) {
+        Assert.notBlank(parameterName, false, "L'argument parameterName ne peut pas être vide ou \"null\"");
+
+        this.parameterName = parameterName.strip();
+        return this;
+    }
 
     @Override
-    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
-        if (!(servletRequest  instanceof HttpServletRequest httpServletRequest) ||
-            !(servletResponse instanceof HttpServletResponse httpServletResponse)
-        ) {
-            filterChain.doFilter(servletRequest, servletResponse);
-            return;
-        }
+    public FilterChainDecision preHandle(HttpServletRequest request, HttpServletResponse response)
+        throws Exception {
 
-        String csrfToken = getOrGenerateCsrfToken(httpServletRequest);
-        if (isStateChangingRequest(httpServletRequest) && !validateCsrfToken(httpServletRequest, csrfToken)) {
-            // TODO: Maybe throw an exception
+        final String csrfToken = getOrGenerateCsrfToken(request);
+        if (isStateChangingRequest(request) && !validateCsrfToken(request, csrfToken))
+            throw new ForbiddenException("Csrf token invalide");
 
-            return;
-        }
-        httpServletResponse.setHeader(CSRF_TOKEN_HEADER, csrfToken);
-
-        filterChain.doFilter(servletRequest, servletResponse);
+        response.setHeader(headerName, csrfToken);
+        return FilterChainDecision.defaultValue();
     }
 
     private String getOrGenerateCsrfToken(HttpServletRequest httpServletRequest) {
         HttpSession httpSession = httpServletRequest.getSession();
 
-        String csrfToken = (String) httpSession.getAttribute(CSRF_TOKEN_SESSION_KEY);
-        if (csrfToken == null) httpSession.setAttribute(CSRF_TOKEN_SESSION_KEY, UUID.randomUUID().toString());
+        String csrfToken = (String) httpSession.getAttribute(sessionKey);
+        if (csrfToken == null) {
+            csrfToken = UUID.randomUUID().toString();
+            httpSession.setAttribute(sessionKey, csrfToken);
+        }
 
         return csrfToken;
     }
 
-    private static boolean validateCsrfToken(HttpServletRequest httpServletRequest, String csrfToken) {
-        String tokenFromRequestHeader    = httpServletRequest.getHeader(CSRF_TOKEN_HEADER);
-        String tokenFromRequestParameter = httpServletRequest.getParameter(CSRF_TOKEN_PARAMETER_NAME);
+    private boolean validateCsrfToken(HttpServletRequest httpServletRequest, String csrfToken) {
+        String tokenFromRequestHeader    = httpServletRequest.getHeader(headerName);
+        String tokenFromRequestParameter = httpServletRequest.getParameter(parameterName);
 
         return csrfToken.equals(tokenFromRequestHeader) || csrfToken.equals(tokenFromRequestParameter);
     }

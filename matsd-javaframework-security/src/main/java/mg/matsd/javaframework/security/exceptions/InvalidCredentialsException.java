@@ -1,8 +1,6 @@
 package mg.matsd.javaframework.security.exceptions;
 
-import mg.matsd.javaframework.core.exceptions.BaseException;
-
-public class InvalidCredentialsException extends BaseException {
+public class InvalidCredentialsException extends ForbiddenException {
     private final String identifier;
     private final String plainPassword;
 
