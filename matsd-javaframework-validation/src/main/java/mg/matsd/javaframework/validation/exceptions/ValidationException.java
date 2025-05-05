@@ -9,12 +9,18 @@ import java.util.Map;
 
 public class ValidationException extends BaseException {
     private static final String PREFIX = "Erreur de validation de données";
+    private final Map<String, List<ConstraintViolation<?>>> constraintViolationMap;
 
-    public <T> ValidationException(Map<String, List<ConstraintViolation<T>>> constraintViolationMap) {
+    public ValidationException(Map<String, List<ConstraintViolation<?>>> constraintViolationMap) {
         super(createMessage(constraintViolationMap), PREFIX);
+        this.constraintViolationMap = constraintViolationMap;
     }
 
-    private static <T> String createMessage(Map<String, List<ConstraintViolation<T>>> constraintViolationMap) {
+    public Map<String, List<ConstraintViolation<?>>> getConstraintViolationMap() {
+        return constraintViolationMap;
+    }
+
+    private static String createMessage(Map<String, List<ConstraintViolation<?>>> constraintViolationMap) {
         Assert.notNull(constraintViolationMap);
 
         StringBuilder stringBuilder = new StringBuilder();
