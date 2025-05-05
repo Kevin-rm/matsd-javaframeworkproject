@@ -7,8 +7,9 @@ import mg.matsd.javaframework.core.utils.StringUtils;
 public class ResourceNotFoundException extends BaseException {
     private final String resourceName;
 
-    public ResourceNotFoundException(@Nullable String message, String resourceName) {
-        super(StringUtils.isNullOrBlank(message) ? "Ressource introuvable" : message);
+    public ResourceNotFoundException(@Nullable final String message, final String resourceName) {
+        super(StringUtils.isNullOrBlank(message) ?
+            String.format("La ressource \"%s\" est introuvable", resourceName) : message);
         this.resourceName = resourceName;
     }
 

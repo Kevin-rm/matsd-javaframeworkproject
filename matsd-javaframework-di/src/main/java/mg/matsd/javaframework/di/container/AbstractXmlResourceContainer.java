@@ -2,8 +2,8 @@ package mg.matsd.javaframework.di.container;
 
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.io.Resource;
-import mg.matsd.javaframework.di.managedinstances.factory.ManagedInstanceFactory;
 import mg.matsd.javaframework.core.utils.Assert;
+import mg.matsd.javaframework.di.managedinstances.factory.ManagedInstanceFactory;
 import org.w3c.dom.Element;
 
 import java.util.Arrays;

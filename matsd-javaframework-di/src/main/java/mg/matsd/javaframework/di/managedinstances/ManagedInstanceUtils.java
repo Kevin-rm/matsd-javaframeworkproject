@@ -1,9 +1,9 @@
 package mg.matsd.javaframework.di.managedinstances;
 
+import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.di.annotations.Identifier;
 import mg.matsd.javaframework.di.annotations.Inject;
 import mg.matsd.javaframework.di.managedinstances.factory.ManagedInstanceFactory;
-import mg.matsd.javaframework.core.utils.Assert;
 
 import java.lang.reflect.*;
 import java.util.Arrays;
@@ -57,7 +57,7 @@ public final class ManagedInstanceUtils {
         } catch (InstantiationException e) {
             throw new ManagedInstanceException(e);
         } catch (InvocationTargetException e) {
-            throw new RuntimeException(e.getCause());
+            throw new ManagedInstanceException(e.getCause());
         }
 
         return instance;

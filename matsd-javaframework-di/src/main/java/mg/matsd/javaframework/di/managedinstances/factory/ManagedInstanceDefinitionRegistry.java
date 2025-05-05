@@ -1,9 +1,8 @@
 package mg.matsd.javaframework.di.managedinstances.factory;
 
-import mg.matsd.javaframework.core.managedinstances.*;
+import mg.matsd.javaframework.di.exceptions.NoSuchManagedInstanceException;
 import mg.matsd.javaframework.di.managedinstances.ManagedInstance;
 import mg.matsd.javaframework.di.managedinstances.ManagedInstanceUtils;
-import mg.matsd.javaframework.di.managedinstances.NoSuchManagedInstanceException;
 import mg.matsd.javaframework.di.managedinstances.Scope;
 
 import java.lang.reflect.Method;
@@ -49,16 +48,14 @@ public class ManagedInstanceDefinitionRegistry {
         for (ManagedInstance managedInstance : managedInstances)
             if (managedInstance.getId().equals(id)) return managedInstance;
 
-        throw new NoSuchManagedInstanceException(String.format("Aucune \"ManagedInstance\" trouvée avec l'identifiant : %s", id));
+        throw new NoSuchManagedInstanceException(id, false);
     }
 
     ManagedInstance getManagedInstanceByClass(Class<?> clazz) throws NoSuchManagedInstanceException {
         for (ManagedInstance managedInstance : managedInstances)
             if (clazz.isAssignableFrom(managedInstance.getClazz())) return managedInstance;
 
-        throw new NoSuchManagedInstanceException(String.format("Aucune \"ManagedInstance\" trouvée ayant " +
-            "comme nom de classe : %s", clazz.getName()
-        ));
+        throw new NoSuchManagedInstanceException(clazz);
     }
 
     void registerManagedInstance(ManagedInstance managedInstance) {
@@ -109,7 +106,7 @@ public class ManagedInstanceDefinitionRegistry {
                 String reference = property.getReference();
                 if (!containsManagedInstance(reference))
                     throw new ManagedInstanceDefinitionException(new NoSuchManagedInstanceException(
-                        String.format("Aucune \"ManagedInstance\" trouvée avec la référence : \"%s\"", reference)
+                        reference, true
                     ));
 
                 property.setValue(managedInstanceFactory.getManagedInstance(reference));
@@ -141,7 +138,7 @@ public class ManagedInstanceDefinitionRegistry {
                         value = managedInstanceFactory.getManagedInstance(reference);
                     } catch (NoSuchManagedInstanceException e) {
                         throw new ManagedInstanceDefinitionException(new NoSuchManagedInstanceException(
-                            String.format("Aucune \"ManagedInstance\" trouvée avec la référence : \"%s\"", reference)
+                            reference, true
                         ));
                     }
 

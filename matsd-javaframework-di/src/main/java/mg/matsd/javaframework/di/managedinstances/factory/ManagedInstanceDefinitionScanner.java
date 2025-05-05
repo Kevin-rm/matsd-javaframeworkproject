@@ -1,15 +1,15 @@
 package mg.matsd.javaframework.di.managedinstances.factory;
 
-import mg.matsd.javaframework.core.annotations.*;
+import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.utils.AnnotationUtils;
+import mg.matsd.javaframework.core.utils.ClassScanner;
+import mg.matsd.javaframework.core.utils.StringUtils;
 import mg.matsd.javaframework.di.annotations.Component;
 import mg.matsd.javaframework.di.annotations.Configuration;
 import mg.matsd.javaframework.di.annotations.Lazy;
 import mg.matsd.javaframework.di.annotations.Scope;
 import mg.matsd.javaframework.di.managedinstances.ManagedInstance;
 import mg.matsd.javaframework.di.managedinstances.ManagedInstanceUtils;
-import mg.matsd.javaframework.core.utils.AnnotationUtils;
-import mg.matsd.javaframework.core.utils.ClassScanner;
-import mg.matsd.javaframework.core.utils.StringUtils;
 
 import java.lang.reflect.Method;
 
