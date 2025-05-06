@@ -4,7 +4,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.servletwrapper.http.Request;
 import mg.matsd.javaframework.servletwrapper.http.Response;
 
@@ -14,72 +13,50 @@ public class ServletWrapper extends HttpServlet {
 
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        Request request = new Request();
-        Response response;
-
+        Request  request  = new Request(req);
+        Response response = new Response(resp);
         try {
             switch (req.getMethod().toUpperCase()) {
-                case "GET":
-                    response = get(request);
-                    break;
-                case "POST":
-                    response = post(request);
-                    break;
-                case "PUT":
-                    response = put(request);
-                    break;
-                case "DELETE":
-                    response = delete(request);
-                    break;
-                case "HEAD":
-                    response = head(request);
-                    break;
-                case "OPTIONS":
-                    response = options(request);
-                    break;
-                case "TRACE":
-                    response = trace(request);
-                    break;
-                default:
-                    return;
+                case "GET"     -> get(request, response);
+                case "POST"    -> post(request, response);
+                case "PUT"     -> put(request, response);
+                case "DELETE"  -> delete(request, response);
+                case "HEAD"    -> head(request, response);
+                case "OPTIONS" -> options(request, response);
+                case "TRACE"   -> trace(request, response);
+                default -> {
+                }
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    @Nullable
-    protected Response get(Request request) throws Exception {
-        return null;
+    protected void get(Request request, Response response) throws Exception {
+
     }
 
-    @Nullable
-    protected Response post(Request request) throws Exception {
-        return null;
+    protected void post(Request request, Response response) throws Exception {
+
     }
 
-    @Nullable
-    protected Response put(Request request) throws Exception {
-        return null;
+    protected void put(Request request, Response response) throws Exception {
+
     }
 
-    @Nullable
-    protected Response delete(Request request) throws Exception {
-        return null;
+    protected void delete(Request request, Response response) throws Exception {
+
     }
 
-    @Nullable
-    protected Response head(Request request) throws Exception {
-        return null;
+    protected void head(Request request, Response response) throws Exception {
+
     }
 
-    @Nullable
-    protected Response options(Request request) throws Exception {
-        return null;
+    protected void options(Request request, Response response) throws Exception {
+
     }
 
-    @Nullable
-    protected Response trace(Request request) throws Exception {
-        return null;
+    protected void trace(Request request, Response response) throws Exception {
+
     }
 }
