@@ -14,6 +14,7 @@
         <module>matsd-javaframework-di</module>
         <module>matsd-javaframework-orm</module>
         <module>matsd-javaframework-security</module>
+        <module>matsd-javaframework-servletwrapper</module>
         <module>matsd-javaframework-validation</module>
         <module>matsd-javaframework-webmvc</module>
     </modules>
