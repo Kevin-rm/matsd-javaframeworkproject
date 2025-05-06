@@ -1,29 +1,75 @@
 package mg.matsd.javaframework.servletwrapper.http;
 
 import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.utils.Assert;
 
+import java.util.HashMap;
 import java.util.Map;
 
-public interface FlashBag {
-    void set(String key, @Nullable Object value);
+public class FlashBag {
+    public static final String STORAGE_KEY = "_matsd_flashes";
 
-    void setAll(Map<String, ?> map);
+    private final Map<String, Object> flashes;
 
-    @Nullable
-    Object get(String key);
-
-    @Nullable
-    Object get(String key, @Nullable Object defaultValue);
+    public FlashBag() {
+         flashes = new HashMap<>();
+    }
 
     @Nullable
-    Object peek(String key);
+    public Object get(String key) {
+        return get(key, null);
+    }
 
     @Nullable
-    Object peek(String key, @Nullable Object defaultValue);
+    public Object get(String key, @Nullable Object defaultValue) {
+        if (!has(key)) return defaultValue;
 
-    Map<String, Object> peekAll();
+        Object result = flashes.get(key);
+        flashes.remove(key);
 
-    Map<String, Object> all();
+        return result;
+    }
 
-    boolean has(String key);
+    public boolean has(String key) {
+        validateKey(key);
+
+        return flashes.containsKey(key);
+    }
+
+    public Map<String, Object> all() {
+        Map<String, Object> results = peekAll();
+        flashes.clear();
+
+        return results;
+    }
+
+    @Nullable
+    public Object peek(String key) {
+        return peek(key, null);
+    }
+
+    @Nullable
+    public Object peek(String key, @Nullable Object defaultValue) {
+        return has(key) ? flashes.get(key) : defaultValue;
+    }
+
+    public Map<String, Object> peekAll() {
+        return new HashMap<>(flashes);
+    }
+
+    public void set(String key, @Nullable Object value) {
+        validateKey(key);
+
+        flashes.put(key, value);
+    }
+
+    public void setAll(Map<String, ?> map) {
+        Assert.notNull(map, "L'argument map ne peut pas être \"null\"");
+
+        flashes.putAll(map);
+    }
+
+    private static void validateKey(String key) {
+        Assert.notBlank(key, false, "La clé ne peut pas être vide ou \"null\"");
+    }
 }

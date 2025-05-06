@@ -1,4 +1,5 @@
 package mg.matsd.javaframework.servletwrapper.http;
 
-public interface Response {
+public class Response {
+
 }

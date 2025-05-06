@@ -2,27 +2,84 @@ package mg.matsd.javaframework.servletwrapper.http;
 
 import jakarta.servlet.http.HttpSession;
 import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.utils.Assert;
 
+import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Map;
 
-public interface Session {
-    Session setHttpSession(HttpSession httpSession);
+public class Session {
+    protected final HttpSession raw;
 
-    Object get(String key);
+    Session(HttpSession raw) {
+        Assert.notNull(raw, "L'argument raw ne peut pas être \"null\"");
+        this.raw = raw;
+    }
 
-    Object get(String key, @Nullable Object defaultValue);
+    public HttpSession getRaw() {
+        return raw;
+    }
 
-    Map<String, Object> all();
+    @Nullable
+    public Object get(String key) {
+        return get(key, null);
+    }
 
-    boolean has(String key);
+    @Nullable
+    public Object get(String key, @Nullable Object defaultValue) {
+        validateSessionKey(key);
 
-    void put(String key, @Nullable Object value);
+        Object attribute = raw.getAttribute(key);
+        return attribute == null ? defaultValue : attribute;
+    }
 
-    void remove(String key);
+    public boolean has(String key) {
+        return get(key) != null;
+    }
 
-    void invalidate();
+    public Map<String, Object> all() {
+        Map<String, Object> sessionAttributes = new HashMap<>();
+        Enumeration<String> attributeNames    = raw.getAttributeNames();
 
-    FlashBag getFlashBag();
+        while (attributeNames.hasMoreElements()) {
+            String key = attributeNames.nextElement();
+            sessionAttributes.put(key, raw.getAttribute(key));
+        }
 
-    void addFlash(String key, Object value);
+        return sessionAttributes;
+    }
+
+    public void set(String key, @Nullable Object value) {
+        validateSessionKey(key);
+
+        raw.setAttribute(key, value);
+    }
+
+    public void remove(String key) {
+        validateSessionKey(key);
+
+        raw.removeAttribute(key);
+    }
+
+    public void clear() {
+        raw.invalidate();
+    }
+
+    public FlashBag getFlashBag() {
+        if (has(FlashBag.STORAGE_KEY))
+            return (FlashBag) get(FlashBag.STORAGE_KEY);
+
+        FlashBag flashBag = new FlashBag();
+        set(FlashBag.STORAGE_KEY, flashBag);
+
+        return flashBag;
+    }
+
+    public void addFlash(String key, Object value) {
+        getFlashBag().set(key, value);
+    }
+
+    private static void validateSessionKey(String key) {
+        Assert.notBlank(key, false, "La clé de session ne peut pas être vide ou \"null\"");
+    }
 }
