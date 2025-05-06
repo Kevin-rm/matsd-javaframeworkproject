@@ -14,16 +14,37 @@ public class ServletWrapper extends HttpServlet {
 
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        Request request;
+        Request request = new Request();
         Response response;
 
-        switch (req.getMethod().toUpperCase()) {
-            case "GET":
-                break;
-            case "POST":
-                break;
-            default:
-                break;
+        try {
+            switch (req.getMethod().toUpperCase()) {
+                case "GET":
+                    response = get(request);
+                    break;
+                case "POST":
+                    response = post(request);
+                    break;
+                case "PUT":
+                    response = put(request);
+                    break;
+                case "DELETE":
+                    response = delete(request);
+                    break;
+                case "HEAD":
+                    response = head(request);
+                    break;
+                case "OPTIONS":
+                    response = options(request);
+                    break;
+                case "TRACE":
+                    response = trace(request);
+                    break;
+                default:
+                    return;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -34,6 +55,31 @@ public class ServletWrapper extends HttpServlet {
 
     @Nullable
     protected Response post(Request request) throws Exception {
+        return null;
+    }
+
+    @Nullable
+    protected Response put(Request request) throws Exception {
+        return null;
+    }
+
+    @Nullable
+    protected Response delete(Request request) throws Exception {
+        return null;
+    }
+
+    @Nullable
+    protected Response head(Request request) throws Exception {
+        return null;
+    }
+
+    @Nullable
+    protected Response options(Request request) throws Exception {
+        return null;
+    }
+
+    @Nullable
+    protected Response trace(Request request) throws Exception {
         return null;
     }
 }
