@@ -5,8 +5,6 @@ import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.servletwrapper.base.internal.UtilFunctions;
 
-import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.Map;
 
 public class Session {
