@@ -1,5 +1,6 @@
 package mg.matsd.javaframework.servletwrapper.http;
 
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import mg.matsd.javaframework.core.annotations.Nullable;
@@ -7,6 +8,7 @@ import mg.matsd.javaframework.core.exceptions.TypeMismatchException;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.core.utils.StringUtils;
 import mg.matsd.javaframework.core.utils.converter.StringToTypeConverter;
+import mg.matsd.javaframework.servletwrapper.base.internal.UtilFunctions;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -17,6 +19,10 @@ public class Request {
     protected final HttpServletRequest raw;
     @Nullable
     protected Session session;
+    @Nullable
+    private Map<String, Object>   attributes;
+    @Nullable
+    private Map<String, Cookie>   cookies;
     @Nullable
     private Map<String, String[]> queryParameters;
     @Nullable
@@ -42,6 +48,36 @@ public class Request {
         return session = new Session(httpSession);
     }
 
+    public Map<String, Cookie> getCookies() {
+        if (this.cookies != null) return this.cookies;
+
+        Cookie[] cookies = raw.getCookies();
+        if (cookies == null || cookies.length == 0) return Collections.emptyMap();
+
+        this.cookies = Collections.unmodifiableMap(
+            Arrays.stream(cookies).collect(
+                Collectors.toMap(Cookie::getName, cookie -> cookie, (a, b) -> b)
+            ));
+        return this.cookies;
+    }
+
+    @Nullable
+    public Cookie getCookie(String name) {
+        Assert.notBlank(name, false, "Le nom du cookie ne peut pas être vide ou \"null\"");
+
+        Map<String, Cookie> cookies = getCookies();
+        if (cookies.isEmpty()) return null;
+
+        return cookies.get(name);
+    }
+
+    public boolean hasCookie(String name) {
+        Assert.notBlank(name, false, "Le nom du cookie ne peut pas être vide ou \"null\"");
+
+        Map<String, Cookie> cookies = getCookies();
+        return !cookies.isEmpty() && cookies.containsKey(name);
+    }
+
     @Nullable
     public <T> T getAttribute(String name, @Nullable T defaultValue, Class<T> expectedType) {
         Assert.notBlank(name, false, "Le nom de l'attribut ne peut pas être vide ou \"null\"");
@@ -49,6 +85,13 @@ public class Request {
 
         Object attribute = raw.getAttribute(name);
         return attribute == null ? defaultValue : expectedType.cast(attribute);
+    }
+
+    public Map<String, Object> getAttributes() {
+        if (attributes != null) return attributes;
+
+        attributes = UtilFunctions.collectAttributes(raw.getAttributeNames(), raw::getAttribute);
+        return attributes;
     }
 
     @Nullable

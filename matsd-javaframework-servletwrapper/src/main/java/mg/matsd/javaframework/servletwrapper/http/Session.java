@@ -3,6 +3,7 @@ package mg.matsd.javaframework.servletwrapper.http;
 import jakarta.servlet.http.HttpSession;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
+import mg.matsd.javaframework.servletwrapper.base.internal.UtilFunctions;
 
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -10,6 +11,8 @@ import java.util.Map;
 
 public class Session {
     protected final HttpSession raw;
+    @Nullable
+    private Map<String, Object> attributes;
 
     Session(HttpSession raw) {
         this.raw = raw;
@@ -33,15 +36,10 @@ public class Session {
     }
 
     public Map<String, Object> all() {
-        Map<String, Object> sessionAttributes = new HashMap<>();
-        Enumeration<String> attributeNames    = raw.getAttributeNames();
+        if (attributes != null) return attributes;
 
-        while (attributeNames.hasMoreElements()) {
-            String key = attributeNames.nextElement();
-            sessionAttributes.put(key, raw.getAttribute(key));
-        }
-
-        return sessionAttributes;
+        attributes = UtilFunctions.collectAttributes(raw.getAttributeNames(), raw::getAttribute);
+        return attributes;
     }
 
     public void set(String key, @Nullable Object value) {
