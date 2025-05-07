@@ -11,12 +11,13 @@ import java.util.function.Function;
 public final class UtilFunctions {
 
     public static Map<String, Object> collectAttributes(
-        Enumeration<String> attributeNames, Function<String, Object> valueGetter
+        final Enumeration<String> attributeNames,
+        final Function<String, Object> valueGetter
     ) {
         Assert.notNull(attributeNames);
         Assert.notNull(valueGetter);
 
-        Map<String, Object> attributes = new HashMap<>();
+        final Map<String, Object> attributes = new HashMap<>();
         while (attributeNames.hasMoreElements()) {
             String key = attributeNames.nextElement();
             attributes.put(key, valueGetter.apply(key));

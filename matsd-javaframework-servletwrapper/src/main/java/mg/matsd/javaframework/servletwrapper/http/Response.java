@@ -29,31 +29,42 @@ public class Response {
     }
 
     public Response setHeader(String name, String value) {
+        Assert.notBlank(name, false, "Le nom de l'en-tête ne peut pas être vide ou \"null\"");
+
         raw.setHeader(name, value);
         return this;
     }
 
     public Response addHeader(String name, String value) {
+        Assert.notBlank(name, false, "Le nom de l'en-tête ne peut pas être vide ou \"null\"");
+
         raw.addHeader(name, value);
         return this;
     }
 
     public Response setContentType(String contentType) {
+        Assert.notBlank(contentType, false, "Le type de contenu ne peut pas être vide ou \"null\"");
+
         raw.setContentType(contentType);
         return this;
     }
 
     public Response setCharset(String charset) {
+        Assert.notBlank(charset, false, "L'argument charset ne peut pas être vide ou \"null\"");
+
         raw.setCharacterEncoding(charset);
         return this;
     }
 
     public Response addCookie(Cookie cookie) {
+        Assert.notNull(cookie, "Le cookie ne peut pas être \"null\"");
+
         raw.addCookie(cookie);
         return this;
     }
 
     public Response addCookie(String name, String value) {
+        Assert.notBlank(name, false, "Le nom du cookie ne peut pas être vide ou \"null\"");
         return addCookie(new Cookie(name, value));
     }
 
@@ -88,6 +99,8 @@ public class Response {
     }
 
     public Response redirect(String location) throws IOException {
+        Assert.notBlank(location, false, "L'argument location ne peut pas être vide ou \"null\"");
+
         raw.sendRedirect(location);
         return this;
     }
@@ -128,16 +141,16 @@ public class Response {
         return error(status.getValue());
     }
 
-    public Response write(String content) throws IOException {
+    public Response write(@Nullable String content) throws IOException {
         getWriter().write(content);
         return this;
     }
 
-    public Response html(String html) throws IOException {
+    public Response html(@Nullable String html) throws IOException {
         return setContentType("text/html").write(html);
     }
 
-    public Response text(String text) throws IOException {
+    public Response text(@Nullable String text) throws IOException {
         return setContentType("text/plain").write(text);
     }
 
