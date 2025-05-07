@@ -79,7 +79,7 @@ public class Request {
     }
 
     @Nullable
-    public <T> T getAttribute(String name, @Nullable T defaultValue, Class<T> expectedType) {
+    public <T> T attribute(String name, @Nullable T defaultValue, Class<T> expectedType) {
         Assert.notBlank(name, false, "Le nom de l'attribut ne peut pas être vide ou \"null\"");
         Assert.notNull(expectedType, "L'argument expectedType ne peut pas être \"null\"");
 
@@ -95,18 +95,18 @@ public class Request {
     }
 
     @Nullable
-    public <T> T getAttribute(String name, Class<T> expectedType) {
-        return getAttribute(name, null, expectedType);
+    public <T> T attribute(String name, Class<T> expectedType) {
+        return attribute(name, null, expectedType);
     }
 
     @Nullable
-    public Object getAttribute(String name, @Nullable Object defaultValue) {
-        return getAttribute(name, defaultValue, Object.class);
+    public Object attribute(String name, @Nullable Object defaultValue) {
+        return attribute(name, defaultValue, Object.class);
     }
 
     @Nullable
-    public Object getAttribute(String name) {
-        return getAttribute(name, null);
+    public Object attribute(String name) {
+        return attribute(name, null);
     }
 
     public Request setAttribute(String name, @Nullable Object value) {
@@ -117,7 +117,7 @@ public class Request {
     }
 
     public boolean hasAttribute(String name) {
-        return getAttribute(name) != null;
+        return attribute(name) != null;
     }
 
     public Map<String, String[]> getQueryParameters() {
@@ -165,7 +165,7 @@ public class Request {
     }
 
     @Nullable
-    public String[] getParameterValues(String name, @Nullable String[] defaultValues) {
+    public String[] getValues(String name, @Nullable String[] defaultValues) {
         validateParameterName(name);
 
         String[] parameterValues = raw.getParameterValues(name);
@@ -173,16 +173,16 @@ public class Request {
     }
 
     @Nullable
-    public String[] getParameterValues(String name) {
-        return getParameterValues(name, null);
+    public String[] getValues(String name) {
+        return getValues(name, null);
     }
 
-    public boolean hasParameterValues(String name) {
-        return getParameterValues(name) != null;
+    public boolean hasValues(String name) {
+        return getValues(name) != null;
     }
 
     @Nullable
-    public String getParameter(String name, @Nullable String defaultValue) {
+    public String get(String name, @Nullable String defaultValue) {
         validateParameterName(name);
 
         String parameter = raw.getParameter(name);
@@ -190,12 +190,12 @@ public class Request {
     }
 
     @Nullable
-    public String getParameter(String name) {
-        return getParameter(name, null);
+    public String get(String name) {
+        return get(name, null);
     }
 
     @Nullable
-    public <T> T getParameterAs(
+    public <T> T getAs(
         String name, @Nullable T defaultValue, Class<T> type, ParameterType parameterType
     ) throws TypeMismatchException {
         Assert.notNull(type, "L'argument type ne peut pas être \"null\"");
@@ -204,54 +204,54 @@ public class Request {
         final String parameter = switch (parameterType) {
             case QUERY -> query(name);
             case INPUT -> input(name);
-            case BOTH  -> getParameter(name);
+            case BOTH  -> get(name);
         };
 
         return parameter == null ? defaultValue : StringToTypeConverter.convert(parameter, type);
     }
 
     @Nullable
-    public Integer getParameterAsInt(String name, @Nullable Integer defaultValue) {
-        return getParameterAs(name, defaultValue, Integer.class, ParameterType.BOTH);
+    public Integer getAsInt(String name, @Nullable Integer defaultValue) {
+        return getAs(name, defaultValue, Integer.class, ParameterType.BOTH);
     }
 
     @Nullable
-    public Integer getParameterAsInt(String name) {
-        return getParameterAsInt(name, null);
+    public Integer getAsInt(String name) {
+        return getAsInt(name, null);
     }
 
     @Nullable
-    public Double getParameterAsDouble(String name, @Nullable Double defaultValue) {
-        return getParameterAs(name, defaultValue, Double.class, ParameterType.BOTH);
+    public Double getAsDouble(String name, @Nullable Double defaultValue) {
+        return getAs(name, defaultValue, Double.class, ParameterType.BOTH);
     }
 
     @Nullable
-    public Double getParameterAsDouble(String name) {
-        return getParameterAsDouble(name, null);
+    public Double getAsDouble(String name) {
+        return getAsDouble(name, null);
     }
 
     @Nullable
-    public Float getParameterAsFloat(String name, @Nullable Float defaultValue) {
-        return getParameterAs(name, defaultValue, Float.class, ParameterType.BOTH);
+    public Float getAsFloat(String name, @Nullable Float defaultValue) {
+        return getAs(name, defaultValue, Float.class, ParameterType.BOTH);
     }
 
     @Nullable
-    public Float getParameterAsFloat(String name) {
-        return getParameterAsFloat(name, null);
+    public Float getAsFloat(String name) {
+        return getAsFloat(name, null);
     }
 
     @Nullable
-    public Boolean getParameterAsBoolean(String name, @Nullable Boolean defaultValue) {
-        return getParameterAs(name, defaultValue, Boolean.class, ParameterType.BOTH);
+    public Boolean getAsBoolean(String name, @Nullable Boolean defaultValue) {
+        return getAs(name, defaultValue, Boolean.class, ParameterType.BOTH);
     }
 
     @Nullable
-    public Boolean getParameterAsBoolean(String name) {
-        return getParameterAsBoolean(name, null);
+    public Boolean getAsBoolean(String name) {
+        return getAsBoolean(name, null);
     }
 
-    public boolean hasParameter(String name) {
-        return getParameter(name) != null;
+    public boolean has(String name) {
+        return get(name) != null;
     }
 
     @Nullable
@@ -280,7 +280,7 @@ public class Request {
 
     @Nullable
     public Integer queryAsInt(String name, @Nullable Integer integer) {
-        return getParameterAs(name, integer, Integer.class, ParameterType.QUERY);
+        return getAs(name, integer, Integer.class, ParameterType.QUERY);
     }
 
     @Nullable
@@ -290,7 +290,7 @@ public class Request {
 
     @Nullable
     public Double queryAsDouble(String name, @Nullable Double defaultValue) {
-        return getParameterAs(name, defaultValue, Double.class, ParameterType.QUERY);
+        return getAs(name, defaultValue, Double.class, ParameterType.QUERY);
     }
 
     @Nullable
@@ -300,7 +300,7 @@ public class Request {
 
     @Nullable
     public Float queryAsFloat(String name, @Nullable Float defaultValue) {
-        return getParameterAs(name, defaultValue, Float.class, ParameterType.QUERY);
+        return getAs(name, defaultValue, Float.class, ParameterType.QUERY);
     }
 
     @Nullable
@@ -310,7 +310,7 @@ public class Request {
 
     @Nullable
     public Boolean queryAsBoolean(String name, @Nullable Boolean defaultValue) {
-        return getParameterAs(name, defaultValue, Boolean.class, ParameterType.QUERY);
+        return getAs(name, defaultValue, Boolean.class, ParameterType.QUERY);
     }
 
     @Nullable
@@ -349,7 +349,7 @@ public class Request {
 
     @Nullable
     public Integer inputAsInt(String name, @Nullable Integer defaultValue) {
-        return getParameterAs(name, defaultValue, Integer.class, ParameterType.INPUT);
+        return getAs(name, defaultValue, Integer.class, ParameterType.INPUT);
     }
 
     @Nullable
@@ -359,7 +359,7 @@ public class Request {
 
     @Nullable
     public Double inputAsDouble(String name, @Nullable Double defaultValue) {
-        return getParameterAs(name, defaultValue, Double.class, ParameterType.INPUT);
+        return getAs(name, defaultValue, Double.class, ParameterType.INPUT);
     }
 
     @Nullable
@@ -369,7 +369,7 @@ public class Request {
 
     @Nullable
     public Float inputAsFloat(String name, @Nullable Float defaultValue) {
-        return getParameterAs(name, defaultValue, Float.class, ParameterType.INPUT);
+        return getAs(name, defaultValue, Float.class, ParameterType.INPUT);
     }
 
     @Nullable
@@ -379,7 +379,7 @@ public class Request {
 
     @Nullable
     public Boolean inputAsBoolean(String name, @Nullable Boolean defaultValue) {
-        return getParameterAs(name, defaultValue, Boolean.class, ParameterType.INPUT);
+        return getAs(name, defaultValue, Boolean.class, ParameterType.INPUT);
     }
 
     @Nullable
