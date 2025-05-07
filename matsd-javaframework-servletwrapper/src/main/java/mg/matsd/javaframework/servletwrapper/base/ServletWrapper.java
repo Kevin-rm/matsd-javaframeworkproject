@@ -4,6 +4,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import mg.matsd.javaframework.servletwrapper.http.HttpStatusCode;
 import mg.matsd.javaframework.servletwrapper.http.Request;
 import mg.matsd.javaframework.servletwrapper.http.Response;
 
@@ -14,21 +15,20 @@ public class ServletWrapper extends HttpServlet {
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         Request  request  = new Request(req);
-        Response response = new Response(resp);
+        Response response = new Response(resp, request);
         try {
             handleRequest(request, response);
-            if (resp.isCommitted()) return;
+            if (response.isCommitted()) return;
 
-            switch (req.getMethod().toUpperCase()) {
-                case "GET"     -> get(request, response);
-                case "POST"    -> post(request, response);
-                case "PUT"     -> put(request, response);
-                case "DELETE"  -> delete(request, response);
-                case "HEAD"    -> head(request, response);
+            switch (request.getMethod()) {
+                case "GET"     -> get    (request, response);
+                case "POST"    -> post   (request, response);
+                case "PUT"     -> put    (request, response);
+                case "DELETE"  -> delete (request, response);
+                case "HEAD"    -> head   (request, response);
                 case "OPTIONS" -> options(request, response);
-                case "TRACE"   -> trace(request, response);
-                default -> {
-                }
+                case "TRACE"   -> trace  (request, response);
+                default        -> throw new RuntimeException();
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -38,30 +38,34 @@ public class ServletWrapper extends HttpServlet {
     protected void handleRequest(Request request, Response response) throws Exception { }
 
     protected void get(Request request, Response response) throws Exception {
-
+        methodNotAllowed(response);
     }
 
     protected void post(Request request, Response response) throws Exception {
-
+        methodNotAllowed(response);
     }
 
     protected void put(Request request, Response response) throws Exception {
-
+        methodNotAllowed(response);
     }
 
     protected void delete(Request request, Response response) throws Exception {
-
+        methodNotAllowed(response);
     }
 
     protected void head(Request request, Response response) throws Exception {
-
+        methodNotAllowed(response);
     }
 
     protected void options(Request request, Response response) throws Exception {
-
+        methodNotAllowed(response);
     }
 
     protected void trace(Request request, Response response) throws Exception {
+        methodNotAllowed(response);
+    }
 
+    private static void methodNotAllowed(Response response) {
+        response.setStatus(HttpStatusCode.METHOD_NOT_ALLOWED);
     }
 }

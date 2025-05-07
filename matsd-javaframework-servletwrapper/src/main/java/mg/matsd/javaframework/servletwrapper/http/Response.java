@@ -6,7 +6,6 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import mg.matsd.javaframework.core.annotations.Nullable;
-import mg.matsd.javaframework.core.utils.ArrayUtils;
 import mg.matsd.javaframework.core.utils.Assert;
 
 import java.io.IOException;
@@ -34,6 +33,11 @@ public class Response {
         return this;
     }
 
+    public Response addHeader(String name, String value) {
+        raw.addHeader(name, value);
+        return this;
+    }
+
     public Response setContentType(String contentType) {
         raw.setContentType(contentType);
         return this;
@@ -51,6 +55,11 @@ public class Response {
 
     public Response addCookie(String name, String value) {
         return addCookie(new Cookie(name, value));
+    }
+
+    public Response setStatus(HttpStatusCode status) {
+        Assert.notNull(status, "Le code de statut HTTP ne peut pas être \"null\"");
+        return setStatus(status.getValue());
     }
 
     public Response setStatus(int status) {
@@ -95,6 +104,28 @@ public class Response {
 
     public Response forwardTo(String path) throws ServletException, IOException {
         return forwardTo(path, null);
+    }
+
+    public Response error(int status, String message) throws IOException {
+        raw.sendError(status, message);
+        return this;
+    }
+
+    public Response error(int status) throws IOException {
+        raw.sendError(status);
+        return this;
+    }
+
+    public Response error(HttpStatusCode status, String message) throws IOException {
+        Assert.notNull(status, "Le code de statut HTTP ne peut pas être \"null\"");
+
+        return error(status.getValue(), message);
+    }
+
+    public Response error(HttpStatusCode status) throws IOException {
+        Assert.notNull(status, "Le code de statut HTTP ne peut pas être \"null\"");
+
+        return error(status.getValue());
     }
 
     public Response write(String content) throws IOException {
