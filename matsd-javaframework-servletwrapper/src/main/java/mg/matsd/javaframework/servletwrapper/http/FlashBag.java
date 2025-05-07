@@ -11,8 +11,8 @@ public class FlashBag {
 
     private final Map<String, Object> flashes;
 
-    public FlashBag() {
-         flashes = new HashMap<>();
+    FlashBag() {
+        flashes = new HashMap<>();
     }
 
     @Nullable

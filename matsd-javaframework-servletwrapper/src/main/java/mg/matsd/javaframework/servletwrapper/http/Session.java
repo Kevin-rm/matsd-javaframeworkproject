@@ -12,12 +12,7 @@ public class Session {
     protected final HttpSession raw;
 
     Session(HttpSession raw) {
-        Assert.notNull(raw, "L'argument raw ne peut pas être \"null\"");
         this.raw = raw;
-    }
-
-    public HttpSession getRaw() {
-        return raw;
     }
 
     @Nullable

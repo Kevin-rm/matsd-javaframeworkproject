@@ -10,20 +10,14 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 public abstract class BaseFilter implements Filter {
     protected static final Logger LOGGER = LogManager.getLogger(BaseFilter.class);
     protected final String alreadyFilteredAttrName = getClass().getName() + ".FILTERED";
-    protected final List<String> urlPatterns = new ArrayList<>();
+    protected final List<String> urlPatterns       = new ArrayList<>();
     private   FilterConfig filterConfig;
-
-    protected BaseFilter(@Nullable String... urlPatterns) {
-        if (urlPatterns == null) return;
-        Arrays.stream(urlPatterns).forEachOrdered(this::addUrlPattern);
-    }
 
     public String getAlreadyFilteredAttrName() {
         return alreadyFilteredAttrName;
@@ -37,12 +31,11 @@ public abstract class BaseFilter implements Filter {
         return Collections.unmodifiableList(urlPatterns);
     }
 
-    @SuppressWarnings("unchecked")
-    public <F extends BaseFilter> F addUrlPattern(String urlPattern) {
+    public BaseFilter addUrlPattern(String urlPattern) {
         Assert.notBlank(urlPattern, false, "L'argument urlPattern ne peut pas être vide ou \"null\"");
         urlPatterns.add(urlPattern);
 
-        return (F) this;
+        return this;
     }
 
     @Override
