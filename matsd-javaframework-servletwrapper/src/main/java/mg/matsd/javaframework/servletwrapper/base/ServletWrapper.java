@@ -16,6 +16,9 @@ public class ServletWrapper extends HttpServlet {
         Request  request  = new Request(req);
         Response response = new Response(resp);
         try {
+            handleRequest(request, response);
+            if (resp.isCommitted()) return;
+
             switch (req.getMethod().toUpperCase()) {
                 case "GET"     -> get(request, response);
                 case "POST"    -> post(request, response);
@@ -31,6 +34,8 @@ public class ServletWrapper extends HttpServlet {
             throw new RuntimeException(e);
         }
     }
+
+    protected void handleRequest(Request request, Response response) throws Exception { }
 
     protected void get(Request request, Response response) throws Exception {
 
