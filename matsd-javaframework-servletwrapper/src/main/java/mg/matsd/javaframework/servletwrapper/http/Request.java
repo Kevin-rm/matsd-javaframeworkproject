@@ -395,6 +395,10 @@ public class Request {
         return raw.getMethod();
     }
 
+    public RequestMethod getMethodAsEnum() {
+        return RequestMethod.valueOf(getMethod());
+    }
+
     public boolean isMethod(String method) {
         Assert.notBlank(method, false, "L'argument method ne peut pas être vide ou \"null\"");
 
