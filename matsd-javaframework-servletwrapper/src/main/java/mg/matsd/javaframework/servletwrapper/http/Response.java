@@ -1,19 +1,28 @@
 package mg.matsd.javaframework.servletwrapper.http;
 
+import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.utils.ArrayUtils;
 import mg.matsd.javaframework.core.utils.Assert;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Map;
 
 public class Response {
     protected final HttpServletResponse raw;
+    protected final Request request;
 
-    public Response(HttpServletResponse raw) {
+    public Response(HttpServletResponse raw, Request request) {
         Assert.notNull(raw, "L'argument raw ne peut pas être \"null\"");
-        this.raw = raw;
+        Assert.notNull(request, "La requête ne peut pas être \"null\"");
+
+        this.raw     = raw;
+        this.request = request;
     }
 
     public HttpServletResponse getRaw() {
@@ -72,6 +81,20 @@ public class Response {
     public Response redirect(String location) throws IOException {
         raw.sendRedirect(location);
         return this;
+    }
+
+    public Response forwardTo(String path, @Nullable Map<String, Object> attributes) throws ServletException, IOException {
+        Assert.notBlank(path, false, "Le chemin ne peut pas être vide ou \"null\"");
+
+        HttpServletRequest httpServletRequest = request.getRaw();
+
+        if (attributes != null && !attributes.isEmpty()) attributes.forEach(httpServletRequest::setAttribute);
+        httpServletRequest.getRequestDispatcher(path).forward(httpServletRequest, raw);
+        return this;
+    }
+
+    public Response forwardTo(String path) throws ServletException, IOException {
+        return forwardTo(path, null);
     }
 
     public Response write(String content) throws IOException {
