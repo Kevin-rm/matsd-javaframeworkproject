@@ -4,7 +4,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Part;
 import mg.itu.prom16.annotations.*;
 import mg.itu.prom16.base.Model;
-import mg.itu.prom16.exceptions.MissingServletRequestParameterException;
+import mg.itu.prom16.exceptions.MissingRequestParameterException;
 import mg.itu.prom16.exceptions.ModelBindingException;
 import mg.itu.prom16.exceptions.UndefinedPathVariableException;
 import mg.itu.prom16.exceptions.UnexpectedParameterException;
@@ -95,7 +95,7 @@ public final class UtilFunctions {
         if (UploadedFile.class == parameterType) {
             UploadedFile uploadedFile = getUploadedFile(parameterName, request);
             if (uploadedFile == null && requestParameter.required())
-                throw new MissingServletRequestParameterException(parameterName);
+                throw new MissingRequestParameterException(parameterName);
 
             return uploadedFile;
         }
@@ -105,7 +105,7 @@ public final class UtilFunctions {
             if (StringUtils.hasText(requestParameter.defaultValue()))
                 return StringToTypeConverter.convert(requestParameter.defaultValue(), parameterType);
             else if (requestParameter.required())
-                throw new MissingServletRequestParameterException(parameterName);
+                throw new MissingRequestParameterException(parameterName);
             else if (parameterType.isPrimitive())
                 return ClassUtils.getPrimitiveDefaultValue(parameterType);
             else if (!ClassUtils.isPrimitiveWrapper(parameterType) &&
