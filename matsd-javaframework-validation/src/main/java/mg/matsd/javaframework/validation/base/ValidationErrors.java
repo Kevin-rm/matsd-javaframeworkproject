@@ -47,10 +47,11 @@ public class ValidationErrors<T> {
         return constraintViolationMap.get(property);
     }
 
+    @SuppressWarnings("unchecked")
     public void throwExceptionIfAny() throws ValidationException {
         if (constraintViolationMap.isEmpty()) return;
 
-        throw new ValidationException(constraintViolationMap);
+        throw new ValidationException((Map<String, List<ConstraintViolation<?>>>) (Map<String, ?>) constraintViolationMap);
     }
 
     void addConstraintViolation(String property, ConstraintViolation<T> constraintViolation) {

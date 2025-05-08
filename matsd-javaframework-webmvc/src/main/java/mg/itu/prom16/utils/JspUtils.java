@@ -27,21 +27,21 @@ public abstract class JspUtils {
         Assert.notBlank(propertyPath, false, "Le chemin vers la propriété ne peut pas être vide ou \"null\"");
 
         final String key = ModelBindingResult.FIELD_ERRORS_KEY_PREFIX + propertyPath;
-        return (List<FieldError>) getCurrentRequest().getAttribute(key);
+        return (List<FieldError>) currentRequest().attribute(key);
     }
 
     public static boolean hasFlash(String key) {
-        return getFlashBag().has(key);
+        return flashBag().has(key);
     }
 
     @Nullable
     public static Object flash(String key) {
-        return getFlashBag().get(key);
+        return flashBag().get(key);
     }
 
     @Nullable
     public static Object flash(String key, @Nullable Object defaultValue) {
-        return getFlashBag().get(key, defaultValue);
+        return flashBag().get(key, defaultValue);
     }
 
     public static String invokeJspFragment(@Nullable JspFragment jspFragment) throws JspException, IOException {

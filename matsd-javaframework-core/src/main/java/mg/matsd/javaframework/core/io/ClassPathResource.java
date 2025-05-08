@@ -14,8 +14,9 @@ public class ClassPathResource extends Resource {
         InputStream inputStream = getClass().getClassLoader().getResourceAsStream(name);
         if (inputStream == null)
             throw new ResourceNotFoundException(String.format(
-                "Impossible de trouver le fichier \"%s\". Assurez-vous qu'il existe et qu'il soit accessible dans le classPath de votre application",
-                name));
+                "Impossible de trouver le fichier \"%s\". Assurez-vous qu'il existe " +
+                "et qu'il soit accessible dans le classPath de votre application", name
+            ), name);
 
         this.inputStream = inputStream;
     }

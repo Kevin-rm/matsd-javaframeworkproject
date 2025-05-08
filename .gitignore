@@ -4,6 +4,7 @@
 */!**/src/test/**/target/
 
 ### IntelliJ IDEA ###
+.idea/
 */.idea/
 */*.iws
 */*.iml
@@ -35,6 +36,5 @@
 ### Mac OS ###
 */.DS_Store
 
-.idea/
 out/
 */out

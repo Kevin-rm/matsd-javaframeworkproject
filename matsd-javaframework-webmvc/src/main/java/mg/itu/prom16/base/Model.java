@@ -3,6 +3,7 @@ package mg.itu.prom16.base;
 import jakarta.servlet.http.HttpServletRequest;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
+import mg.matsd.javaframework.servletwrapper.http.Request;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,6 +15,14 @@ public class Model {
 
     public Map<String, Object> getData() {
         return data;
+    }
+
+    @Nullable
+    public Object getData(String key) {
+        Assert.notBlank(key, false, "La clé de la donnée à récupérer ne peut pas être vide ou \"null\"");
+
+        if (!data.containsKey(key)) return null;
+        return data.get(key);
     }
 
     public Model addData(String key, @Nullable Object value) {
@@ -38,18 +47,10 @@ public class Model {
         return data.containsKey(key);
     }
 
-    @Nullable
-    public Object getData(String key) {
-        Assert.notBlank(key, false, "La clé de la donnée à récupérer ne peut pas être vide ou \"null\"");
-
-        if (!data.containsKey(key)) return null;
-        return data.get(key);
-    }
-
-    void setAttributes(HttpServletRequest httpServletRequest) {
+    void setAttributes(Request request) {
         if (data.isEmpty()) return;
 
-        data.forEach(httpServletRequest::setAttribute);
+        data.forEach(request::setAttribute);
         data.clear();
     }
 }

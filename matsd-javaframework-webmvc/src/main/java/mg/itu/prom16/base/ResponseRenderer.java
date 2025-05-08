@@ -2,18 +2,14 @@ package mg.itu.prom16.base;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.base.internal.handler.AbstractHandler;
 import mg.itu.prom16.exceptions.InvalidReturnTypeException;
-import mg.itu.prom16.http.FlashBag;
-import mg.itu.prom16.http.HttpStatusCode;
-import mg.itu.prom16.http.Session;
 import mg.itu.prom16.support.ThirdPartyConfiguration;
 import mg.itu.prom16.support.WebApplicationContainer;
 import mg.matsd.javaframework.core.io.ClassPathResource;
 import mg.matsd.javaframework.core.utils.StringUtils;
 import mg.matsd.javaframework.security.exceptions.HttpStatusException;
+import mg.matsd.javaframework.servletwrapper.http.*;
 
 import java.io.*;
 import java.lang.reflect.Method;
@@ -41,28 +37,26 @@ class ResponseRenderer {
         this.webApplicationContainer = webApplicationContainer;
     }
 
-    static void doRenderError(Throwable throwable, HttpServletResponse httpServletResponse) throws IOException {
-        httpServletResponse.setContentType("text/html");
-        httpServletResponse.setStatus(throwable instanceof HttpStatusException httpStatusException ?
-            httpStatusException.getStatusCode() : HttpStatusCode.INTERNAL_SERVER_ERROR.getValue());
-
+    static void doRenderError(Throwable throwable, Response response) throws IOException {
         StringWriter stringWriter = new StringWriter();
         throwable.printStackTrace(new PrintWriter(stringWriter));
 
-        PrintWriter printWriter = httpServletResponse.getWriter();
-        printWriter.write(String.format(ERROR_PAGE_TEMPLATE_CONTENT,
-            throwable.getClass().getName(),
-            StringUtils.escapeHtml(throwable.getMessage()),
-            httpServletResponse.getStatus(),
-            StringUtils.escapeHtml(stringWriter.toString())
-        ));
-        printWriter.flush();
+        response.asHtml()
+            .setStatus(throwable instanceof HttpStatusException httpStatusException ?
+                httpStatusException.getStatusCode() : HttpStatusCode.INTERNAL_SERVER_ERROR.getValue())
+            .write(String.format(ERROR_PAGE_TEMPLATE_CONTENT,
+                throwable.getClass().getName(),
+                StringUtils.escapeHtml(throwable.getMessage()),
+                response.getStatus(),
+                StringUtils.escapeHtml(stringWriter.toString())
+            ))
+            .flush();
     }
 
     void doRender(
-        HttpServletRequest httpServletRequest,
-        HttpServletResponse httpServletResponse,
-        Session session,
+        Request  request,
+        Response response,
+        Session  session,
         AbstractHandler handler,
         Object additionalParameter
     ) throws ServletException, IOException {
@@ -73,26 +67,25 @@ class ResponseRenderer {
             .filter(k -> k.startsWith(RedirectData.KEY_PREFIX))
             .forEachOrdered(k -> model.addData(k.substring(RedirectData.KEY_PREFIX.length()), flashBag.get(k)));
 
-        Object handlerMethodResult = handler.invokeMethod(
-            webApplicationContainer, httpServletRequest, httpServletResponse, session, additionalParameter);
+        Object handlerMethodResult = handler.invokeMethod(webApplicationContainer,
+            request, response, session, additionalParameter);
         Method handlerMethod = handler.getMethod();
 
-        model.setAttributes(httpServletRequest);
+        model.setAttributes(request);
         if (handler.isJsonResponse())
-            handleJsonResult(httpServletResponse, handler.getControllerClass(), handlerMethod, handlerMethodResult);
+            handleJsonResult(response, handler.getControllerClass(), handlerMethod, handlerMethodResult);
         else if (handlerMethodResult instanceof ModelAndView modelAndView) {
-            modelAndView.getModel().setAttributes(httpServletRequest);
-
-            httpServletRequest.getRequestDispatcher(modelAndView.getView()).forward(httpServletRequest, httpServletResponse);
+            modelAndView.getModel().setAttributes(request);
+            response.forwardTo(modelAndView.getView());
         } else if (handlerMethodResult instanceof RedirectView redirectView)
-            httpServletResponse.sendRedirect(redirectView.buildCompleteUrl());
+            response.redirect(redirectView.buildCompleteUrl());
         else if (handlerMethodResult instanceof String string)
-            handleStringResult(httpServletRequest, httpServletResponse, string);
+            handleStringResult(request, response, string);
         else throw new InvalidReturnTypeException(handlerMethod);
     }
 
     private void handleJsonResult(
-        HttpServletResponse httpServletResponse,
+        Response response,
         Class<?> controllerClass,
         Method   handlerMethod,
         Object   handlerMethodResult
@@ -102,37 +95,33 @@ class ResponseRenderer {
                 "le type de retour est \"void\": méthode \"%s\" du contrôleur \"%s\"", handlerMethod.getName(), controllerClass)
             );
 
-        httpServletResponse.setContentType("application/json");
+        response.asJson();
         ObjectMapper objectMapper = (ObjectMapper) webApplicationContainer.getManagedInstance(ThirdPartyConfiguration.JACKSON_OBJECT_MAPPER_ID);
-        objectMapper.writeValue(httpServletResponse.getWriter(),
+        objectMapper.writeValue(response.getWriter(),
             handlerMethodResult instanceof ModelAndView modelAndView ? modelAndView.getData() : handlerMethodResult);
     }
 
     private void handleStringResult(
-        HttpServletRequest  httpServletRequest,
-        HttpServletResponse httpServletResponse,
-        String originalString
+        Request request, Response response, String originalString
     ) throws ServletException, IOException {
         originalString = originalString.strip();
         String string = "/" + originalString;
         if (!string.endsWith(".jsp")) string += ".jsp";
 
-        if (httpServletRequest.getServletContext().getResource(string) != null) {
-            httpServletRequest.getRequestDispatcher(string).forward(httpServletRequest, httpServletResponse);
+        if (request.getRaw().getServletContext().getResource(string) != null) {
+            response.forwardTo(string);
             return;
         }
 
         String[] originalStringParts = originalString.split(":", 2);
         if (!originalStringParts[0].stripTrailing().equalsIgnoreCase("redirect")) {
-            httpServletResponse.setContentType("text/html");
-
-            PrintWriter printWriter = httpServletResponse.getWriter();
-            printWriter.print(originalString);
-            printWriter.flush();
+            response.asHtml()
+                .print(originalString)
+                .flush();
             return;
         }
 
-        httpServletResponse.sendRedirect(
+        response.redirect(
             ((RedirectData) webApplicationContainer.getManagedInstance(RedirectData.MANAGED_INSTANCE_ID))
             .buildCompleteUrl(originalStringParts[1].stripLeading()));
     }

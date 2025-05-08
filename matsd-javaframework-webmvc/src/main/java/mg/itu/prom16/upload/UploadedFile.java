@@ -71,7 +71,7 @@ public class UploadedFile {
     public void store(String path) throws FileUploadException {
         Assert.notBlank(path, false, "Le répertoire de destination du fichier importé ne peut pas être vide ou \"null\"");
 
-        Path targetPath = Path.of(WebFacade.getCurrentRequest().getServletContext().getRealPath("") +
+        Path targetPath = Path.of(WebFacade.currentRequest().getRaw().getServletContext().getRealPath("") +
             File.separator + path);
 
         try {
