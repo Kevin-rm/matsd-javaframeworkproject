@@ -22,15 +22,20 @@ public class Session {
 
     @Nullable
     public Object get(String key) {
-        return get(key, null);
+        validateSessionKey(key);
+
+        return raw.getAttribute(key);
     }
 
     @Nullable
-    public Object get(String key, @Nullable Object defaultValue) {
-        validateSessionKey(key);
+    public Object getOrCreate(String key, @Nullable Object defaultValue) {
+        final Object attribute = get(key);
+        if (attribute == null) {
+            raw.setAttribute(key, defaultValue);
+            return defaultValue;
+        }
 
-        Object attribute = raw.getAttribute(key);
-        return attribute == null ? defaultValue : attribute;
+        return attribute;
     }
 
     public boolean has(String key) {

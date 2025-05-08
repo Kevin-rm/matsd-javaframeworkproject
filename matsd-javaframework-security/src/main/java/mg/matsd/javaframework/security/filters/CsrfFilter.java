@@ -1,10 +1,9 @@
 package mg.matsd.javaframework.security.filters;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.security.exceptions.ForbiddenException;
+import mg.matsd.javaframework.servletwrapper.http.Request;
+import mg.matsd.javaframework.servletwrapper.http.Response;
 
 import java.util.UUID;
 
@@ -53,7 +52,7 @@ public class CsrfFilter extends BaseFilter {
     }
 
     @Override
-    public FilterChainDecision preHandle(HttpServletRequest request, HttpServletResponse response)
+    public FilterChainDecision preHandle(Request request, Response response)
         throws Exception {
 
         final String csrfToken = getOrGenerateCsrfToken(request);
@@ -64,27 +63,20 @@ public class CsrfFilter extends BaseFilter {
         return FilterChainDecision.defaultValue();
     }
 
-    private String getOrGenerateCsrfToken(HttpServletRequest httpServletRequest) {
-        HttpSession httpSession = httpServletRequest.getSession();
-
-        String csrfToken = (String) httpSession.getAttribute(sessionKey);
-        if (csrfToken == null) {
-            csrfToken = UUID.randomUUID().toString();
-            httpSession.setAttribute(sessionKey, csrfToken);
-        }
-
-        return csrfToken;
+    private String getOrGenerateCsrfToken(Request request) {
+        return (String) request.getSession()
+            .getOrCreate(sessionKey, UUID.randomUUID().toString());
     }
 
-    private boolean validateCsrfToken(HttpServletRequest httpServletRequest, String csrfToken) {
-        String tokenFromRequestHeader    = httpServletRequest.getHeader(headerName);
-        String tokenFromRequestParameter = httpServletRequest.getParameter(parameterName);
+    private boolean validateCsrfToken(Request request, String csrfToken) {
+        String tokenFromRequestHeader = request.getRaw().getHeader(headerName);
+        String tokenFromRequestInput  = request.input(parameterName);
 
-        return csrfToken.equals(tokenFromRequestHeader) || csrfToken.equals(tokenFromRequestParameter);
+        return csrfToken.equals(tokenFromRequestHeader) || csrfToken.equals(tokenFromRequestInput);
     }
 
-    private static boolean isStateChangingRequest(HttpServletRequest httpServletRequest) {
-        String method = httpServletRequest.getMethod();
+    private static boolean isStateChangingRequest(Request request) {
+        String method = request.getMethod();
         return "POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method) || "DELETE".equalsIgnoreCase(method);
     }
 }
