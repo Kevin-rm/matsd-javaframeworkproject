@@ -85,11 +85,11 @@ public abstract class AbstractHandler {
                 Parameter parameter     = parameters[i];
                 Class<?>  parameterType = parameter.getType();
 
-                if (Request.class.isAssignableFrom(parameterType))
+                if (parameterType == Request.class)
                     args[i] = request;
-                else if (Response.class.isAssignableFrom(parameterType))
+                else if (parameterType == Response.class)
                     args[i] = response;
-                else if (Session.class.isAssignableFrom(parameterType))
+                else if (parameterType == Session.class)
                     args[i] = session;
                 else if (parameter.isAnnotationPresent(SessionAttribute.class))
                     args[i] = UtilFunctions.getSessionAttributeValue(parameterType, parameter, session);
