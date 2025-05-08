@@ -1,10 +1,10 @@
 package mg.itu.prom16.base.internal.handler;
 
 import com.sun.jdi.InternalException;
-import jakarta.servlet.http.HttpServletRequest;
 import mg.itu.prom16.exceptions.UnexpectedParameterException;
 import mg.itu.prom16.support.WebApplicationContainer;
 import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.servletwrapper.http.Request;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -47,7 +47,7 @@ public class ExceptionHandler extends AbstractHandler {
     @Override
     protected Object resolveAdditionalParameter(
         Class<?> parameterType, Parameter parameter,
-        WebApplicationContainer webApplicationContainer, HttpServletRequest httpServletRequest,
+        WebApplicationContainer webApplicationContainer, Request request,
         Object additionalParameter
     ) throws UnexpectedParameterException, InternalException {
         if (!(additionalParameter instanceof List<?> list)) throw new InternalException();

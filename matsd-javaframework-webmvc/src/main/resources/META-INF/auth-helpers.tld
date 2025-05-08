@@ -10,7 +10,7 @@
     <function>
         <name>currentUser</name>
         <function-class>mg.itu.prom16.utils.AuthFacade</function-class>
-        <function-signature>mg.matsd.javaframework.security.base.User getCurrentUser()</function-signature>
+        <function-signature>mg.matsd.javaframework.security.base.User currentUser()</function-signature>
     </function>
     <function>
         <name>requireCurrentUser</name>

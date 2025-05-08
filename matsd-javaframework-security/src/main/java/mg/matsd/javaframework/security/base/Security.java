@@ -40,11 +40,11 @@ public class Security {
         return this;
     }
 
-    public synchronized Security addFilterBefore(Class<? extends Filter> filterClass, Filter filter) {
+    public synchronized Security addFilterBefore(Filter filter, Class<? extends Filter> filterClass) {
         return addFilter(filterClass, filter, true);
     }
 
-    public synchronized Security addFilterAfter(Class<? extends Filter> filterClass, Filter filter) {
+    public synchronized Security addFilterAfter(Filter filter, Class<? extends Filter> filterClass) {
         return addFilter(filterClass, filter, false);
     }
 
@@ -54,10 +54,6 @@ public class Security {
 
         Collections.addAll(this.filters, filters);
         return this;
-    }
-
-    public SecurityFilterChain buildFilterChain() {
-        return new SecurityFilterChain(Collections.unmodifiableList(filters));
     }
 
     private synchronized Security addFilter(Class<? extends Filter> filterClass, Filter filter, boolean before) {

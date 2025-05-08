@@ -3,13 +3,13 @@ package mg.itu.prom16.utils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import mg.itu.prom16.base.FrontServlet;
+import mg.itu.prom16.base.internal.request.RequestContext;
 import mg.itu.prom16.base.internal.request.RequestContextHolder;
-import mg.itu.prom16.base.internal.request.ServletRequestAttributes;
-import mg.itu.prom16.http.FlashBag;
-import mg.itu.prom16.http.Session;
-import mg.itu.prom16.http.SessionImpl;
 import mg.itu.prom16.support.WebApplicationContainer;
 import mg.matsd.javaframework.core.utils.Assert;
+import mg.matsd.javaframework.servletwrapper.http.FlashBag;
+import mg.matsd.javaframework.servletwrapper.http.Request;
+import mg.matsd.javaframework.servletwrapper.http.Session;
 
 public abstract class WebFacade {
     static FrontServlet frontServlet;
@@ -20,36 +20,31 @@ public abstract class WebFacade {
         WebFacade.frontServlet = frontServlet;
     }
 
-    public static HttpServletRequest getCurrentRequest() {
-        return getServletRequestAttributes().getRequest();
+    public static Request currentRequest() {
+        return requestContext().getRequest();
     }
 
-    public static HttpSession getCurrentHttpSession() {
-        return getServletRequestAttributes().getSession();
+    public static HttpServletRequest currentHttpServletRequest() {
+        return currentRequest().getRaw();
     }
 
-    public static Session getCurrentSession() {
-        return (Session) getCurrentHttpSession()
-            .getAttribute(WebApplicationContainer.WEB_SCOPED_MANAGED_INSTANCES_KEY_PREFIX + SessionImpl.MANAGED_INSTANCE_ID);
+    public static Session currentSession() {
+        return requestContext().getSession();
     }
 
-    public static FlashBag getFlashBag() {
-        return getCurrentSession().getFlashBag();
+    public static HttpSession currentHttpSession() {
+        return currentSession().getRaw();
     }
 
-    public static boolean isGetRequest() {
-        return "GET".equals(getCurrentRequest().getMethod());
+    public static FlashBag flashBag() {
+        return currentSession().getFlashBag();
     }
 
-    public static boolean isPostRequest() {
-        return "POST".equals(getCurrentRequest().getMethod());
-    }
-
-    public static WebApplicationContainer getWebApplicationContainer() {
+    public static WebApplicationContainer webApplicationContainer() {
         return frontServlet.getWebApplicationContainer();
     }
 
-    private static ServletRequestAttributes getServletRequestAttributes() {
-        return RequestContextHolder.getServletRequestAttributes();
+    public static RequestContext requestContext() {
+        return RequestContextHolder.getRequestContext();
     }
 }

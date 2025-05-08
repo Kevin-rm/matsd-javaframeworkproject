@@ -20,27 +20,27 @@ public abstract class AuthFacade {
         AuthenticationManager authenticationManager = statefulWellConfiguredAuthenticationManager();
 
         authenticationManager.login(identifier, password);
-        getCurrentSession().put(authenticationManager.getStatefulStorageKey(), authenticationManager.getCurrentUser());
+        currentSession().set(authenticationManager.getStatefulStorageKey(), authenticationManager.getCurrentUser());
     }
 
     public static void logout() {
         AuthenticationManager authenticationManager = statefulWellConfiguredAuthenticationManager();
 
         authenticationManager.removeCurrentUser();
-        getCurrentSession().remove(authenticationManager.getStatefulStorageKey());
+        currentSession().remove(authenticationManager.getStatefulStorageKey());
     }
 
     public static boolean isUserAuthenticated() {
-        return getCurrentUser() != null;
+        return currentUser() != null;
     }
 
     @Nullable
-    public static User getCurrentUser() {
+    public static User currentUser() {
         return withAuthenticationManager(AuthenticationManager::getCurrentUser);
     }
 
     @Nullable
-    public static <U extends User> U getCurrentUser(final Class<U> expectedType) {
+    public static <U extends User> U currentUser(final Class<U> expectedType) {
         return withAuthenticationManager(am -> am.getCurrentUser(expectedType));
     }
 
@@ -56,7 +56,7 @@ public abstract class AuthFacade {
     public static AuthenticationManager getAuthenticationManager() {
         if (authenticationManager != null) return authenticationManager;
 
-        WebApplicationContainer webApplicationContainer = getWebApplicationContainer();
+        WebApplicationContainer webApplicationContainer = webApplicationContainer();
         authenticationManager = webApplicationContainer.containsManagedInstance(Security.class) ?
             webApplicationContainer.getManagedInstance(Security.class).getAuthenticationManager() : null;
 
@@ -64,7 +64,7 @@ public abstract class AuthFacade {
     }
 
     @Nullable
-    private static <T> T withAuthenticationManager(
+    public static <T> T withAuthenticationManager(
         final Function<AuthenticationManager, T> function, @Nullable final Boolean required
     ) {
         AuthenticationManager authenticationManager = getAuthenticationManager();
@@ -78,7 +78,7 @@ public abstract class AuthFacade {
     }
 
     @Nullable
-    private static <T> T withAuthenticationManager(final Function<AuthenticationManager, T> function) {
+    public static <T> T withAuthenticationManager(final Function<AuthenticationManager, T> function) {
         return withAuthenticationManager(function, false);
     }
 

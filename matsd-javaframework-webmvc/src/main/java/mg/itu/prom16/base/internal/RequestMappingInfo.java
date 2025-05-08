@@ -2,10 +2,11 @@ package mg.itu.prom16.base.internal;
 
 import jakarta.servlet.http.HttpServletRequest;
 import mg.itu.prom16.exceptions.DuplicatePathVariableNameException;
-import mg.itu.prom16.http.RequestMethod;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.core.utils.StringUtils;
+import mg.matsd.javaframework.servletwrapper.http.Request;
+import mg.matsd.javaframework.servletwrapper.http.RequestMethod;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -96,7 +97,7 @@ public class RequestMappingInfo {
 
             String requirement;
             if (pathVariableParts.length == 2 && StringUtils.hasText(pathVariableParts[1]))
-                requirement  = pathVariableParts[1];
+                 requirement = pathVariableParts[1];
             else requirement = PATH_VARIABLE_DEFAULT_REQUIREMENT;
 
             pathVariablesAttributes.put(pathVariableParts[0], requirement);
@@ -123,17 +124,18 @@ public class RequestMappingInfo {
         return this;
     }
 
-    public boolean matches(HttpServletRequest httpServletRequest) {
-        Assert.notNull(httpServletRequest, "L'argument httpServletRequest ne peut pas être \"null\"");
+    public boolean matches(final String servletPath, final RequestMethod requestMethod) {
+        Assert.notBlank(servletPath, false, "L'argument servletPath ne peut pas être vide ou \"null\"");
+        Assert.notNull(requestMethod, "L'argument requestMethod ne peut pas être \"null\"");
 
-        return pathPattern.matcher(httpServletRequest.getServletPath()).matches() &&
-               methods.contains(RequestMethod.valueOf(httpServletRequest.getMethod()));
+        return pathPattern.matcher(servletPath).matches() &&
+               methods.contains(requestMethod);
     }
 
-    public Map<String, String> extractPathVariablesValues(HttpServletRequest httpServletRequest) {
-        Assert.notNull(httpServletRequest, "L'argument httpServletRequest ne peut pas être \"null\"");
+    public Map<String, String> extractPathVariablesValues(Request request) {
+        Assert.notNull(request, "La requête ne peut pas être \"null\"");
 
-        Matcher matcher = pathPattern.matcher(httpServletRequest.getServletPath());
+        Matcher matcher = pathPattern.matcher(request.getServletPath());
         if (!matcher.matches()) return Collections.emptyMap();
 
         Map<String, String> pathVariablesValues = new HashMap<>();

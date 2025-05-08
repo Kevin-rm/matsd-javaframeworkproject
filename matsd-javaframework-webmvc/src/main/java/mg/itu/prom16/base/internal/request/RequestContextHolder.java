@@ -3,23 +3,24 @@ package mg.itu.prom16.base.internal.request;
 import mg.matsd.javaframework.core.utils.Assert;
 
 public class RequestContextHolder {
-    private static final ThreadLocal<ServletRequestAttributes> SERVLET_REQUEST_ATTRIBUTES_HOLDER = new ThreadLocal<>();
+    private static final ThreadLocal<RequestContext> THREAD_LOCAL = new ThreadLocal<>();
 
     private RequestContextHolder() { }
 
-    public static void setServletRequestAttributes(ServletRequestAttributes servletRequestAttributes) {
-        SERVLET_REQUEST_ATTRIBUTES_HOLDER.set(servletRequestAttributes);
+    public static void setRequestContext(RequestContext requestContext) {
+        Assert.notNull(requestContext);
+        THREAD_LOCAL.set(requestContext);
     }
 
-    public static ServletRequestAttributes getServletRequestAttributes() {
-        ServletRequestAttributes servletRequestAttributes = SERVLET_REQUEST_ATTRIBUTES_HOLDER.get();
-        Assert.state(servletRequestAttributes != null,
-            "Aucun servletRequestAttributes trouvé pour le thread courant");
+    public static RequestContext getRequestContext() {
+        RequestContext requestContext = THREAD_LOCAL.get();
+        Assert.state(requestContext != null,
+            "Aucun requestAttributes trouvé pour le thread courant");
 
-        return servletRequestAttributes;
+        return requestContext;
     }
 
     public static void clear() {
-        SERVLET_REQUEST_ATTRIBUTES_HOLDER.remove();
+        THREAD_LOCAL.remove();
     }
 }
