@@ -5,6 +5,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
+import mg.matsd.javaframework.servletwrapper.http.Request;
+import mg.matsd.javaframework.servletwrapper.http.Response;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -45,25 +47,32 @@ public abstract class BaseFilter implements Filter {
     }
 
     @Override
-    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
+    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
+        throws IOException, ServletException {
         if (!(servletRequest  instanceof HttpServletRequest httpServletRequest)   ||
             !(servletResponse instanceof HttpServletResponse httpServletResponse) ||
-            httpServletRequest.getAttribute(alreadyFilteredAttrName) != null      ||
-            shouldIgnore(httpServletRequest)
+            httpServletRequest.getAttribute(alreadyFilteredAttrName) != null
         ) {
+            filterChain.doFilter(servletRequest, servletResponse);
+            return;
+        }
+
+        Request request   = new Request(httpServletRequest);
+        Response response = new Response(httpServletResponse, request);
+        if (shouldIgnore(request)) {
             filterChain.doFilter(servletRequest, servletResponse);
             return;
         }
 
         httpServletRequest.setAttribute(alreadyFilteredAttrName, Boolean.TRUE);
         try {
-            FilterChainDecision decision = preHandle(httpServletRequest, httpServletResponse);
+            FilterChainDecision decision = preHandle(request, response);
             switch (decision) {
                 case CONTINUE -> {
                     filterChain.doFilter(servletRequest, servletResponse);
-                    postHandle(httpServletRequest, httpServletResponse);
+                    postHandle(request, response);
                 }
-                case SKIP_CHAIN -> postHandle(httpServletRequest, httpServletResponse);
+                case SKIP_CHAIN -> postHandle(request, response);
                 case STOP -> { }
                 default -> throw new IllegalStateException("Valeur de \"FilterChainDecision\" non reconnue: " + decision);
             }
@@ -79,13 +88,13 @@ public abstract class BaseFilter implements Filter {
     }
 
     @Nullable
-    public abstract FilterChainDecision preHandle(HttpServletRequest request, HttpServletResponse response)
+    public abstract FilterChainDecision preHandle(Request request, Response response)
         throws Exception;
 
-    public void postHandle(HttpServletRequest request, HttpServletResponse response)
+    public void postHandle(Request request, Response response)
         throws Exception { }
 
-    public boolean shouldIgnore(HttpServletRequest request) { return false; }
+    public boolean shouldIgnore(Request request) { return false; }
 
     public enum FilterChainDecision {
         CONTINUE, SKIP_CHAIN, STOP;
