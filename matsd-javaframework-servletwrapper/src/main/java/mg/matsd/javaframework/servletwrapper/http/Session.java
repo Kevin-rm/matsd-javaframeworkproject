@@ -16,6 +16,10 @@ public class Session {
         this.raw = raw;
     }
 
+    public HttpSession getRaw() {
+        return raw;
+    }
+
     @Nullable
     public Object get(String key) {
         return get(key, null);

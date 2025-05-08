@@ -2,18 +2,18 @@ package mg.itu.prom16.base.internal.handler;
 
 import com.sun.jdi.InternalException;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.annotations.JsonResponse;
 import mg.itu.prom16.annotations.SessionAttribute;
 import mg.itu.prom16.base.internal.UtilFunctions;
 import mg.itu.prom16.exceptions.UnexpectedParameterException;
-import mg.itu.prom16.http.Session;
 import mg.itu.prom16.support.WebApplicationContainer;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.di.exceptions.NoSuchManagedInstanceException;
 import mg.matsd.javaframework.security.base.AuthenticationManager;
 import mg.matsd.javaframework.security.base.Security;
+import mg.matsd.javaframework.servletwrapper.http.Request;
+import mg.matsd.javaframework.servletwrapper.http.Response;
+import mg.matsd.javaframework.servletwrapper.http.Session;
 import mg.matsd.javaframework.validation.base.Validator;
 import mg.matsd.javaframework.validation.base.ValidatorFactory;
 
@@ -66,15 +66,15 @@ public abstract class AbstractHandler {
 
     protected abstract Object resolveAdditionalParameter(
         Class<?> parameterType, Parameter parameter,
-        WebApplicationContainer webApplicationContainer, HttpServletRequest httpServletRequest,
+        WebApplicationContainer webApplicationContainer, Request request,
         Object additionalParameter
     ) throws UnexpectedParameterException, InternalException, ServletException;
 
     public Object invokeMethod(
         WebApplicationContainer webApplicationContainer,
-        HttpServletRequest httpServletRequest,
-        HttpServletResponse httpServletResponse,
-        Session session,
+        Request  request,
+        Response response,
+        Session  session,
         Object additionalParameter
     ) throws ServletException {
         try {
@@ -85,21 +85,21 @@ public abstract class AbstractHandler {
                 Parameter parameter     = parameters[i];
                 Class<?>  parameterType = parameter.getType();
 
-                if (parameterType == HttpServletRequest.class)
-                    args[i] = httpServletRequest;
-                else if (parameterType == HttpServletResponse.class)
-                    args[i] = httpServletResponse;
+                if (Request.class.isAssignableFrom(parameterType))
+                    args[i] = request;
+                else if (Response.class.isAssignableFrom(parameterType))
+                    args[i] = response;
                 else if (Session.class.isAssignableFrom(parameterType))
                     args[i] = session;
                 else if (parameter.isAnnotationPresent(SessionAttribute.class))
-                    args[i] = UtilFunctions.getSessionAttributeValue(parameterType, parameter, httpServletRequest.getSession());
+                    args[i] = UtilFunctions.getSessionAttributeValue(parameterType, parameter, session);
                 else if (parameterType == Validator.class)
                     args[i] = webApplicationContainer.getManagedInstance(ValidatorFactory.class).getValidator();
                 else if (parameterType == AuthenticationManager.class)
                     args[i] = webApplicationContainer.getManagedInstance(Security.class).getAuthenticationManager();
                 else {
                     try {
-                        args[i] = resolveAdditionalParameter(parameterType, parameter, webApplicationContainer, httpServletRequest, additionalParameter);
+                        args[i] = resolveAdditionalParameter(parameterType, parameter, webApplicationContainer, request, additionalParameter);
                     } catch (UnexpectedParameterException | InternalException e) {
                         try {
                             args[i] = webApplicationContainer.getManagedInstance(parameterType);

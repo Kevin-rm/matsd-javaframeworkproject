@@ -11,11 +11,9 @@ import mg.itu.prom16.base.internal.RequestMappingInfo;
 import mg.itu.prom16.base.internal.UtilFunctions;
 import mg.itu.prom16.base.internal.handler.ExceptionHandler;
 import mg.itu.prom16.base.internal.handler.MappingHandler;
+import mg.itu.prom16.base.internal.request.RequestContext;
 import mg.itu.prom16.base.internal.request.RequestContextHolder;
-import mg.itu.prom16.base.internal.request.ServletRequestAttributes;
 import mg.itu.prom16.exceptions.DuplicateMappingException;
-import mg.itu.prom16.http.RequestMethod;
-import mg.itu.prom16.http.Session;
 import mg.itu.prom16.support.WebApplicationContainer;
 import mg.itu.prom16.utils.AuthFacade;
 import mg.itu.prom16.utils.WebFacade;
@@ -28,6 +26,10 @@ import mg.matsd.javaframework.security.base.AuthenticationManager;
 import mg.matsd.javaframework.security.base.User;
 import mg.matsd.javaframework.security.exceptions.AccessDeniedException;
 import mg.matsd.javaframework.security.exceptions.NotFoundHttpException;
+import mg.matsd.javaframework.servletwrapper.http.Request;
+import mg.matsd.javaframework.servletwrapper.http.RequestMethod;
+import mg.matsd.javaframework.servletwrapper.http.Response;
+import mg.matsd.javaframework.servletwrapper.http.Session;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -119,27 +121,30 @@ public class FrontServlet extends HttpServlet {
             .orElseThrow(() -> new JspException(String.format("Aucun \"RequestMapping\" trouvé avec le nom : \"%s\"", name)));
     }
 
-    protected final void processRequest(HttpServletRequest request, HttpServletResponse response)
+    protected final void processRequest(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse)
         throws ServletException, IOException {
-        response.setCharacterEncoding("UTF-8");
+        final Request  request  = new Request (httpServletRequest);
+        final Response response = new Response(httpServletResponse, request)
+            .setCharset("UTF-8");
+
         if (throwableOnInit != null) {
             ResponseRenderer.doRenderError(throwableOnInit, response);
             LOGGER.fatal("Une erreur s'est produite durant l'initialisation du \"FrontServlet\"", throwableOnInit);
             return;
         }
 
-        RequestContextHolder.setServletRequestAttributes(new ServletRequestAttributes(request, response));
-        Session session = webApplicationContainer.getManagedInstance(Session.class)
-            .setHttpSession(WebFacade.getCurrentHttpSession());
+        RequestContextHolder.setRequestContext(new RequestContext(request, response));
+        final Session session = request.getSession();
 
         MappingHandler mappingHandler = null;
         try {
-            Map.Entry<RequestMappingInfo, MappingHandler> mappingHandlerEntry = resolveMappingHandler(request);
-            final String servletPath = request.getServletPath();
+            final String servletPath   = request.getServletPath();
+            final String requestMethod = request.getMethod();
+
+            Map.Entry<RequestMappingInfo, MappingHandler> mappingHandlerEntry = resolveMappingHandler(servletPath, RequestMethod.valueOf(requestMethod));
             if (mappingHandlerEntry == null)
                 throw new NotFoundHttpException(String.format("Aucun mapping trouvé pour le path : \"%s\" et method : \"%s\"",
-                    servletPath, request.getMethod())
-                );
+                    servletPath, requestMethod));
             mappingHandler = mappingHandlerEntry.getValue();
 
             AuthenticationManager authenticationManager = AuthFacade.getAuthenticationManager();
@@ -149,7 +154,7 @@ public class FrontServlet extends HttpServlet {
                 final String statefulStorageKey   = authenticationManager.getStatefulStorageKey();
 
                 if (isUserAuthenticated && statefulStorageKey != null)
-                    session.put(statefulStorageKey, authenticationManager.getUserProvider().refreshUser(currentUser));
+                    session.set(statefulStorageKey, authenticationManager.getUserProvider().refreshUser(currentUser));
                 if (mappingHandler.isAnonymous() && isUserAuthenticated)
                     throw new AccessDeniedException(String.format("Vous devez être anonyme " +
                         "pour accéder à la ressource \"%s\"", servletPath), servletPath);
@@ -185,11 +190,12 @@ public class FrontServlet extends HttpServlet {
     }
 
     @Nullable
-    private Map.Entry<RequestMappingInfo, MappingHandler> resolveMappingHandler(HttpServletRequest request) {
+    private Map.Entry<RequestMappingInfo, MappingHandler> resolveMappingHandler(
+        final String servletPath, final RequestMethod requestMethod
+    ) {
         return mappingHandlerMap.isEmpty() ? null : mappingHandlerMap.entrySet().stream()
-            .filter(entry -> entry.getKey().matches(request))
+            .filter(entry -> entry.getKey().matches(servletPath, requestMethod))
             .min((entry1, entry2) -> {
-                String servletPath = request.getServletPath();
                 boolean isStatic1  = entry1.getKey().getPath().equals(servletPath);
                 boolean isStatic2  = entry2.getKey().getPath().equals(servletPath);
 

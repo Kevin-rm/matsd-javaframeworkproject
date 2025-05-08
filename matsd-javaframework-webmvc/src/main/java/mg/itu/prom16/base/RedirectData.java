@@ -16,7 +16,7 @@ public class RedirectData {
     private final Map<String, List<String>> redirectRequestParameters = new HashMap<>();
 
     public RedirectData add(String key, @Nullable Object value) {
-        WebFacade.getFlashBag().set(KEY_PREFIX + key, value);
+        WebFacade.flashBag().set(KEY_PREFIX + key, value);
         return this;
     }
 

@@ -10,6 +10,7 @@ import mg.matsd.javaframework.core.utils.Assert;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Collection;
 import java.util.Map;
 
 public class Response {
@@ -28,6 +29,21 @@ public class Response {
         return raw;
     }
 
+    public String getHeader(String name) {
+        Assert.notBlank(name, false, "Le nom de l'en-tête ne peut pas être vide ou \"null\"");
+        return raw.getHeader(name);
+    }
+
+    public Collection<String> getHeaders(String name) {
+        Assert.notBlank(name, false, "Le nom de l'en-tête ne peut pas être vide ou \"null\"");
+        return raw.getHeaders(name);
+    }
+
+    public boolean hasHeader(String name) {
+        Assert.notBlank(name, false, "Le nom de l'en-tête ne peut pas être vide ou \"null\"");
+        return raw.containsHeader(name);
+    }
+
     public Response setHeader(String name, String value) {
         Assert.notBlank(name, false, "Le nom de l'en-tête ne peut pas être vide ou \"null\"");
 
@@ -42,11 +58,31 @@ public class Response {
         return this;
     }
 
+    public String getContentType() {
+        return raw.getContentType();
+    }
+
     public Response setContentType(String contentType) {
         Assert.notBlank(contentType, false, "Le type de contenu ne peut pas être vide ou \"null\"");
 
         raw.setContentType(contentType);
         return this;
+    }
+
+    public Response asHtml() {
+        return setContentType("text/html");
+    }
+
+    public Response asText() {
+        return setContentType("text/plain");
+    }
+
+    public Response asJson() {
+        return setContentType("application/json");
+    }
+
+    public String getCharset() {
+        return raw.getCharacterEncoding();
     }
 
     public Response setCharset(String charset) {
@@ -66,6 +102,10 @@ public class Response {
     public Response addCookie(String name, String value) {
         Assert.notBlank(name, false, "Le nom du cookie ne peut pas être vide ou \"null\"");
         return addCookie(new Cookie(name, value));
+    }
+
+    public int getStatus() {
+        return raw.getStatus();
     }
 
     public Response setStatus(HttpStatusCode status) {
@@ -141,17 +181,36 @@ public class Response {
         return error(status.getValue());
     }
 
-    public Response write(@Nullable String content) throws IOException {
+    public Response write(String content) throws IOException {
+        Assert.notNull(content, "Le contenu ne peut pas être \"null\"");
+
         getWriter().write(content);
         return this;
     }
 
-    public Response html(@Nullable String html) throws IOException {
-        return setContentType("text/html").write(html);
+    public Response print(@Nullable String content) throws IOException {
+        getWriter().print(content);
+        return this;
     }
 
-    public Response text(@Nullable String text) throws IOException {
-        return setContentType("text/plain").write(text);
+    public Response println(@Nullable String content) throws IOException {
+        getWriter().println(content);
+        return this;
+    }
+
+    public Response println() throws IOException {
+        getWriter().println();
+        return this;
+    }
+
+    public Response printf(String format, Object... args) throws IOException {
+        getWriter().printf(format, args);
+        return this;
+    }
+
+    public Response flush() throws IOException {
+        getWriter().flush();
+        return this;
     }
 
     public Response noCache() {

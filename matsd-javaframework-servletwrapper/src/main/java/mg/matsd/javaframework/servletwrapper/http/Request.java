@@ -39,13 +39,21 @@ public class Request {
         return raw;
     }
 
-    public Session getSession() {
+    public String getContentType() {
+        return raw.getContentType();
+    }
+
+    @Nullable
+    public Session getSession(boolean createIfNoSession) {
         if (session != null) return session;
 
-        HttpSession httpSession = raw.getSession();
-        if (httpSession == null) httpSession = raw.getSession(true);
+        HttpSession httpSession = raw.getSession(createIfNoSession);
+        return httpSession == null ? null : (session = new Session(httpSession));
+    }
 
-        return session = new Session(httpSession);
+    @Nullable
+    public Session getSession() {
+        return getSession(false);
     }
 
     public Map<String, Cookie> getCookies() {
@@ -419,6 +427,38 @@ public class Request {
 
     public boolean isDelete() {
         return isMethod("DELETE");
+    }
+
+    public String getUrlWithoutQueryString() {
+        return raw.getRequestURL().toString();
+    }
+
+    public String getUri() {
+        return raw.getRequestURI();
+    }
+
+    public String getContextPath() {
+        return raw.getContextPath();
+    }
+
+    public String getServletPath() {
+        return raw.getServletPath();
+    }
+
+    public String getProtocol() {
+        return raw.getScheme();
+    }
+
+    public String getHttpVersion() {
+        return raw.getProtocol();
+    }
+
+    public String getServerName() {
+        return raw.getServerName();
+    }
+
+    public int getPort() {
+        return raw.getServerPort();
     }
 
     private static void validateParameterName(String name) {

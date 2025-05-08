@@ -1,21 +1,24 @@
 package mg.itu.prom16.base.internal;
 
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
 import mg.itu.prom16.annotations.*;
 import mg.itu.prom16.base.Model;
-import mg.itu.prom16.exceptions.*;
-import mg.itu.prom16.validation.ModelBindingResult;
+import mg.itu.prom16.exceptions.MissingServletRequestParameterException;
+import mg.itu.prom16.exceptions.ModelBindingException;
+import mg.itu.prom16.exceptions.UndefinedPathVariableException;
+import mg.itu.prom16.exceptions.UnexpectedParameterException;
 import mg.itu.prom16.support.WebApplicationContainer;
 import mg.itu.prom16.upload.FileUploadException;
 import mg.itu.prom16.upload.UploadedFile;
+import mg.itu.prom16.validation.ModelBindingResult;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.AnnotationUtils;
 import mg.matsd.javaframework.core.utils.ClassUtils;
 import mg.matsd.javaframework.core.utils.StringUtils;
 import mg.matsd.javaframework.core.utils.converter.StringToTypeConverter;
+import mg.matsd.javaframework.servletwrapper.http.Request;
+import mg.matsd.javaframework.servletwrapper.http.Session;
 import mg.matsd.javaframework.validation.annotations.Validate;
 import mg.matsd.javaframework.validation.base.ValidatorFactory;
 
@@ -28,7 +31,10 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 public final class UtilFunctions {
     private static final Set<Class<?>> ALLOWED_CLASSES = Set.of(
@@ -78,23 +84,23 @@ public final class UtilFunctions {
     public static Object getRequestParameterValue(
         Class<?>  parameterType,
         Parameter parameter,
-        HttpServletRequest httpServletRequest
+        Request   request
     ) throws ServletException {
         if (Map.class.isAssignableFrom(parameterType))
-            return getRequestParameterMap(parameter, httpServletRequest);
+            return getRequestParameterMap(parameter, request);
 
         RequestParameter requestParameter = parameter.getAnnotation(RequestParameter.class);
         String parameterName = StringUtils.hasText(requestParameter.name()) ? requestParameter.name() : parameter.getName();
 
         if (UploadedFile.class == parameterType) {
-            UploadedFile uploadedFile = getUploadedFile(parameterName, httpServletRequest);
+            UploadedFile uploadedFile = getUploadedFile(parameterName, request);
             if (uploadedFile == null && requestParameter.required())
                 throw new MissingServletRequestParameterException(parameterName);
 
             return uploadedFile;
         }
 
-        String parameterValue = httpServletRequest.getParameter(parameterName);
+        String parameterValue = request.get(parameterName);
         if (parameterValue == null || StringUtils.isBlank(parameterValue)) {
             if (StringUtils.hasText(requestParameter.defaultValue()))
                 return StringToTypeConverter.convert(requestParameter.defaultValue(), parameterType);
@@ -117,12 +123,12 @@ public final class UtilFunctions {
         Class<?>  parameterType,
         Parameter parameter,
         RequestMappingInfo requestMappingInfo,
-        HttpServletRequest httpServletRequest
+        Request request
     ) {
         PathVariable pathVariable = parameter.getAnnotation(PathVariable.class);
         String pathVariableName = StringUtils.hasText(pathVariable.value()) ? pathVariable.value() : parameter.getName();
 
-        Map<String, String> pathVariables = requestMappingInfo.extractPathVariablesValues(httpServletRequest);
+        Map<String, String> pathVariables = requestMappingInfo.extractPathVariablesValues(request);
         if (!pathVariables.containsKey(pathVariableName))
             throw new UndefinedPathVariableException(pathVariableName, requestMappingInfo);
 
@@ -132,7 +138,7 @@ public final class UtilFunctions {
     @Nullable
     public static Object bindRequestParameters(
         Class<?> parameterType, Parameter parameter,
-        WebApplicationContainer webApplicationContainer, HttpServletRequest httpServletRequest
+        WebApplicationContainer webApplicationContainer, Request request
     ) {
         Model model = (Model) webApplicationContainer.getManagedInstance(Model.MANAGED_INSTANCE_ID);
 
@@ -149,27 +155,27 @@ public final class UtilFunctions {
                 model.addData(modelName, modelInstance);
             } else modelInstance = model.getData(modelName);
 
-            result = populateModelFromRequest(parameterType, modelInstance, modelName, httpServletRequest);
+            result = populateModelFromRequest(parameterType, modelInstance, modelName, request);
             if (parameter.isAnnotationPresent(Validate.class))
                 modelBindingResult.addValidationErrors(modelName, webApplicationContainer
                         .getManagedInstance(ValidatorFactory.class)
                         .getValidator()
                         .doValidate(modelInstance))
-                    .getFieldErrorsMap().forEach(httpServletRequest::setAttribute);
+                    .getFieldErrorsMap().forEach(request::setAttribute);
         } catch (Throwable e) { modelBindingResult.addGlobalError(modelName, e); }
 
         return result;
     }
 
     public static Object getSessionAttributeValue(
-        Class<?>    parameterType,
-        Parameter   parameter,
-        HttpSession httpSession
+        Class<?>  parameterType,
+        Parameter parameter,
+        Session   session
     ) {
         SessionAttribute sessionAttribute = parameter.getAnnotation(SessionAttribute.class);
         String sessionAttributeName = StringUtils.hasText(sessionAttribute.value()) ? sessionAttribute.value() : parameter.getName();
 
-        Object sessionAttributeValue = httpSession.getAttribute(sessionAttributeName);
+        Object sessionAttributeValue = session.get(sessionAttributeName);
         if (sessionAttributeValue != null && !ClassUtils.isAssignable(parameterType, sessionAttributeValue.getClass())) {
             Executable executable = parameter.getDeclaringExecutable();
 
@@ -197,7 +203,7 @@ public final class UtilFunctions {
     }
 
     private static Object populateModelFromRequest(
-        Class<?> clazz, @Nullable Object modelInstance, String modelName, HttpServletRequest httpServletRequest
+        Class<?> clazz, @Nullable Object modelInstance, String modelName, Request request
     ) {
         if (modelInstance == null) modelInstance = instantiateModel(clazz);
         try {
@@ -223,20 +229,20 @@ public final class UtilFunctions {
                         populateCollectionFromRequest(collection,
                             field.getGenericType() instanceof ParameterizedType parameterizedType ?
                             (Class<?>) parameterizedType.getActualTypeArguments()[0] : Object.class,
-                        requestParameterName, httpServletRequest));
+                        requestParameterName, request));
                     continue;
                 }
 
                 if (fieldType == UploadedFile.class) {
-                    UploadedFile uploadedFile = getUploadedFile(requestParameterName, httpServletRequest);
+                    UploadedFile uploadedFile = getUploadedFile(requestParameterName, request);
                     if (uploadedFile != null) field.set(modelInstance, uploadedFile);
 
                     continue;
                 }
 
                 if (ClassUtils.isSimpleOrStandardClass(fieldType))
-                    setSimpleField(field, fieldType, modelInstance, httpServletRequest.getParameter(requestParameterName));
-                else field.set(modelInstance, populateModelFromRequest(fieldType, null, fieldAlias, httpServletRequest));
+                    setSimpleField(field, fieldType, modelInstance, request.get(requestParameterName));
+                else field.set(modelInstance, populateModelFromRequest(fieldType, null, fieldAlias, request));
             }
 
             return modelInstance;
@@ -248,21 +254,21 @@ public final class UtilFunctions {
     private static Collection<Object> populateCollectionFromRequest(
         Collection<Object> collection,
         Class<?> clazz,
-        String requestParameterName,
-        HttpServletRequest httpServletRequest
+        String   requestParameterName,
+        Request  request
     ) {
         int index = 0;
 
-        Set<String> parameterMapKeySet = httpServletRequest.getParameterMap().keySet();
+        Set<String> parameterMapKeySet = request.getAllParameters().keySet();
         while (true) {
             String indexedRequestParameterName  = String.format("%s[%d]", requestParameterName, index);
-            String indexedRequestParameterValue = httpServletRequest.getParameter(indexedRequestParameterName);
+            String indexedRequestParameterValue = request.get(indexedRequestParameterName);
 
             if (indexedRequestParameterValue == null &&
                 parameterMapKeySet.stream().noneMatch(key -> key.startsWith(indexedRequestParameterName + "."))
             ) break;
             collection.add(ClassUtils.isSimpleOrStandardClass(clazz) ? indexedRequestParameterValue :
-                populateModelFromRequest(clazz, null, indexedRequestParameterName, httpServletRequest));
+                populateModelFromRequest(clazz, null, indexedRequestParameterName, request));
 
             index++;
         }
@@ -284,14 +290,14 @@ public final class UtilFunctions {
     }
 
     @Nullable
-    private static UploadedFile getUploadedFile(String parameterName, HttpServletRequest httpServletRequest)
+    private static UploadedFile getUploadedFile(String parameterName, Request request)
         throws ServletException {
-        String contentType = httpServletRequest.getContentType();
+        String contentType = request.getContentType();
         if (contentType == null || !contentType.toLowerCase().startsWith("multipart/form-data"))
             return null;
 
         try {
-            Part part = httpServletRequest.getPart(parameterName);
+            Part part = request.getRaw().getPart(parameterName);
             if (part == null)
                 return null;
 
@@ -301,10 +307,7 @@ public final class UtilFunctions {
         }
     }
 
-    private static Map<String, String[]> getRequestParameterMap(
-        Parameter parameter,
-        HttpServletRequest httpServletRequest
-    ) {
+    private static Map<String, String[]> getRequestParameterMap(Parameter parameter, Request request) {
         IllegalArgumentException illegalArgumentException = new IllegalArgumentException(String.format(
            "Le type Map attendu du paramètre \"%s\" est \"Map<String, String[]>\" ou une de ses sous-classes de cette structure " +
            "mais vous avez donné \"%s\"", parameter.getName(), parameter.getParameterizedType()
@@ -318,7 +321,7 @@ public final class UtilFunctions {
                 typeArguments[1] != String[].class
             ) throw illegalArgumentException;
 
-            return httpServletRequest.getParameterMap();
+            return request.getAllParameters();
         }
 
         throw illegalArgumentException;

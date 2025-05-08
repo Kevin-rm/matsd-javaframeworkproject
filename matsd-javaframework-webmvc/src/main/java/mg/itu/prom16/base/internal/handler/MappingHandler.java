@@ -2,7 +2,6 @@ package mg.itu.prom16.base.internal.handler;
 
 import com.sun.jdi.InternalException;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
 import mg.itu.prom16.annotations.ModelData;
 import mg.itu.prom16.annotations.PathVariable;
 import mg.itu.prom16.annotations.RequestParameter;
@@ -14,6 +13,7 @@ import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.security.annotation.Anonymous;
 import mg.matsd.javaframework.security.annotation.Authorize;
+import mg.matsd.javaframework.servletwrapper.http.Request;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -77,18 +77,18 @@ public class MappingHandler extends AbstractHandler {
     @Override
     protected Object resolveAdditionalParameter(
         Class<?> parameterType, Parameter parameter,
-        WebApplicationContainer webApplicationContainer, HttpServletRequest httpServletRequest,
+        WebApplicationContainer webApplicationContainer, Request request,
         Object additionalParameter
     ) throws UnexpectedParameterException, InternalException, ServletException {
         if (!(additionalParameter instanceof RequestMappingInfo requestMappingInfo)) throw new InternalException();
 
         Object result;
         if (parameter.isAnnotationPresent(RequestParameter.class))
-            result = UtilFunctions.getRequestParameterValue(parameterType, parameter, httpServletRequest);
+            result = UtilFunctions.getRequestParameterValue(parameterType, parameter, request);
         else if (parameter.isAnnotationPresent(PathVariable.class))
-            result = UtilFunctions.getPathVariableValue(parameterType, parameter, requestMappingInfo, httpServletRequest);
+            result = UtilFunctions.getPathVariableValue(parameterType, parameter, requestMappingInfo, request);
         else if (parameter.isAnnotationPresent(ModelData.class))
-            result = UtilFunctions.bindRequestParameters(parameterType, parameter, webApplicationContainer, httpServletRequest);
+            result = UtilFunctions.bindRequestParameters(parameterType, parameter, webApplicationContainer, request);
         else throw new UnexpectedParameterException();
 
         return result;
