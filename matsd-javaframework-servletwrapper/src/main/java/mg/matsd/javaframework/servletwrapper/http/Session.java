@@ -5,6 +5,7 @@ import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.servletwrapper.base.internal.UtilFunctions;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class Session {
@@ -31,7 +32,7 @@ public class Session {
     public Object getOrCreate(String key, @Nullable Object defaultValue) {
         final Object attribute = get(key);
         if (attribute == null) {
-            raw.setAttribute(key, defaultValue);
+            set(key, defaultValue);
             return defaultValue;
         }
 
@@ -49,16 +50,25 @@ public class Session {
         return attributes;
     }
 
-    public void set(String key, @Nullable Object value) {
+    public Session set(String key, @Nullable Object value) {
         validateSessionKey(key);
 
         raw.setAttribute(key, value);
+
+        if (attributes == null) attributes = new HashMap<>();
+        if (value == null) attributes.remove(key);
+        else attributes.put(key, value);
+
+        return this;
     }
 
-    public void remove(String key) {
+    public Session remove(String key) {
         validateSessionKey(key);
 
         raw.removeAttribute(key);
+        if (attributes != null) attributes.remove(key);
+
+        return this;
     }
 
     public void clear() {

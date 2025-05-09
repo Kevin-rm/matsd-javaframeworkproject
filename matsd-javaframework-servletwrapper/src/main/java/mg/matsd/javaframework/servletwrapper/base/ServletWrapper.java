@@ -4,7 +4,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import mg.matsd.javaframework.servletwrapper.http.HttpStatusCode;
 import mg.matsd.javaframework.servletwrapper.http.Request;
 import mg.matsd.javaframework.servletwrapper.http.Response;
 
@@ -38,34 +37,30 @@ public class ServletWrapper extends HttpServlet {
     protected void handleRequest(Request request, Response response) throws Exception { }
 
     protected void get(Request request, Response response) throws Exception {
-        methodNotAllowed(response);
+        response.methodNotAllowed();
     }
 
     protected void post(Request request, Response response) throws Exception {
-        methodNotAllowed(response);
+        response.methodNotAllowed();
     }
 
     protected void put(Request request, Response response) throws Exception {
-        methodNotAllowed(response);
+        response.methodNotAllowed();
     }
 
     protected void delete(Request request, Response response) throws Exception {
-        methodNotAllowed(response);
+        response.methodNotAllowed();
     }
 
     protected void head(Request request, Response response) throws Exception {
-        methodNotAllowed(response);
+        response.methodNotAllowed();
     }
 
     protected void options(Request request, Response response) throws Exception {
-        methodNotAllowed(response);
+        response.methodNotAllowed();
     }
 
     protected void trace(Request request, Response response) throws Exception {
-        methodNotAllowed(response);
-    }
-
-    private static void methodNotAllowed(Response response) {
-        response.setStatus(HttpStatusCode.METHOD_NOT_ALLOWED);
+        response.methodNotAllowed();
     }
 }

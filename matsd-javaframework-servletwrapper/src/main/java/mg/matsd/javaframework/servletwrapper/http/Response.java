@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
+import mg.matsd.javaframework.core.utils.CollectionUtils;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -99,7 +100,7 @@ public class Response {
         return this;
     }
 
-    public Response addCookie(String name, String value) {
+    public Response addCookie(String name, @Nullable String value) {
         Assert.notBlank(name, false, "Le nom du cookie ne peut pas être vide ou \"null\"");
         return addCookie(new Cookie(name, value));
     }
@@ -122,16 +123,20 @@ public class Response {
         return setStatus(HttpServletResponse.SC_OK);
     }
 
-    public Response notFound() {
-        return setStatus(HttpServletResponse.SC_NOT_FOUND);
-    }
-
     public Response badRequest() {
         return setStatus(HttpServletResponse.SC_BAD_REQUEST);
     }
 
     public Response unauthorized() {
         return setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    }
+
+    public Response notFound() {
+        return setStatus(HttpServletResponse.SC_NOT_FOUND);
+    }
+
+    public Response methodNotAllowed() {
+        return setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
     }
 
     public Response internalServerError() {
@@ -150,7 +155,7 @@ public class Response {
 
         HttpServletRequest httpServletRequest = request.getRaw();
 
-        if (attributes != null && !attributes.isEmpty()) attributes.forEach(httpServletRequest::setAttribute);
+        if (!CollectionUtils.isEmpty(attributes)) attributes.forEach(httpServletRequest::setAttribute);
         httpServletRequest.getRequestDispatcher(path).forward(httpServletRequest, raw);
         return this;
     }

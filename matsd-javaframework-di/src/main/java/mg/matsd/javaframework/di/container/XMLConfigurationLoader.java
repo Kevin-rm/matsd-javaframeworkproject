@@ -19,6 +19,7 @@ class XMLConfigurationLoader {
             abstractXmlResourceContainer.getSchemas());
 
         scanComponents(abstractXmlResourceContainer, documentElement);
+        abstractXmlResourceContainer.additionalXmlConfigLoadingLogic(documentElement);
 
         List<Element> elements = getChildElementsByTagName(documentElement, "managed-instance");
         if (elements.isEmpty()) return;
@@ -36,8 +37,6 @@ class XMLConfigurationLoader {
                 else if (childElementTagName.equals("property"))   addProperties(managedInstance, childElement);
             }
         }
-
-        abstractXmlResourceContainer.additionalXmlConfigLoadingLogic(documentElement);
     }
 
     private static void scanComponents(ManagedInstanceFactory managedInstanceFactory, Element documentElement) {

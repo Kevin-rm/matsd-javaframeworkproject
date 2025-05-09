@@ -2,6 +2,7 @@ package mg.itu.prom16.support;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import mg.matsd.javaframework.di.annotations.IfClassPresent;
 import mg.matsd.javaframework.validation.base.ValidatorFactory;
 
 public class ThirdPartyConfiguration {
@@ -16,6 +17,7 @@ public class ThirdPartyConfiguration {
         return objectMapper;
     }
 
+    @IfClassPresent("mg.matsd.javaframework.validation.base.ValidatorFactory")
     public ValidatorFactory validatorFactory() {
         return ValidatorFactory.buildDefault();
     }

@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpSession;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.exceptions.TypeMismatchException;
 import mg.matsd.javaframework.core.utils.Assert;
+import mg.matsd.javaframework.core.utils.CollectionUtils;
 import mg.matsd.javaframework.core.utils.StringUtils;
 import mg.matsd.javaframework.core.utils.converter.StringToTypeConverter;
 import mg.matsd.javaframework.servletwrapper.base.internal.UtilFunctions;
@@ -60,7 +61,7 @@ public class Request {
         if (this.cookies != null) return this.cookies;
 
         Cookie[] cookies = raw.getCookies();
-        if (cookies == null || cookies.length == 0) return Collections.emptyMap();
+        if (CollectionUtils.isEmpty(cookies)) return Collections.emptyMap();
 
         this.cookies = Collections.unmodifiableMap(
             Arrays.stream(cookies).collect(
@@ -121,11 +122,25 @@ public class Request {
         Assert.notBlank(name, false, "Le nom de l'attribut ne peut pas être vide ou \"null\"");
 
         raw.setAttribute(name, value);
+
+        if (attributes == null) attributes = new HashMap<>();
+        if (value == null) attributes.remove(name);
+        else attributes.put(name, value);
+
         return this;
     }
 
     public boolean hasAttribute(String name) {
         return attribute(name) != null;
+    }
+
+    public Request removeAttribute(String name) {
+        Assert.notBlank(name, false, "Le nom de l'attribut ne peut pas être vide ou \"null\"");
+
+        raw.removeAttribute(name);
+        if (attributes != null) attributes.remove(name);
+
+        return this;
     }
 
     public Map<String, String[]> getQueryParameters() {

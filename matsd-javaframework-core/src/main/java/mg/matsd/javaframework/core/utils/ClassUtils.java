@@ -149,4 +149,19 @@ public abstract class ClassUtils {
             "La classe \"%s\" n'est pas une classe primitive", primitiveType.getName()
         ));
     }
+
+    public static boolean isClassPresent(String className) {
+        Assert.notBlank(className, false, "Le nom de la classe ne peut pas être vide ou \"null\"");
+
+        try {
+            Class.forName(className, false, Thread.currentThread().getContextClassLoader());
+            return true;
+        } catch (ClassNotFoundException | LinkageError e) {
+            return false;
+        }
+    }
+
+    public static boolean isClassMissing(String className) {
+        return !isClassPresent(className);
+    }
 }

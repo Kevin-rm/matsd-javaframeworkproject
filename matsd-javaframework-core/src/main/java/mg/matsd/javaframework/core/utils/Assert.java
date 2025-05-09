@@ -32,7 +32,7 @@ public abstract class Assert {
     }
 
     public static void notEmpty(@Nullable Object[] array, @Nullable String exceptionMessage) {
-        if (ArrayUtils.isEmpty(array))
+        if (CollectionUtils.isEmpty(array))
             throw new IllegalArgumentException(exceptionMessage == null ?
                 "Le tableau passé en argument ne peut pas être vide ou \"null\"" : exceptionMessage);
     }

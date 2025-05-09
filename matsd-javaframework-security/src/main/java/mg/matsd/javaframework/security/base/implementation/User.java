@@ -1,8 +1,8 @@
 package mg.matsd.javaframework.security.base.implementation;
 
 import mg.matsd.javaframework.core.annotations.Nullable;
-import mg.matsd.javaframework.core.utils.ArrayUtils;
 import mg.matsd.javaframework.core.utils.Assert;
+import mg.matsd.javaframework.core.utils.CollectionUtils;
 import mg.matsd.javaframework.security.base.PasswordHasher;
 import mg.matsd.javaframework.security.base.UserRole;
 
@@ -44,7 +44,7 @@ public class User implements mg.matsd.javaframework.security.base.User {
     }
 
     public User setRoles(@Nullable String... roles) {
-        if (ArrayUtils.isEmpty(roles)) return this;
+        if (CollectionUtils.isEmpty(roles)) return this;
         Assert.noNullElements(roles, "Chaque rôle du tableau ne peut pas être \"null\"");
 
         this.roles = new ArrayList<>();

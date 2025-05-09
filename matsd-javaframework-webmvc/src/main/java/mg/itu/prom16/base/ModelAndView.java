@@ -40,6 +40,11 @@ public class ModelAndView {
         return model.getData();
     }
 
+    @Nullable
+    public Object getData(String key) {
+        return model.getData(key);
+    }
+
     public ModelAndView addData(String key, @Nullable Object value) {
         model.addData(key, value);
         return this;
@@ -50,8 +55,12 @@ public class ModelAndView {
         return this;
     }
 
-    @Nullable
-    public Object getData(String key) {
-        return model.getData(key);
+    public boolean hasData(String key) {
+        return model.hasData(key);
+    }
+
+    public ModelAndView removeData(String key) {
+        model.removeData(key);
+        return this;
     }
 }

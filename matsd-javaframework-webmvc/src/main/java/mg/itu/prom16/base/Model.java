@@ -1,6 +1,5 @@
 package mg.itu.prom16.base;
 
-import jakarta.servlet.http.HttpServletRequest;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.servletwrapper.http.Request;
@@ -45,6 +44,13 @@ public class Model {
         Assert.notBlank(key, false, "La clé de la donnée ne peut pas être vide ou \"null\"");
 
         return data.containsKey(key);
+    }
+
+    public Model removeData(String key) {
+        Assert.notBlank(key, false, "La clé de la donnée à supprimer ne peut pas être vide ou \"null\"");
+
+        data.remove(key);
+        return this;
     }
 
     void setAttributes(Request request) {
