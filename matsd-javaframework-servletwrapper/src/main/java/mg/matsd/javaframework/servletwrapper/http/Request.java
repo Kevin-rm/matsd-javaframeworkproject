@@ -87,6 +87,13 @@ public class Request {
         return !cookies.isEmpty() && cookies.containsKey(name);
     }
 
+    public Map<String, Object> getAttributes() {
+        if (attributes != null) return attributes;
+
+        attributes = UtilFunctions.collectAttributes(raw.getAttributeNames(), raw::getAttribute);
+        return attributes;
+    }
+
     @Nullable
     public <T> T attribute(String name, @Nullable T defaultValue, Class<T> expectedType) {
         Assert.notBlank(name, false, "Le nom de l'attribut ne peut pas être vide ou \"null\"");
@@ -94,13 +101,6 @@ public class Request {
 
         Object attribute = raw.getAttribute(name);
         return attribute == null ? defaultValue : expectedType.cast(attribute);
-    }
-
-    public Map<String, Object> getAttributes() {
-        if (attributes != null) return attributes;
-
-        attributes = UtilFunctions.collectAttributes(raw.getAttributeNames(), raw::getAttribute);
-        return attributes;
     }
 
     @Nullable
@@ -115,7 +115,7 @@ public class Request {
 
     @Nullable
     public Object attribute(String name) {
-        return attribute(name, null);
+        return attribute(name, (Object) null);
     }
 
     public Request setAttribute(String name, @Nullable Object value) {
