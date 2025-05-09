@@ -124,8 +124,7 @@ public class FrontServlet extends HttpServlet {
     protected final void processRequest(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse)
         throws ServletException, IOException {
         final Request  request  = new Request (httpServletRequest);
-        final Response response = new Response(httpServletResponse, request)
-            .setCharset("UTF-8");
+        final Response response = new Response(httpServletResponse, request).setCharset("UTF-8");
 
         if (throwableOnInit != null) {
             ResponseRenderer.doRenderError(throwableOnInit, response);
@@ -134,7 +133,7 @@ public class FrontServlet extends HttpServlet {
         }
 
         RequestContextHolder.setRequestContext(new RequestContext(request, response));
-        final Session session = request.getSession();
+        final Session session = request.getSession(true);
 
         MappingHandler mappingHandler = null;
         try {
