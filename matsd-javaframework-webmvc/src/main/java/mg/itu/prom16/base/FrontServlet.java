@@ -134,7 +134,7 @@ public class FrontServlet extends HttpServlet {
         }
 
         RequestContextHolder.setRequestContext(new RequestContext(request, response));
-        final Session session = request.getSession();
+        final Session session = request.getSession(true);
 
         MappingHandler mappingHandler = null;
         try {
