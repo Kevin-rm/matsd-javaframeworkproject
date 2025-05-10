@@ -1,4 +1,4 @@
-import type { ErrorData } from '../types/ErrorTypes';
+import type { ErrorData } from '../types';
 
 export const mockErrorData: ErrorData = {
   type: "java.lang.NullPointerException",

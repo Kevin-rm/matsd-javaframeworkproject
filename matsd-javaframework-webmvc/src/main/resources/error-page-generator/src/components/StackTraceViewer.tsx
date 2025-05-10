@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ErrorTraceItem } from '../types/ErrorTypes';
+import type { ErrorTraceItem } from '../types';
 
 interface StackTraceViewerProps {
   trace: ErrorTraceItem[];

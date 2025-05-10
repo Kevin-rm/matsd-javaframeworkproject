@@ -1,4 +1,4 @@
-export interface ErrorFile {
+export type ErrorFile = {
   path: string;
   content: string;
   highlight: {
@@ -8,14 +8,14 @@ export interface ErrorFile {
   } | null;
 }
 
-export interface ErrorTraceItem {
+export type ErrorTraceItem = {
   file: string;
   line: number;
   method: string;
   fileIndex?: number; // index in the files array
 }
 
-export interface ErrorData {
+export type ErrorData = {
   type: string;
   message: string;
   statusCode: number;

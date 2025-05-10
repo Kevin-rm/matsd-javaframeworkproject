@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ErrorFile } from '../types/ErrorTypes';
+import type { ErrorFile } from '../types';
 
 interface FileViewerProps {
   file: ErrorFile;
