@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import './App.css'
 import ErrorPage from './components/ErrorPage'
 import { mockErrorData } from './data/mockErrorData'
 
