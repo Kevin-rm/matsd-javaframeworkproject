@@ -56,7 +56,7 @@ const exceptionFiles: ExceptionFile[] = [
 	},
 ];
 
-export const errorData: Error = {
+export const errorMockData: Error = {
 	statusCodeReason: "Internal Server Error",
 	appDetails: appDetails,
 	requestInfo: requestInfo,
