@@ -7,7 +7,7 @@ const App = () => {
   console.log(error);
 
   return (
-    <>Hello World!</>
+    <>Hello world!</>
   );
 };
 
