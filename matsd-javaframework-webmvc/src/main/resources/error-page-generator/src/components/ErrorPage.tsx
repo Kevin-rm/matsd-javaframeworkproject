@@ -3,7 +3,7 @@ import ErrorHeader from './ErrorHeader';
 import ErrorDetails from './ErrorDetails';
 import StackTraceViewer from './StackTraceViewer';
 import FileViewer from './FileViewer';
-import type { ErrorData } from '../types';
+import type { ErrorData } from '../types.ts';
 
 interface ErrorPageProps {
   errorData: ErrorData;
