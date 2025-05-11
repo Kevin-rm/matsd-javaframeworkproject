@@ -1,11 +1,9 @@
 import { useState } from "react";
 import type { Error, Exception, ExceptionFile } from "./types.ts";
 import { errorMockData } from "./data/mock.ts";
-import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card";
-import { Badge } from "./components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
-import { Separator } from "./components/ui/separator";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./components/ui/collapsible";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card.tsx";
+import { Badge } from "@/components/ui/Badge.tsx";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs.tsx";
 import { ThemeProvider } from "@/components/ThemeProvider.tsx";
 
 const Header = ({ statusCodeReason }: { statusCodeReason: string }) => {
@@ -27,12 +25,16 @@ const Header = ({ statusCodeReason }: { statusCodeReason: string }) => {
 
 const Exception = ({ exception }: { exception: Exception }) => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{exception.className}</CardTitle>
+    <Card className="bg-gray-900 border-gray-800 mt-6">
+      <CardHeader className="flex flex-row items-center gap-4">
+        <CardTitle>
+          <Badge variant="destructive" className="px-3 py-2 rounded-3xl text-sm">
+            {exception.className}
+          </Badge>
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        {exception.message}
+        <p className="font-medium text-2xl">{exception.message}</p>
       </CardContent>
     </Card>
   );
@@ -40,17 +42,7 @@ const Exception = ({ exception }: { exception: Exception }) => {
 
 const App = () => {
   const [error] = useState<Error>(errorMockData);
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    requestInfo: false,
-    appDetails: false
-  });
-
-  const toggleSection = (section: string) => {
-    setOpenSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
-  };
+  const [selectedFileIndex, setSelectedFileIndex] = useState<number>(0);
 
   const renderCodeWithHighlight = (file: ExceptionFile) => {
     const lines = file.sourceCode.split('\n');
@@ -71,20 +63,64 @@ const App = () => {
 
   return (
     <ThemeProvider defaultTheme="dark">
-      <div className="min-h-screen bg-gray-950 px-6 py-12">
+      <div className="min-h-screen bg-gray-950 px-6 py-8">
         <div className="max-w-6xl mx-auto">
           <Header statusCodeReason={error.statusCodeReason}/>
           <Exception exception={error.exception}/>
-        </div>
-
-        {/* Main Content */}
-        <div className="max-w-6xl mx-auto py-8 px-6">
-          <Tabs defaultValue="stack-trace" className="w-full">
+          <Tabs defaultValue="sources" className="mt-8">
             <TabsList className="bg-gray-900 border border-gray-800 rounded-lg overflow-hidden mb-6">
-              <TabsTrigger value="stack-trace">Stack Trace</TabsTrigger>
-              <TabsTrigger value="request">Request</TabsTrigger>
-              <TabsTrigger value="app-info">Application Info</TabsTrigger>
+              <TabsTrigger value="sources">Sources</TabsTrigger>
+              <TabsTrigger value="stack-trace">Piles d'appel</TabsTrigger>
+              <TabsTrigger value="request">Requête</TabsTrigger>
+              <TabsTrigger value="app-details">Application</TabsTrigger>
             </TabsList>
+
+            {/* Fichiers Source Tab - Two Column Layout */}
+            <TabsContent value="sources" className="space-y-6">
+              <Card className="bg-gray-900 border-gray-800">
+                <div className="grid grid-cols-12 min-h-[400px]">
+                  {/* Left column - File list */}
+                  <div className="col-span-4 border-r border-gray-800 overflow-y-auto">
+                    <div className="p-4 border-b border-gray-800">
+                      <h3 className="font-medium text-sm text-gray-400 uppercase">Fichiers sources</h3>
+                    </div>
+                    <div className="divide-y divide-gray-800">
+                      {error.exceptionFiles && error.exceptionFiles.map((file, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setSelectedFileIndex(index)}
+                          className={`w-full text-left px-4 py-3 hover:bg-gray-800 transition-colors ${
+                            selectedFileIndex === index ? 'bg-gray-800 border-l-2 border-red-500' : ''
+                          }`}
+                        >
+                          <div className="flex flex-col">
+                            <span className="font-medium truncate">{file.fullPath}</span>
+                            <span className="text-xs text-gray-500">{file.method}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Right column - Code view */}
+                  <div className="col-span-8 overflow-auto">
+                    {error.exceptionFiles && error.exceptionFiles.length > 0 && (
+                      <div>
+                        <div
+                          className="p-4 border-b border-gray-800 sticky top-0 bg-gray-900 flex justify-between items-center">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{error.exceptionFiles[selectedFileIndex].fullPath}</span>
+                          </div>
+                        </div>
+                        <div className="font-mono">
+                          {renderCodeWithHighlight(error.exceptionFiles[selectedFileIndex])}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            </TabsContent>
 
             {/* Stack Trace Tab */}
             <TabsContent value="stack-trace" className="space-y-6">
@@ -100,81 +136,62 @@ const App = () => {
                   </div>
                 </CardContent>
               </Card>
-
-              {error.exceptionFiles && error.exceptionFiles.map((file, index) => (
-                <Card key={index} className="bg-gray-900 border-gray-800">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg flex items-center gap-3">
-                      <span>{file.fullPath}</span>
-                      <Badge variant="outline" className="bg-gray-800 text-red-400 border-gray-700">
-                        {file.method}
-                      </Badge>
-                    </CardTitle>
-                  </CardHeader>
-                  <Separator className="bg-gray-800"/>
-                  <CardContent className="p-0 overflow-hidden font-mono">
-                    {renderCodeWithHighlight(file)}
-                  </CardContent>
-                </Card>
-              ))}
             </TabsContent>
 
             {/* Request Info Tab */}
             <TabsContent value="request">
               <Card className="bg-gray-900 border-gray-800">
                 <CardHeader>
-                  <CardTitle className="text-lg font-medium">Request Information</CardTitle>
+                  <CardTitle className="text-lg font-medium">Informations de requête</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="font-medium text-gray-400">Method</div>
-                      <div>{error.requestInfo.method}</div>
-
-                      <div className="font-medium text-gray-400">URL</div>
-                      <div>{`${error.requestInfo.serverName}:${error.requestInfo.port}${error.requestInfo.uri}`}</div>
-
-                      <div className="font-medium text-gray-400">Status</div>
-                      <div>{error.statusCodeReason}</div>
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-md font-medium mb-2">Détails de base</h3>
+                      <div className="border border-gray-800 rounded-md overflow-hidden">
+                        <table className="w-full border-collapse">
+                          <tbody>
+                          <tr className="border-b border-gray-800">
+                            <td className="px-4 py-3 bg-gray-800/50 font-medium text-gray-400 w-1/4">Méthode</td>
+                            <td className="px-4 py-3">{error.requestInfo.method}</td>
+                          </tr>
+                          <tr className="border-b border-gray-800">
+                            <td className="px-4 py-3 bg-gray-800/50 font-medium text-gray-400">URL</td>
+                            <td
+                              className="px-4 py-3">{`${error.requestInfo.serverName}:${error.requestInfo.port}${error.requestInfo.uri}`}</td>
+                          </tr>
+                          <tr>
+                            <td className="px-4 py-3 bg-gray-800/50 font-medium text-gray-400">Status</td>
+                            <td className="px-4 py-3">{error.statusCodeReason}</td>
+                          </tr>
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
 
-                    <Collapsible
-                      open={openSections.requestInfo}
-                      onOpenChange={() => toggleSection('requestInfo')}
-                      className="mt-4 border border-gray-800 rounded-lg overflow-hidden"
-                    >
-                      <CollapsibleTrigger
-                        className="flex items-center justify-between w-full p-4 bg-gray-800 hover:bg-gray-700">
-                        <span className="font-medium">Headers</span>
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className={`h-5 w-5 transition-transform ${openSections.requestInfo ? 'rotate-180' : ''}`}
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
-                        </svg>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="p-4 bg-gray-900">
-                        <div className="space-y-2">
-                          {Object.entries(error.requestInfo.headers).map(([key, value]) => (
-                            <div key={key} className="grid grid-cols-2">
-                              <div className="font-medium text-gray-400">{key}</div>
-                              <div className="break-all">{value}</div>
-                            </div>
+                    <div>
+                      <h3 className="text-md font-medium mb-2">Headers</h3>
+                      <div className="border border-gray-800 rounded-md overflow-hidden">
+                        <table className="w-full border-collapse">
+                          <tbody>
+                          {Object.entries(error.requestInfo.headers).map(([key, value], index, arr) => (
+                            <tr key={key} className={index < arr.length - 1 ? "border-b border-gray-800" : ""}>
+                              <td className="px-4 py-3 bg-gray-800/50 font-medium text-gray-400 w-1/4">{key}</td>
+                              <td className="px-4 py-3 break-all">{value}</td>
+                            </tr>
                           ))}
-                        </div>
-                      </CollapsibleContent>
-                    </Collapsible>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
 
                     {error.requestInfo.body && (
-                      <div className="mt-4">
+                      <div>
                         <h3 className="text-md font-medium mb-2">Request Body</h3>
                         <div className="bg-gray-800 p-4 rounded-lg">
-                        <pre className="text-sm overflow-x-auto">
-                          {JSON.stringify(error.requestInfo.body, null, 2)}
-                        </pre>
+                          <pre className="text-sm overflow-x-auto">
+                            {JSON.stringify(error.requestInfo.body, null, 2)}
+                          </pre>
                         </div>
                       </div>
                     )}
@@ -184,23 +201,29 @@ const App = () => {
             </TabsContent>
 
             {/* App Info Tab */}
-            <TabsContent value="app-info">
+            <TabsContent value="app-details">
               <Card className="bg-gray-900 border-gray-800">
                 <CardHeader>
-                  <CardTitle className="text-lg font-medium">Application Details</CardTitle>
+                  <CardTitle className="text-lg font-medium">Détails de l'application</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="font-medium text-gray-400">Java Version</div>
-                      <div>{error.appDetails.javaVersion}</div>
-
-                      <div className="font-medium text-gray-400">Jakarta EE Version</div>
-                      <div>{error.appDetails.jakartaEEVersion}</div>
-
-                      <div className="font-medium text-gray-400">Framework Version</div>
-                      <div>{error.appDetails.matsdjavaframeworkVersion}</div>
-                    </div>
+                  <div className="border border-gray-800 rounded-md overflow-hidden">
+                    <table className="w-full border-collapse">
+                      <tbody>
+                      <tr className="border-b border-gray-800">
+                        <td className="px-4 py-3 bg-gray-800/50 font-medium text-gray-400 w-1/4">Version Java</td>
+                        <td className="px-4 py-3">{error.appDetails.javaVersion}</td>
+                      </tr>
+                      <tr className="border-b border-gray-800">
+                        <td className="px-4 py-3 bg-gray-800/50 font-medium text-gray-400">Version Jakarta EE</td>
+                        <td className="px-4 py-3">{error.appDetails.jakartaEEVersion}</td>
+                      </tr>
+                      <tr>
+                        <td className="px-4 py-3 bg-gray-800/50 font-medium text-gray-400">Version du Framework</td>
+                        <td className="px-4 py-3">{error.appDetails.matsdjavaframeworkVersion}</td>
+                      </tr>
+                      </tbody>
+                    </table>
                   </div>
                 </CardContent>
               </Card>
