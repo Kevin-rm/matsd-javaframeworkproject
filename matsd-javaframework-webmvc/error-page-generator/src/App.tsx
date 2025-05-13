@@ -1,10 +1,11 @@
 import { useState } from "react";
-import type { Error, Exception, ExceptionFile } from "./types.ts";
+import type { AppDetails, Error, Exception, ExceptionFile, RequestInfo } from "./types.ts";
 import { errorMockData } from "./data/mock.ts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card.tsx";
 import { Badge } from "@/components/ui/Badge.tsx";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs.tsx";
 import { ThemeProvider } from "@/components/ThemeProvider.tsx";
+import CodeBlock from "@/components/CodeBlock.tsx";
 
 const Header = ({ statusCodeReason }: { statusCodeReason: string }) => {
   return (
@@ -44,20 +45,167 @@ const App = () => {
   const [error] = useState<Error>(errorMockData);
   const [selectedFileIndex, setSelectedFileIndex] = useState<number>(0);
 
-  const renderCodeWithHighlight = (file: ExceptionFile) => {
-    const lines = file.sourceCode.split('\n');
+  const SourcesTab = ({ exceptionFiles }: { exceptionFiles?: ExceptionFile[] }) => {
     return (
-      <pre className="text-sm overflow-x-auto">
-        {lines.map((line, index) => (
-          <div
-            key={index}
-            className={`px-4 py-1 flex ${index + 1 === file.highlightedLine ? 'bg-red-900/30 border-l-2 border-red-500' : ''}`}
-          >
-            <span className="text-gray-500 w-8 inline-block select-none">{index + 1}</span>
-            <code>{line}</code>
-          </div>
-        ))}
-      </pre>
+      <TabsContent value="sources">
+        <Card className="bg-gray-900 border-gray-800">
+          <CardContent>
+            <div className="grid grid-cols-12 min-h-[400px]">
+              {/* Left column - File list */}
+              <div className="col-span-4 border-r border-gray-800 overflow-y-auto">
+                <div className="p-4 border-b border-gray-800">
+                  <h3 className="font-medium text-sm text-gray-400 uppercase">Fichiers sources</h3>
+                </div>
+                <div className="divide-y divide-gray-800">
+                  {exceptionFiles && exceptionFiles.map((file, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedFileIndex(index)}
+                      className={`w-full text-left px-4 py-3 hover:bg-gray-800 transition-colors ${
+                        selectedFileIndex === index ? 'bg-gray-800 border-l-2 border-red-500' : ''
+                      }`}
+                    >
+                      <div className="flex flex-col">
+                        <span className="font-medium truncate">{file.fullPath}</span>
+                        <span className="text-xs text-gray-500">{file.method}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right column - Code view */}
+              <div className="col-span-8 overflow-auto">
+                {exceptionFiles && exceptionFiles.length > 0 && (
+                  <div>
+                    <div
+                      className="p-4 border-b border-gray-800 sticky top-0 bg-gray-900">
+                      <div className="flex items-center gap-1">
+                        <span className="font-medium">{exceptionFiles[selectedFileIndex].fullPath}</span>
+                      </div>
+                    </div>
+                    <div className="jetbrains-mono">
+                      <CodeBlock code={exceptionFiles[selectedFileIndex].sourceCode}/>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+    );
+  };
+
+  const StackTraceTab = ({ stackTrace }: { stackTrace: string }) => {
+    return (
+      <TabsContent value="stack-trace" className="space-y-6">
+        <Card className="bg-gray-900 border-gray-800">
+          <CardHeader>
+            <CardTitle className="text-lg font-medium">Stack Trace</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-1 text-gray-400 font-mono text-sm">
+              {stackTrace.split('\n').map((line, index) => (
+                <div key={index} className="py-1">{line}</div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+    );
+  };
+
+  const RequestInfoTab = ({ requestInfo }: { requestInfo: RequestInfo }) => {
+    return (
+      <TabsContent value="request">
+        <Card className="bg-gray-900 border-gray-800">
+          <CardHeader>
+            <CardTitle className="text-lg font-medium">Informations de requête</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-md font-medium mb-2">Détails de base</h3>
+                <div className="border border-gray-800 rounded-md overflow-hidden">
+                  <table className="w-full border-collapse">
+                    <tbody>
+                    <tr className="border-b border-gray-800">
+                      <td className="px-4 py-3 bg-gray-800/50 font-medium text-gray-400 w-1/4">Méthode</td>
+                      <td className="px-4 py-3">{requestInfo.method}</td>
+                    </tr>
+                    <tr className="border-b border-gray-800">
+                      <td className="px-4 py-3 bg-gray-800/50 font-medium text-gray-400">URL</td>
+                      <td
+                        className="px-4 py-3">{`${requestInfo.serverName}:${requestInfo.port}${requestInfo.uri}`}</td>
+                    </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-md font-medium mb-2">Headers</h3>
+                <div className="border border-gray-800 rounded-md overflow-hidden">
+                  <table className="w-full border-collapse">
+                    <tbody>
+                    {Object.entries(requestInfo.headers).map(([key, value], index, arr) => (
+                      <tr key={key} className={index < arr.length - 1 ? "border-b border-gray-800" : ""}>
+                        <td className="px-4 py-3 bg-gray-800/50 font-medium text-gray-400 w-1/4">{key}</td>
+                        <td className="px-4 py-3 break-all">{value}</td>
+                      </tr>
+                    ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {requestInfo.body && (
+                <div>
+                  <h3 className="text-md font-medium mb-2">Request Body</h3>
+                  <div className="bg-gray-800 p-4 rounded-lg">
+                          <pre className="text-sm overflow-x-auto">
+                            {JSON.stringify(error.requestInfo.body, null, 2)}
+                          </pre>
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+    );
+  };
+
+  const AppDetailsTab = ({ appDetails }: { appDetails: AppDetails }) => {
+    return (
+      <TabsContent value="app-details">
+        <Card className="bg-gray-900 border-gray-800">
+          <CardHeader>
+            <CardTitle className="text-lg font-medium">Détails de l'application</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="border border-gray-800 rounded-md overflow-hidden">
+              <table className="w-full border-collapse">
+                <tbody>
+                <tr className="border-b border-gray-800">
+                  <td className="px-4 py-3 bg-gray-800/50 font-medium text-gray-400 w-1/4">Version Java</td>
+                  <td className="px-4 py-3">{appDetails.javaVersion}</td>
+                </tr>
+                <tr className="border-b border-gray-800">
+                  <td className="px-4 py-3 bg-gray-800/50 font-medium text-gray-400">Version Jakarta EE</td>
+                  <td className="px-4 py-3">{appDetails.jakartaEEVersion}</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-3 bg-gray-800/50 font-medium text-gray-400">Version du Framework</td>
+                  <td className="px-4 py-3">{appDetails.matsdjavaframeworkVersion}</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
     );
   };
 
@@ -76,158 +224,17 @@ const App = () => {
             </TabsList>
 
             {/* Fichiers Source Tab - Two Column Layout */}
-            <TabsContent value="sources" className="space-y-6">
-              <Card className="bg-gray-900 border-gray-800">
-                <div className="grid grid-cols-12 min-h-[400px]">
-                  {/* Left column - File list */}
-                  <div className="col-span-4 border-r border-gray-800 overflow-y-auto">
-                    <div className="p-4 border-b border-gray-800">
-                      <h3 className="font-medium text-sm text-gray-400 uppercase">Fichiers sources</h3>
-                    </div>
-                    <div className="divide-y divide-gray-800">
-                      {error.exceptionFiles && error.exceptionFiles.map((file, index) => (
-                        <button
-                          key={index}
-                          onClick={() => setSelectedFileIndex(index)}
-                          className={`w-full text-left px-4 py-3 hover:bg-gray-800 transition-colors ${
-                            selectedFileIndex === index ? 'bg-gray-800 border-l-2 border-red-500' : ''
-                          }`}
-                        >
-                          <div className="flex flex-col">
-                            <span className="font-medium truncate">{file.fullPath}</span>
-                            <span className="text-xs text-gray-500">{file.method}</span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Right column - Code view */}
-                  <div className="col-span-8 overflow-auto">
-                    {error.exceptionFiles && error.exceptionFiles.length > 0 && (
-                      <div>
-                        <div
-                          className="p-4 border-b border-gray-800 sticky top-0 bg-gray-900 flex justify-between items-center">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">{error.exceptionFiles[selectedFileIndex].fullPath}</span>
-                          </div>
-                        </div>
-                        <div className="font-mono">
-                          {renderCodeWithHighlight(error.exceptionFiles[selectedFileIndex])}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            </TabsContent>
+            <SourcesTab exceptionFiles={error.exceptionFiles}/>
 
             {/* Stack Trace Tab */}
-            <TabsContent value="stack-trace" className="space-y-6">
-              <Card className="bg-gray-900 border-gray-800">
-                <CardHeader>
-                  <CardTitle className="text-lg font-medium">Stack Trace</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-1 text-gray-400 font-mono text-sm">
-                    {error.exception.stackTrace.split('\n').map((line, index) => (
-                      <div key={index} className="py-1">{line}</div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+            <StackTraceTab stackTrace={error.exception.stackTrace}/>
 
             {/* Request Info Tab */}
-            <TabsContent value="request">
-              <Card className="bg-gray-900 border-gray-800">
-                <CardHeader>
-                  <CardTitle className="text-lg font-medium">Informations de requête</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    <div>
-                      <h3 className="text-md font-medium mb-2">Détails de base</h3>
-                      <div className="border border-gray-800 rounded-md overflow-hidden">
-                        <table className="w-full border-collapse">
-                          <tbody>
-                          <tr className="border-b border-gray-800">
-                            <td className="px-4 py-3 bg-gray-800/50 font-medium text-gray-400 w-1/4">Méthode</td>
-                            <td className="px-4 py-3">{error.requestInfo.method}</td>
-                          </tr>
-                          <tr className="border-b border-gray-800">
-                            <td className="px-4 py-3 bg-gray-800/50 font-medium text-gray-400">URL</td>
-                            <td
-                              className="px-4 py-3">{`${error.requestInfo.serverName}:${error.requestInfo.port}${error.requestInfo.uri}`}</td>
-                          </tr>
-                          <tr>
-                            <td className="px-4 py-3 bg-gray-800/50 font-medium text-gray-400">Status</td>
-                            <td className="px-4 py-3">{error.statusCodeReason}</td>
-                          </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-
-                    <div>
-                      <h3 className="text-md font-medium mb-2">Headers</h3>
-                      <div className="border border-gray-800 rounded-md overflow-hidden">
-                        <table className="w-full border-collapse">
-                          <tbody>
-                          {Object.entries(error.requestInfo.headers).map(([key, value], index, arr) => (
-                            <tr key={key} className={index < arr.length - 1 ? "border-b border-gray-800" : ""}>
-                              <td className="px-4 py-3 bg-gray-800/50 font-medium text-gray-400 w-1/4">{key}</td>
-                              <td className="px-4 py-3 break-all">{value}</td>
-                            </tr>
-                          ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-
-                    {error.requestInfo.body && (
-                      <div>
-                        <h3 className="text-md font-medium mb-2">Request Body</h3>
-                        <div className="bg-gray-800 p-4 rounded-lg">
-                          <pre className="text-sm overflow-x-auto">
-                            {JSON.stringify(error.requestInfo.body, null, 2)}
-                          </pre>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+            <RequestInfoTab requestInfo={error.requestInfo}/>
 
             {/* App Info Tab */}
-            <TabsContent value="app-details">
-              <Card className="bg-gray-900 border-gray-800">
-                <CardHeader>
-                  <CardTitle className="text-lg font-medium">Détails de l'application</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="border border-gray-800 rounded-md overflow-hidden">
-                    <table className="w-full border-collapse">
-                      <tbody>
-                      <tr className="border-b border-gray-800">
-                        <td className="px-4 py-3 bg-gray-800/50 font-medium text-gray-400 w-1/4">Version Java</td>
-                        <td className="px-4 py-3">{error.appDetails.javaVersion}</td>
-                      </tr>
-                      <tr className="border-b border-gray-800">
-                        <td className="px-4 py-3 bg-gray-800/50 font-medium text-gray-400">Version Jakarta EE</td>
-                        <td className="px-4 py-3">{error.appDetails.jakartaEEVersion}</td>
-                      </tr>
-                      <tr>
-                        <td className="px-4 py-3 bg-gray-800/50 font-medium text-gray-400">Version du Framework</td>
-                        <td className="px-4 py-3">{error.appDetails.matsdjavaframeworkVersion}</td>
-                      </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+            <AppDetailsTab appDetails={error.appDetails}/>
+
           </Tabs>
         </div>
       </div>
