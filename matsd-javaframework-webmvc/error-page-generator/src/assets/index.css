@@ -114,8 +114,15 @@
     font-family: "Figtree", system-ui, sans-serif !important;
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
+  }
+
+  .hljs, .hljs > * {
+    font-family: "JetBrains Mono", monospace, sans-serif !important;
+    font-size: 13px;
+    background: transparent !important;
   }
 }
 
@@ -124,13 +131,16 @@
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
   }
+
   .backdrop-blur-sm {
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
   }
+
   .animate-spin-slow {
     animation: spin 18s linear infinite;
   }
+
 }
 
 @keyframes spin {
