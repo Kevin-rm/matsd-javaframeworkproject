@@ -24,10 +24,16 @@ const requestInfo: RequestInfo = {
 
 const exception: Exception = {
   className: "mg.matsd.javaframework.NotFoundHttpException",
-  message: "error: unreported exception FileNotFoundException; must be caught or declared to be thrown\n" +
-    "      FileReader fr = new FileReader(file);",
-  stackTrace: `at src/services/UserService.java:3
-at src/controllers/SampleController.java:4`,
+  message: `error: unreported exception FileNotFoundException; must be caught or declared to be thrown 
+  FileReader fr = new FileReader(file);
+`,
+  stackTrace: `Exception in thread "main" java.lang.RuntimeException: Something has gone wrong, aborting!
+  at com.myproject.module.MyProject.badMethod(MyProject.java:22)
+  at com.myproject.module.MyProject.oneMoreMethod(MyProject.java:18)
+  at com.myproject.module.MyProject.anotherMethod(MyProject.java:14)
+  at com.myproject.module.MyProject.someMethod(MyProject.java:10)
+  at com.myproject.module.MyProject.main(MyProject.java:6)
+`,
 };
 
 const exceptionFiles: ExceptionFile[] = [

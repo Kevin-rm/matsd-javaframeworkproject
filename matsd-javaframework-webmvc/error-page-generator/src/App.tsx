@@ -184,7 +184,7 @@ const App = () => {
             <CardTitle className="text-xl font-medium">Piles d'appel</CardTitle>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[400px] rounded-md border border-border/30 bg-black/20 p-4">
+            <ScrollArea className="max-h-[400px] rounded-md border border-border/30 bg-black/20 p-4">
               <pre className="space-y-1 text-gray-300 text-sm">
                 {stackTrace}
               </pre>
@@ -235,7 +235,7 @@ const App = () => {
               <div>
                 <h3 className="text-md font-medium mb-3 flex items-center gap-2">
                   <Badge variant="outline" className="rounded-md font-normal">
-                    Headers
+                    En-têtes
                   </Badge>
                 </h3>
                 <Table>
@@ -254,10 +254,12 @@ const App = () => {
                 <div>
                   <h3 className="text-md font-medium mb-3 flex items-center gap-2">
                     <Badge variant="outline" className="rounded-md font-normal">
-                      Request Body
+                      Corps de la requête
                     </Badge>
                   </h3>
-                  <CodeBlock code={JSON.stringify(error.requestInfo.body, null, 2)}/>
+                  <div className="rounded-md border border-border/30 bg-black/20">
+                    <CodeBlock code={JSON.stringify(error.requestInfo.body, null, 2)} language="json" />
+                  </div>
                 </div>
               )}
             </div>
