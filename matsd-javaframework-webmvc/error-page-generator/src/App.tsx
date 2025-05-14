@@ -5,26 +5,14 @@ import type { AppDetails, Error, Exception, ExceptionFile, RequestInfo } from ".
 import { errorMockData } from "./data/mock.ts"
 import { ThemeProvider } from "@/components/ThemeProvider.tsx"
 import CodeBlock from "@/components/CodeBlock.tsx"
-import {
-  AlertCircle,
-  ChevronRight,
-  Code,
-  Copy,
-  CornerDownRight,
-  FileCode,
-  Info,
-  Layers,
-  Server,
-  Settings,
-} from "lucide-react"
-import { ScrollArea, ScrollBar } from "@/components/ui/ScrollArea.tsx"
+import { AlertCircle, ChevronRight, Code, CornerDownRight, FileCode, Info, Layers, Server, } from "lucide-react"
+import { ScrollArea } from "@/components/ui/ScrollArea.tsx"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card.tsx";
 import { Badge } from "@/components/ui/Badge.tsx";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs.tsx";
 import { cn } from "@/lib/utils.ts";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/Tooltip.tsx";
-import { Table, TableRow } from "@/components/Table.tsx";
+import { Row, Table } from "@/components/Table.tsx";
 
 const Header = ({ statusCodeReason }: { statusCodeReason: string }) => {
   return (
@@ -105,7 +93,7 @@ const App = () => {
     return (
       <TabsContentCard value="sources" cardClassName="p-0">
         <CardContent className="p-0">
-          <div className="grid grid-cols-12 min-h-[500px]">
+          <div className="grid grid-cols-12 min-h-[580px]">
             <div className="col-span-12 md:col-span-4 border-r border-gray-800 overflow-hidden">
               <div className="p-4 border-b border-gray-800 bg-muted/10 sticky top-0 z-10">
                 <div className="flex items-center gap-2">
@@ -113,7 +101,7 @@ const App = () => {
                   <h3 className="font-medium text-sm text-muted-foreground">FICHIERS SOURCES</h3>
                 </div>
               </div>
-              <ScrollArea className="h-[calc(500px-57px)]">
+              <ScrollArea className="h-[calc(580px-57px)]">
                 <div className="divide-y divide-gray-800/50">
                   {exceptionFiles.map((file, index) => (
                     <button
@@ -153,21 +141,11 @@ const App = () => {
                   </div>
                 </div>
               </div>
-              <ScrollArea className="h-[calc(500px-57px)]">
-                <CodeBlock
-                  code={exceptionFiles[selectedFileIndex].sourceCode}
-                  highlightedLine={exceptionFiles[selectedFileIndex].highlightedLine}
-                />
-                <div className="absolute top-3 right-3 z-10">
-                  <button
-                    className="p-1.5 rounded-sm bg-background/80 backdrop-blur-sm shadow ring-1 ring-white/10 hover:ring-white/30 transition-all"
-                    aria-label="Copier le code"
-                  >
-                    <Copy className="w-4 h-4"/>
-                  </button>
-                </div>
-                <ScrollBar orientation="horizontal"></ScrollBar>
-              </ScrollArea>
+              <CodeBlock
+                className="h-[calc(580px-57px)]"
+                code={exceptionFiles[selectedFileIndex].sourceCode}
+                highlightedLine={exceptionFiles[selectedFileIndex].highlightedLine}
+              />
             </div>
           </div>
         </CardContent>
@@ -184,11 +162,7 @@ const App = () => {
             <CardTitle className="text-xl font-medium">Piles d'appel</CardTitle>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="max-h-[400px] rounded-md border border-border/30 bg-black/20 p-4">
-              <pre className="space-y-1 text-gray-300 text-sm">
-                {stackTrace}
-              </pre>
-            </ScrollArea>
+            <CodeBlock className="rounded-md border border-border/30 bg-black/20" code={stackTrace}/>
           </CardContent>
         </Card>
       </TabsContent>
@@ -212,7 +186,7 @@ const App = () => {
                   </Badge>
                 </h3>
                 <Table>
-                  <TableRow label="Méthode" value={
+                  <Row label="Méthode" value={
                     <Badge
                       variant={requestInfo.method === "GET" ? "secondary" : "default"}
                       className="rounded-md"
@@ -220,12 +194,10 @@ const App = () => {
                       {requestInfo.method}
                     </Badge>
                   }/>
-                  <TableRow
+                  <Row
                     label="URL"
                     value={
-                      <span className="font-mono text-sm">
-                        {`${requestInfo.serverName}:${requestInfo.port}${requestInfo.uri}`}
-                      </span>
+                      <span className="font-mono text-sm">{requestInfo.url}</span>
                     }
                     isLast
                   />
@@ -240,7 +212,7 @@ const App = () => {
                 </h3>
                 <Table>
                   {Object.entries(requestInfo.headers).map(([key, value], index, arr) => (
-                    <TableRow
+                    <Row
                       key={key}
                       label={key}
                       value={<span className="break-all font-mono text-sm">{value}</span>}
@@ -257,9 +229,8 @@ const App = () => {
                       Corps de la requête
                     </Badge>
                   </h3>
-                  <div className="rounded-md border border-border/30 bg-black/20">
-                    <CodeBlock code={JSON.stringify(error.requestInfo.body, null, 2)} language="json" />
-                  </div>
+                  <CodeBlock className="rounded-md border border-border/30 bg-black/20"
+                             code={JSON.stringify(error.requestInfo.body, null, 2)} language="json"/>
                 </div>
               )}
             </div>
@@ -270,65 +241,31 @@ const App = () => {
   };
 
   const AppDetailsTabsContent = ({ appDetails }: { appDetails: AppDetails }) => {
+    const InternalRow = ({ label, badgeText }: {
+      label: string;
+      badgeText: string;
+    }) => {
+      return (
+        <Row label={label} value={
+          <Badge variant="outline" className="rounded-md">
+            {badgeText}
+          </Badge>
+        }/>
+      );
+    };
+
     return (
       <TabsContent value="app-details" className="animate-in fade-in-50 duration-300">
         <Card className="bg-gradient-to-br from-gray-900 to-gray-950 border-gray-800 shadow-xl">
           <CardHeader className="flex flex-row items-center gap-2 pb-2">
-            <Settings className="h-5 w-5 text-green-500"/>
+            <Info className="h-5 w-5 text-green-500"/>
             <CardTitle className="text-xl font-medium">Détails de l'application</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
-              <TableRow label="Version Java" value={
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Badge variant="outline" className="rounded-md">
-                        {appDetails.javaVersion}
-                      </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Version de Java utilisée par l'application</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              }
-              />
-              <TableRow
-                label="Version Jakarta EE"
-                value={
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <Badge variant="outline" className="rounded-md font-mono">
-                          {appDetails.jakartaEEVersion}
-                        </Badge>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Version de Jakarta EE utilisée par l'application</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                }
-              />
-              <TableRow
-                label="Version du matsd-javaframework"
-                value={
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <Badge variant="outline" className="rounded-md font-mono">
-                          {appDetails.matsdjavaframeworkVersion}
-                        </Badge>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Version du framework utilisée par l'application</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                }
-                isLast
-              />
+              <InternalRow label="Version Java" badgeText={appDetails.javaVersion}/>
+              <InternalRow label="Version Jakarta EE" badgeText={appDetails.javaVersion}/>
+              <InternalRow label="Version matsd-javaframework" badgeText={appDetails.matsdjavaframeworkVersion}/>
             </Table>
           </CardContent>
         </Card>

@@ -8,9 +8,7 @@ const appDetails: AppDetails = {
 
 const requestInfo: RequestInfo = {
   method: "POST",
-  serverName: "localhost",
-  port: 8080,
-  uri: "/api/users",
+  url: "localhost/8080/api/users",
   headers: {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
     Accept: "application/json",
@@ -27,12 +25,12 @@ const exception: Exception = {
   message: `error: unreported exception FileNotFoundException; must be caught or declared to be thrown 
   FileReader fr = new FileReader(file);
 `,
-  stackTrace: `Exception in thread "main" java.lang.RuntimeException: Something has gone wrong, aborting!
-  at com.myproject.module.MyProject.badMethod(MyProject.java:22)
-  at com.myproject.module.MyProject.oneMoreMethod(MyProject.java:18)
-  at com.myproject.module.MyProject.anotherMethod(MyProject.java:14)
-  at com.myproject.module.MyProject.someMethod(MyProject.java:10)
-  at com.myproject.module.MyProject.main(MyProject.java:6)
+  stackTrace: `Exception in thread "main" java.lang.NullPointerException
+    at com.example.MyClass.myMethod(MyClass.java:42)
+    at com.example.Main.main(Main.java:10)
+Caused by: java.io.IOException: File not found
+    at com.example.FileUtil.loadFile(FileUtil.java:123)
+    ... 3 more
 `,
 };
 

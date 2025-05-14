@@ -111,17 +111,19 @@
 
 @layer base {
   * {
-    font-family: "Figtree", system-ui, sans-serif !important;
     @apply border-border outline-ring/50;
   }
 
   body {
+    font-family: "Figtree", system-ui, sans-serif;
     @apply bg-background text-foreground;
   }
 
   pre, pre * {
-    font-family: "JetBrains Mono", monospace, sans-serif !important;
-    font-size: 13px;
+    font-family: "JetBrains Mono", monospace, sans-serif;
+  }
+
+  .hljs {
     background: transparent !important;
   }
 }

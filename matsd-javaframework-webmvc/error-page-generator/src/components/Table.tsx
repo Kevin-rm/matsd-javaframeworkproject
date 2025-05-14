@@ -15,7 +15,7 @@ export const Table = ({ children, className = "" }: {
   );
 };
 
-export const TableRow = ({ label, value, isLast = false, labelWidth = "w-1/4" }: {
+export const Row = ({ label, value, isLast = false, labelWidth = "w-1/4" }: {
   label: string;
   value: React.ReactNode;
   isLast?: boolean;

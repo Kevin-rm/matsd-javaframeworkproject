@@ -6,9 +6,7 @@ export type AppDetails = {
 
 export type RequestInfo = {
   method: string;
-  serverName: string;
-  port: number;
-  uri: string;
+  url: string;
   headers: Record<string, string>;
   body?: Record<string, unknown>;
 };
