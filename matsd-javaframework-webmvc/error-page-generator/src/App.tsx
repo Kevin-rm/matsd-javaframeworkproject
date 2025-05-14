@@ -6,8 +6,10 @@ import { errorMockData } from "./data/mock.ts"
 import { ThemeProvider } from "@/components/ThemeProvider.tsx"
 import CodeBlock from "@/components/CodeBlock.tsx"
 import {
-  AlertCircle, ChevronRight,
-  Code, Copy,
+  AlertCircle,
+  ChevronRight,
+  Code,
+  Copy,
   CornerDownRight,
   FileCode,
   Info,
@@ -22,7 +24,7 @@ import { Badge } from "@/components/ui/Badge.tsx";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs.tsx";
 import { cn } from "@/lib/utils.ts";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/Tooltip.tsx";
-import Table, { TableRow } from "@/components/Table.tsx";
+import { Table, TableRow } from "@/components/Table.tsx";
 
 const Header = ({ statusCodeReason }: { statusCodeReason: string }) => {
   return (
@@ -161,7 +163,7 @@ const App = () => {
                     className="p-1.5 rounded-sm bg-background/80 backdrop-blur-sm shadow ring-1 ring-white/10 hover:ring-white/30 transition-all"
                     aria-label="Copier le code"
                   >
-                   <Copy className="w-4 h-4"/>
+                    <Copy className="w-4 h-4"/>
                   </button>
                 </div>
                 <ScrollBar orientation="horizontal"></ScrollBar>

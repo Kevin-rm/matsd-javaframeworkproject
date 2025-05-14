@@ -1,6 +1,6 @@
 import React from "react";
 
-const Table = ({ children, className = "" }: {
+export const Table = ({ children, className = "" }: {
   children: React.ReactNode;
   className?: string;
 }) => {
@@ -32,5 +32,3 @@ export const TableRow = ({ label, value, isLast = false, labelWidth = "w-1/4" }:
     </tr>
   );
 };
-
-export default Table;
