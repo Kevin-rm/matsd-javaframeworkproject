@@ -8,7 +8,7 @@ const appDetails: AppDetails = {
 
 const requestInfo: RequestInfo = {
   method: "POST",
-  url: "localhost/8080/api/users",
+  url: "localhost:8080/api/users",
   headers: {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
     Accept: "application/json",
