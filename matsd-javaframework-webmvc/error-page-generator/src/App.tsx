@@ -15,13 +15,14 @@ import {
   Server,
   Settings,
 } from "lucide-react"
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { ScrollArea, ScrollBar } from "@/components/ui/ScrollArea.tsx"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card.tsx";
 import { Badge } from "@/components/ui/Badge.tsx";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs.tsx";
 import { cn } from "@/lib/utils.ts";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/Tooltip.tsx";
+import Table, { TableRow } from "@/components/Table.tsx";
 
 const Header = ({ statusCodeReason }: { statusCodeReason: string }) => {
   return (
@@ -103,7 +104,6 @@ const App = () => {
       <TabsContentCard value="sources" cardClassName="p-0">
         <CardContent className="p-0">
           <div className="grid grid-cols-12 min-h-[500px]">
-            {/* Left column - File list */}
             <div className="col-span-12 md:col-span-4 border-r border-gray-800 overflow-hidden">
               <div className="p-4 border-b border-gray-800 bg-muted/10 sticky top-0 z-10">
                 <div className="flex items-center gap-2">
@@ -139,7 +139,6 @@ const App = () => {
               </ScrollArea>
             </div>
 
-            {/* Right column - Code view */}
             <div className="col-span-12 md:col-span-8 overflow-hidden">
               <div className="p-4 border-b border-gray-800 bg-muted/10 sticky top-0 z-10">
                 <div className="flex items-center gap-2">
@@ -184,9 +183,9 @@ const App = () => {
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[400px] rounded-md border border-border/30 bg-black/20 p-4">
-              <div className="space-y-1 text-gray-300 font-mono text-sm">
+              <pre className="space-y-1 text-gray-300 text-sm">
                 {stackTrace}
-              </div>
+              </pre>
             </ScrollArea>
           </CardContent>
         </Card>
@@ -200,7 +199,7 @@ const App = () => {
         <Card className="bg-gradient-to-br from-gray-900 to-gray-950 border-gray-800 shadow-xl">
           <CardHeader className="flex flex-row items-center gap-2 pb-2">
             <Server className="h-5 w-5 text-blue-500"/>
-            <CardTitle className="text-lg font-medium">Informations de requête</CardTitle>
+            <CardTitle className="text-xl font-medium">Informations de requête</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
@@ -210,29 +209,25 @@ const App = () => {
                     Détails de base
                   </Badge>
                 </h3>
-                <div className="border border-border/30 rounded-lg overflow-hidden bg-black/20">
-                  <table className="w-full border-collapse">
-                    <tbody>
-                    <tr className="border-b border-border/30">
-                      <td className="px-4 py-3 bg-muted/10 font-medium text-muted-foreground w-1/4">Méthode</td>
-                      <td className="px-4 py-3">
-                        <Badge
-                          variant={requestInfo.method === "GET" ? "secondary" : "default"}
-                          className="rounded-md"
-                        >
-                          {requestInfo.method}
-                        </Badge>
-                      </td>
-                    </tr>
-                    <tr className="border-b border-border/30">
-                      <td className="px-4 py-3 bg-muted/10 font-medium text-muted-foreground">URL</td>
-                      <td className="px-4 py-3 font-mono text-sm">
+                <Table>
+                  <TableRow label="Méthode" value={
+                    <Badge
+                      variant={requestInfo.method === "GET" ? "secondary" : "default"}
+                      className="rounded-md"
+                    >
+                      {requestInfo.method}
+                    </Badge>
+                  }/>
+                  <TableRow
+                    label="URL"
+                    value={
+                      <span className="font-mono text-sm">
                         {`${requestInfo.serverName}:${requestInfo.port}${requestInfo.uri}`}
-                      </td>
-                    </tr>
-                    </tbody>
-                  </table>
-                </div>
+                      </span>
+                    }
+                    isLast
+                  />
+                </Table>
               </div>
 
               <div>
@@ -241,18 +236,16 @@ const App = () => {
                     Headers
                   </Badge>
                 </h3>
-                <div className="border border-border/30 rounded-lg overflow-hidden bg-black/20">
-                  <table className="w-full border-collapse">
-                    <tbody>
-                    {Object.entries(requestInfo.headers).map(([key, value], index, arr) => (
-                      <tr key={key} className={index < arr.length - 1 ? "border-b border-border/30" : ""}>
-                        <td className="px-4 py-3 bg-muted/10 font-medium text-muted-foreground w-1/4">{key}</td>
-                        <td className="px-4 py-3 break-all font-mono text-sm">{value}</td>
-                      </tr>
-                    ))}
-                    </tbody>
-                  </table>
-                </div>
+                <Table>
+                  {Object.entries(requestInfo.headers).map(([key, value], index, arr) => (
+                    <TableRow
+                      key={key}
+                      label={key}
+                      value={<span className="break-all font-mono text-sm">{value}</span>}
+                      isLast={index === arr.length - 1}
+                    />
+                  ))}
+                </Table>
               </div>
 
               {requestInfo.body && (
@@ -269,8 +262,8 @@ const App = () => {
           </CardContent>
         </Card>
       </TabsContent>
-    )
-  }
+    );
+  };
 
   const AppDetailsTabsContent = ({ appDetails }: { appDetails: AppDetails }) => {
     return (
@@ -278,77 +271,71 @@ const App = () => {
         <Card className="bg-gradient-to-br from-gray-900 to-gray-950 border-gray-800 shadow-xl">
           <CardHeader className="flex flex-row items-center gap-2 pb-2">
             <Settings className="h-5 w-5 text-green-500"/>
-            <CardTitle className="text-lg font-medium">Détails de l'application</CardTitle>
+            <CardTitle className="text-xl font-medium">Détails de l'application</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="border border-border/30 rounded-lg overflow-hidden bg-black/20">
-              <table className="w-full border-collapse">
-                <tbody>
-                <tr className="border-b border-border/30">
-                  <td className="px-4 py-3 bg-muted/10 font-medium text-muted-foreground w-1/4">Version Java</td>
-                  <td className="px-4 py-3">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <Badge variant="outline" className="rounded-md font-mono">
-                            {appDetails.javaVersion}
-                          </Badge>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Version de Java utilisée par l'application</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </td>
-                </tr>
-                <tr className="border-b border-border/30">
-                  <td className="px-4 py-3 bg-muted/10 font-medium text-muted-foreground">Version Jakarta EE</td>
-                  <td className="px-4 py-3">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <Badge variant="outline" className="rounded-md font-mono">
-                            {appDetails.jakartaEEVersion}
-                          </Badge>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Version de Jakarta EE utilisée par l'application</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </td>
-                </tr>
-                <tr>
-                  <td className="px-4 py-3 bg-muted/10 font-medium text-muted-foreground">Version du Framework</td>
-                  <td className="px-4 py-3">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <Badge variant="outline" className="rounded-md font-mono">
-                            {appDetails.matsdjavaframeworkVersion}
-                          </Badge>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Version du framework utilisée par l'application</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </td>
-                </tr>
-                </tbody>
-              </table>
-            </div>
+            <Table>
+              <TableRow label="Version Java" value={
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Badge variant="outline" className="rounded-md">
+                        {appDetails.javaVersion}
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Version de Java utilisée par l'application</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              }
+              />
+              <TableRow
+                label="Version Jakarta EE"
+                value={
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Badge variant="outline" className="rounded-md font-mono">
+                          {appDetails.jakartaEEVersion}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Version de Jakarta EE utilisée par l'application</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                }
+              />
+              <TableRow
+                label="Version du matsd-javaframework"
+                value={
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Badge variant="outline" className="rounded-md font-mono">
+                          {appDetails.matsdjavaframeworkVersion}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Version du framework utilisée par l'application</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                }
+                isLast
+              />
+            </Table>
           </CardContent>
         </Card>
       </TabsContent>
-    )
-  }
+    );
+  };
 
   return (
     <ThemeProvider defaultTheme="dark">
       <div
         className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900/90 to-black px-8 py-12 relative overflow-x-hidden">
-        {/* Decorative blurred background shapes */}
         <div className="pointer-events-none fixed inset-0 z-0">
           <div
             className="absolute top-[-10%] left-[-10%] w-[400px] h-[400px] bg-pink-500/10 rounded-full blur-3xl animate-spin-slow"/>

@@ -119,7 +119,7 @@
     @apply bg-background text-foreground;
   }
 
-  .hljs, .hljs > * {
+  pre, pre * {
     font-family: "JetBrains Mono", monospace, sans-serif !important;
     font-size: 13px;
     background: transparent !important;
