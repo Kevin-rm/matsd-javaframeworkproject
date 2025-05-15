@@ -162,7 +162,11 @@ const App = () => {
             <CardTitle className="text-xl font-medium">Piles d'appel</CardTitle>
           </CardHeader>
           <CardContent>
-            <CodeBlock className="rounded-md border border-border/30 bg-black/20" code={stackTrace}/>
+            <CodeBlock
+              className="rounded-md border border-border/30 bg-black/20"
+              code={stackTrace}
+              showLineNumbers={false}
+            />
           </CardContent>
         </Card>
       </TabsContent>
@@ -229,7 +233,9 @@ const App = () => {
                   </h3>
                   <CodeBlock
                     className="rounded-md border border-border/30 bg-black/20"
-                    code={JSON.stringify(error.requestInfo.body, null, 2)} language="json"
+                    code={JSON.stringify(error.requestInfo.body, null, 2)}
+                    language="json"
+                    showLineNumbers={false}
                   />
                 </div>
               )}
