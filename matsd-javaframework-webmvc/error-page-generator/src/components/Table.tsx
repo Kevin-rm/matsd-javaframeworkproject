@@ -15,15 +15,14 @@ export const Table = ({ children, className = "" }: {
   );
 };
 
-export const Row = ({ label, value, isLast = false, labelWidth = "w-1/4" }: {
+export const Row = ({ label, value, isLast = false }: {
   label: string;
   value: React.ReactNode;
   isLast?: boolean;
-  labelWidth?: string;
 }) => {
   return (
     <tr className={!isLast ? "border-b border-border/30" : ""}>
-      <td className={`px-4 py-3 bg-muted/10 font-medium text-muted-foreground ${labelWidth}`}>
+      <td className="px-4 py-3 bg-muted/10 font-medium text-muted-foreground w-1/5">
         {label}
       </td>
       <td className="px-4 py-3">
