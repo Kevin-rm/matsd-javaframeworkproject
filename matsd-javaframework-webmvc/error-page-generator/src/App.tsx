@@ -196,9 +196,7 @@ const App = () => {
                   }/>
                   <Row
                     label="URL"
-                    value={
-                      <span className="font-mono text-sm">{requestInfo.url}</span>
-                    }
+                    value={<span className="font-mono text-sm">{requestInfo.url}</span>}
                     isLast
                   />
                 </Table>
@@ -229,8 +227,10 @@ const App = () => {
                       Corps de la requête
                     </Badge>
                   </h3>
-                  <CodeBlock className="rounded-md border border-border/30 bg-black/20"
-                    code={JSON.stringify(error.requestInfo.body, null, 2)} language="json"/>
+                  <CodeBlock
+                    className="rounded-md border border-border/30 bg-black/20"
+                    code={JSON.stringify(error.requestInfo.body, null, 2)} language="json"
+                  />
                 </div>
               )}
             </div>

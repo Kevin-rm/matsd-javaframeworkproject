@@ -120,7 +120,7 @@
   }
 
   pre, pre * {
-    font-family: "JetBrains Mono", monospace, sans-serif;
+    font-family: monospace, sans-serif;
   }
 
   .hljs {
