@@ -25,7 +25,7 @@ import mg.matsd.javaframework.security.annotation.Authorize;
 import mg.matsd.javaframework.security.base.AuthenticationManager;
 import mg.matsd.javaframework.security.base.User;
 import mg.matsd.javaframework.security.exceptions.AccessDeniedException;
-import mg.matsd.javaframework.security.exceptions.NotFoundHttpException;
+import mg.matsd.javaframework.servletwrapper.exceptions.NotFoundHttpException;
 import mg.matsd.javaframework.servletwrapper.http.Request;
 import mg.matsd.javaframework.servletwrapper.http.RequestMethod;
 import mg.matsd.javaframework.servletwrapper.http.Response;
@@ -127,7 +127,7 @@ public class FrontServlet extends HttpServlet {
         final Response response = new Response(httpServletResponse, request).setCharset("UTF-8");
 
         if (throwableOnInit != null) {
-            ResponseRenderer.doRenderError(throwableOnInit, response);
+            responseRenderer.doRenderError(throwableOnInit, request, response);
             LOGGER.fatal("Une erreur s'est produite durant l'initialisation du \"FrontServlet\"", throwableOnInit);
             return;
         }
@@ -174,7 +174,7 @@ public class FrontServlet extends HttpServlet {
                 mappingHandler == null ? null : mappingHandler.getControllerClass());
 
             if (exceptionHandler == null) {
-                ResponseRenderer.doRenderError(throwable, response);
+                responseRenderer.doRenderError(throwable, request, response);
                 LOGGER.error("", throwable);
             } else responseRenderer.doRender(request, response, session, exceptionHandler, throwableTrace);
         } finally {

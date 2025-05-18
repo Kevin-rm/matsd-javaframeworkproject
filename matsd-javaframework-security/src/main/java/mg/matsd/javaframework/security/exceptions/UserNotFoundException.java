@@ -1,5 +1,7 @@
 package mg.matsd.javaframework.security.exceptions;
 
+import mg.matsd.javaframework.servletwrapper.exceptions.NotFoundHttpException;
+
 public class UserNotFoundException extends NotFoundHttpException {
     private static final String PREFIX = "Utilisateur non trouvé";
     private final String identifier;

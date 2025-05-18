@@ -13,6 +13,7 @@ export default defineConfig({
     }
   },
   build: {
+    outDir: "../src/main/resources/error-pages",
     emptyOutDir: true,
     assetsInlineLimit: 100000000,
     cssCodeSplit: false,

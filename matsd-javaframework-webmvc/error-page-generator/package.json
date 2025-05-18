@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && npm run rename",
+    "rename": "node -e \"require('fs').renameSync('../src/main/resources/error-pages/index.html', '../src/main/resources/error-pages/exception-page.html')\"",
     "lint": "eslint .",
     "preview": "vite preview"
   },

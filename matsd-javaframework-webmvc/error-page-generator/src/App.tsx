@@ -84,7 +84,7 @@ const TabsContentCard = ({
 };
 
 const App = () => {
-  const [error] = useState<Error>(errorMockData)
+  const [error] = useState<Error>(() => (window as any).ERROR_DATA || errorMockData)
   const [selectedFileIndex, setSelectedFileIndex] = useState<number>(0)
 
   const SourcesTabsContent = ({ exceptionFiles }: { exceptionFiles?: ExceptionFile[] }) => {
