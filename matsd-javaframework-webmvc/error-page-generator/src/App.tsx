@@ -107,13 +107,14 @@ const App = () => {
                     <button
                       key={index}
                       onClick={() => setSelectedFileIndex(index)}
-                      className={`w-full text-left px-4 py-3 hover:bg-gray-800/50 transition-colors cursor-pointer ${
+                      className={cn(
+                        "w-full text-left px-4 py-3 hover:bg-gray-800/50 transition-colors cursor-pointer",
                         selectedFileIndex === index ? "bg-gray-800/70 border-0 border-l-2 border-red-500" : ""
-                      }`}
+                      )}
                     >
                       <div className="flex items-start gap-3">
                         <Code
-                          className={`h-5 w-5 mt-0.5 ${selectedFileIndex === index ? "text-red-400" : "text-muted-foreground"}`}
+                          className={cn("h-5 w-5 mt-0.5", selectedFileIndex === index ? "text-red-400" : "text-muted-foreground")}
                         />
                         <div className="flex flex-col">
                           <span className="text-sm truncate">{file.fullPath}</span>
@@ -142,7 +143,7 @@ const App = () => {
                 </div>
               </div>
               <CodeBlock
-                className="h-[calc(580px-57px)]"
+                height="h-[calc(580px-57px)]"
                 code={exceptionFiles[selectedFileIndex].sourceCode}
                 highlightedLine={exceptionFiles[selectedFileIndex].highlightedLine}
               />

@@ -1,3 +1,5 @@
+"use client";
+
 import hljs from "highlight.js/lib/core";
 import java from "highlight.js/lib/languages/java";
 import json from "highlight.js/lib/languages/json";
@@ -12,12 +14,14 @@ hljs.registerLanguage("json", json);
 
 const CodeBlock = ({
   className = "",
+  height = "400px",
   code,
   language = "java",
   highlightedLine,
   showLineNumbers = true,
 }: {
   className?: string;
+  height?: string;
   code: string;
   language?: "java" | "json";
   highlightedLine?: number;
@@ -34,7 +38,7 @@ const CodeBlock = ({
   };
 
   return (
-    <ScrollArea className={className}>
+    <ScrollArea className={cn(`h-[${height}]`, className)}>
       <button
         className="absolute top-3 right-4 z-10 p-1.5 rounded-sm bg-background/80 backdrop-blur-sm shadow ring-1 ring-white/10 hover:ring-white/30 transition-all"
         onClick={copyToClipboard}
@@ -52,7 +56,7 @@ const CodeBlock = ({
               key={index}
               className={cn(
                 "grid group",
-                showLineNumbers ? "grid-cols-[2.5rem_1fr]" : "grid-cols-[1fr]",
+                showLineNumbers ? "grid-cols-[2.5rem_1fr]" : "",
                 isHighlightedLine && "bg-red-400/40"
               )}
             >

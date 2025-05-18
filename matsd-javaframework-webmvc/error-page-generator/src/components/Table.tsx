@@ -1,11 +1,14 @@
+"use client";
+
 import React from "react";
+import { cn } from "@/lib/utils.ts";
 
 export const Table = ({ children, className = "" }: {
   children: React.ReactNode;
   className?: string;
 }) => {
   return (
-    <div className={`border border-border/30 rounded-lg overflow-hidden bg-black/20 ${className}`}>
+    <div className={cn("border border-border/30 rounded-lg overflow-hidden bg-black/20", className)}>
       <table className="w-full border-collapse">
         <tbody>
         {children}
