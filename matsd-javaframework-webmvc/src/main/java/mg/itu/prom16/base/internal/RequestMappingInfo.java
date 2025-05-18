@@ -1,6 +1,5 @@
 package mg.itu.prom16.base.internal;
 
-import jakarta.servlet.http.HttpServletRequest;
 import mg.itu.prom16.exceptions.DuplicatePathVariableNameException;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
