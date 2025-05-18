@@ -270,7 +270,7 @@ const App = () => {
           <CardContent>
             <Table>
               <InternalRow label="Version Java" badgeText={appDetails.javaVersion}/>
-              <InternalRow label="Version Jakarta EE" badgeText={appDetails.javaVersion}/>
+              <InternalRow label="Version Jakarta EE" badgeText={appDetails.jakartaEEVersion}/>
               <InternalRow label="Version matsd-javaframework" badgeText={appDetails.matsdjavaframeworkVersion}/>
             </Table>
           </CardContent>
