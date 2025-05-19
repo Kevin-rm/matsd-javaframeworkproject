@@ -143,7 +143,7 @@ const App = () => {
                 </div>
               </div>
               <CodeBlock
-                height="h-[calc(580px-57px)]"
+                className="h-[calc(580px-57px)]"
                 code={exceptionFiles[selectedFileIndex].sourceCode}
                 highlightedLine={exceptionFiles[selectedFileIndex].highlightedLine}
               />
@@ -165,6 +165,7 @@ const App = () => {
           <CardContent>
             <CodeBlock
               className="rounded-md border border-border/30 bg-black/20"
+              maxHeight="400px"
               code={stackTrace}
               showLineNumbers={false}
             />
@@ -234,6 +235,7 @@ const App = () => {
                   </h3>
                   <CodeBlock
                     className="rounded-md border border-border/30 bg-black/20"
+                    maxHeight="400px"
                     code={JSON.stringify(error.requestInfo.body, null, 2)}
                     language="json"
                     showLineNumbers={false}

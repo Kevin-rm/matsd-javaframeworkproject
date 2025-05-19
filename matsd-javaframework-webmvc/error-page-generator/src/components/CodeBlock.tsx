@@ -14,14 +14,14 @@ hljs.registerLanguage("json", json);
 
 const CodeBlock = ({
   className = "",
-  height = "400px",
+  maxHeight,
   code,
   language = "java",
   highlightedLine,
   showLineNumbers = true,
 }: {
   className?: string;
-  height?: string;
+  maxHeight?: string;
   code: string;
   language?: "java" | "json";
   highlightedLine?: number;
@@ -38,7 +38,7 @@ const CodeBlock = ({
   };
 
   return (
-    <ScrollArea className={cn(`h-[${height}]`, className)}>
+    <ScrollArea className={className} style={maxHeight ? { maxHeight } : undefined}>
       <button
         className="absolute top-3 right-4 z-10 p-1.5 rounded-sm bg-background/80 backdrop-blur-sm shadow ring-1 ring-white/10 hover:ring-white/30 transition-all"
         onClick={copyToClipboard}
@@ -47,36 +47,36 @@ const CodeBlock = ({
         {copied ? <Check className="h-4 w-4 text-green-400"/> : <Copy className="h-4 w-4"/>}
       </button>
       <pre className="text-sm p-3 leading-relaxed">
-        {codeLines.map((line, index) => {
-          const lineNumber = index + 1;
-          const isHighlightedLine = highlightedLine === lineNumber;
+          {codeLines.map((line, index) => {
+            const lineNumber = index + 1;
+            const isHighlightedLine = highlightedLine === lineNumber;
 
-          return (
-            <div
-              key={index}
-              className={cn(
-                "grid group",
-                showLineNumbers ? "grid-cols-[2.5rem_1fr]" : "",
-                isHighlightedLine && "bg-red-400/40"
-              )}
-            >
-              {showLineNumbers && (
-                <span className="text-gray-400 text-right pr-3 select-none">
-                  {lineNumber}
-                </span>
-              )}
-              <code
+            return (
+              <div
+                key={index}
                 className={cn(
-                  "language-java pl-3", hoveredLine === lineNumber && !isHighlightedLine && "bg-white/10"
+                  "grid group",
+                  showLineNumbers ? "grid-cols-[2.5rem_1fr]" : "",
+                  isHighlightedLine && "bg-red-400/40"
                 )}
-                dangerouslySetInnerHTML={{ __html: hljs.highlight(line, { language }).value }}
-                onMouseEnter={() => setHoveredLine(lineNumber)}
-                onMouseLeave={() => setHoveredLine(null)}
-              />
-            </div>
-          );
-        })}
-      </pre>
+              >
+                {showLineNumbers && (
+                  <span className="text-gray-400 text-right pr-3 select-none">
+                    {lineNumber}
+                  </span>
+                )}
+                <code
+                  className={cn(
+                    "language-java pl-3", hoveredLine === lineNumber && !isHighlightedLine && "bg-white/10"
+                  )}
+                  dangerouslySetInnerHTML={{ __html: hljs.highlight(line, { language }).value }}
+                  onMouseEnter={() => setHoveredLine(lineNumber)}
+                  onMouseLeave={() => setHoveredLine(null)}
+                />
+              </div>
+            );
+          })}
+        </pre>
       <ScrollBar orientation="horizontal"/>
     </ScrollArea>
   );
