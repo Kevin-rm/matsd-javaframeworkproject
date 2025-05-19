@@ -5,7 +5,17 @@ import type { AppDetails, Error, Exception, ExceptionFile, RequestInfo } from ".
 import { errorMockData } from "./data/mock.ts"
 import { ThemeProvider } from "@/components/ThemeProvider.tsx"
 import CodeBlock from "@/components/CodeBlock.tsx"
-import { AlertCircle, ChevronRight, Code, CornerDownRight, FileCode, Info, Layers, Server, } from "lucide-react"
+import {
+  AlertCircle,
+  ChevronRight,
+  Code,
+  CornerDownRight,
+  FileCode,
+  FileSearch,
+  Info,
+  Layers,
+  Server,
+} from "lucide-react"
 import { ScrollArea } from "@/components/ui/ScrollArea.tsx"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card.tsx";
@@ -93,7 +103,7 @@ const App = () => {
     const scrollAreaRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-      if (buttonRefs.current && buttonRefs.current[selectedFileIndex] !== null)
+      if (buttonRefs.current && buttonRefs.current[selectedFileIndex])
         buttonRefs.current[selectedFileIndex].scrollIntoView({ block: "nearest" });
     }, [selectedFileIndex]);
 
@@ -112,76 +122,81 @@ const App = () => {
       return () => viewport.removeEventListener("scroll", handleScroll);
     }, []);
 
-    if (!exceptionFiles) return;
-
     return (
       <TabsContentCard value="sources" cardClassName="p-0">
         <CardContent className="p-0">
-          <div className="grid grid-cols-12 min-h-[580px]">
-            <div className="col-span-12 md:col-span-4 border-r border-gray-800 overflow-hidden">
-              <div className="p-4 border-b border-gray-800 bg-muted/10 sticky top-0 z-10">
-                <div className="flex items-center gap-2">
-                  <FileCode className="h-5 w-5 text-muted-foreground"/>
-                  <h3 className="font-medium text-sm text-muted-foreground">FICHIERS SOURCES</h3>
-                </div>
-              </div>
-              <ScrollArea
-                ref={scrollAreaRef}
-                className="h-[calc(580px-57px)] hide-scrollbar"
-              >
-                <div className="divide-y divide-gray-800/50">
-                  {exceptionFiles.map((file, index) => {
-                    const isSelected = selectedFileIndex === index;
-
-                    return <button
-                      ref={el => { buttonRefs.current[index] = el; }}
-                      key={index}
-                      onClick={() => setSelectedFileIndex(index)}
-                      className={cn(
-                        "w-full text-left px-4 py-3 hover:bg-gray-800/50 transition-colors cursor-pointer border-0",
-                        isSelected ? "bg-gray-800/70 border-l-2 border-red-500" : ""
-                      )}
-                    >
-                      <div className="flex items-start gap-3">
-                        <Code
-                          className={cn("h-5 w-5 mt-0.5", isSelected ? "text-red-400" : "text-muted-foreground")}
-                        />
-                        <div className="flex flex-col">
-                          <span className="text-sm truncate">{file.fullPath}</span>
-                          <span className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                              <CornerDownRight className="h-3 w-3"/>
-                            {file.method}
-                            </span>
-                        </div>
-                      </div>
-                    </button>;
-                  })}
-                </div>
-                {showBottomShadow && <div
-                  className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-gray-900 to-transparent pointer-events-none z-10"
-                />}
-              </ScrollArea>
+          {!exceptionFiles || exceptionFiles.length === 0 ? (
+            <div className="p-4 flex flex-row items-center gap-2">
+              <FileSearch/>
+              <p>Aucun fichier source à afficher</p>
             </div>
-
-            <div className="col-span-12 md:col-span-8 overflow-hidden">
-              <div className="p-4 border-b border-gray-800 bg-muted/10 sticky top-0 z-10">
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1 text-muted-foreground">
-                    <span className="font-mono text-sm">{exceptionFiles[selectedFileIndex].fullPath}</span>
-                    <ChevronRight className="h-4 w-4"/>
-                    <span className="text-sm font-medium text-red-400">
-                        Ligne {exceptionFiles[selectedFileIndex].highlightedLine}
-                      </span>
+          ) : (
+            <div className="grid grid-cols-12 min-h-[580px]">
+              <div className="col-span-12 md:col-span-4 border-r border-gray-800 overflow-hidden">
+                <div className="p-4 border-b border-gray-800 bg-muted/10 sticky top-0 z-10">
+                  <div className="flex items-center gap-2">
+                    <FileCode className="h-5 w-5 text-muted-foreground"/>
+                    <h3 className="font-medium text-sm text-muted-foreground">FICHIERS SOURCES</h3>
                   </div>
                 </div>
+                <ScrollArea
+                  ref={scrollAreaRef}
+                  className="h-[calc(580px-57px)] hide-scrollbar"
+                >
+                  <div className="divide-y divide-gray-800/50">
+                    {exceptionFiles.map((file, index) => {
+                      const isSelected = selectedFileIndex === index;
+
+                      return <button
+                        ref={el => { buttonRefs.current[index] = el; }}
+                        key={index}
+                        onClick={() => setSelectedFileIndex(index)}
+                        className={cn(
+                          "w-full text-left px-4 py-3 hover:bg-gray-800/50 transition-colors cursor-pointer border-0",
+                          isSelected ? "bg-gray-800/70 border-l-2 border-red-500" : ""
+                        )}
+                      >
+                        <div className="flex items-start gap-3">
+                          <Code
+                            className={cn("h-5 w-5 mt-0.5", isSelected ? "text-red-400" : "text-muted-foreground")}
+                          />
+                          <div className="flex flex-col">
+                            <span className="text-sm truncate">{file.fullPath}</span>
+                            <span className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                              <CornerDownRight className="h-3 w-3"/>
+                              {file.method}
+                            </span>
+                          </div>
+                        </div>
+                      </button>;
+                    })}
+                  </div>
+                  {showBottomShadow && <div
+                    className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-gray-900 to-transparent pointer-events-none z-10"
+                  />}
+                </ScrollArea>
               </div>
-              <CodeBlock
-                className="h-[calc(580px-57px)]"
-                code={exceptionFiles[selectedFileIndex].sourceCode}
-                highlightedLine={exceptionFiles[selectedFileIndex].highlightedLine}
-              />
+
+              <div className="col-span-12 md:col-span-8 overflow-hidden">
+                <div className="p-4 border-b border-gray-800 bg-muted/10 sticky top-0 z-10">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 text-muted-foreground">
+                      <span className="font-mono text-sm">{exceptionFiles[selectedFileIndex].fullPath}</span>
+                      <ChevronRight className="h-4 w-4"/>
+                      <span className="text-sm font-medium text-red-400">
+                        Ligne {exceptionFiles[selectedFileIndex].highlightedLine}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <CodeBlock
+                  className="h-[calc(580px-57px)]"
+                  code={exceptionFiles[selectedFileIndex].sourceCode}
+                  highlightedLine={exceptionFiles[selectedFileIndex].highlightedLine}
+                />
+              </div>
             </div>
-          </div>
+          )}
         </CardContent>
       </TabsContentCard>
     );
