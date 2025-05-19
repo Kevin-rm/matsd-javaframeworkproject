@@ -88,12 +88,29 @@ const App = () => {
 
   const SourcesTabsContent = ({ exceptionFiles }: { exceptionFiles?: ExceptionFile[] }) => {
     const [selectedFileIndex, setSelectedFileIndex] = useState<number>(0);
-    const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+    const [showBottomShadow, setShowBottomShadow]   = useState<boolean>(true);
+    const buttonRefs    = useRef<(HTMLButtonElement | null)[]>([]);
+    const scrollAreaRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
       if (buttonRefs.current && buttonRefs.current[selectedFileIndex] !== null)
         buttonRefs.current[selectedFileIndex].scrollIntoView({ block: "nearest" });
     }, [selectedFileIndex]);
+
+    useEffect(() => {
+      const scrollAreaRefCurrent = scrollAreaRef.current;
+      if (!scrollAreaRefCurrent) return;
+
+      const viewport = scrollAreaRefCurrent.querySelector("[data-radix-scroll-area-viewport]") as HTMLElement;
+      const handleScroll = () => {
+        const { scrollTop, scrollHeight, clientHeight } = viewport;
+        setShowBottomShadow(!Math.abs(Number(scrollHeight - (scrollTop + clientHeight) < 10)));
+      };
+
+      handleScroll();
+      viewport.addEventListener("scroll", handleScroll);
+      return () => viewport.removeEventListener("scroll", handleScroll);
+    }, []);
 
     if (!exceptionFiles) return;
 
@@ -108,7 +125,10 @@ const App = () => {
                   <h3 className="font-medium text-sm text-muted-foreground">FICHIERS SOURCES</h3>
                 </div>
               </div>
-              <ScrollArea className="h-[calc(580px-57px)] hide-scrollbar">
+              <ScrollArea
+                ref={scrollAreaRef}
+                className="h-[calc(580px-57px)] hide-scrollbar"
+              >
                 <div className="divide-y divide-gray-800/50">
                   {exceptionFiles.map((file, index) => {
                     const isSelected = selectedFileIndex === index;
@@ -129,14 +149,17 @@ const App = () => {
                         <div className="flex flex-col">
                           <span className="text-sm truncate">{file.fullPath}</span>
                           <span className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                            <CornerDownRight className="h-3 w-3"/>
+                              <CornerDownRight className="h-3 w-3"/>
                             {file.method}
-                          </span>
+                            </span>
                         </div>
                       </div>
                     </button>;
                   })}
                 </div>
+                {showBottomShadow && <div
+                  className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-gray-900 to-transparent pointer-events-none z-10"
+                />}
               </ScrollArea>
             </div>
 
