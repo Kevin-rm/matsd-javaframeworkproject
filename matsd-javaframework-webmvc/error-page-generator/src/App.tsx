@@ -125,12 +125,11 @@ const App = () => {
     return (
       <TabsContentCard value="sources" cardClassName="p-0">
         <CardContent className="p-0">
-          {!exceptionFiles || exceptionFiles.length === 0 ? (
+          {!exceptionFiles || exceptionFiles.length === 0 ?
             <div className="p-4 flex flex-row items-center gap-2">
               <FileSearch/>
               <p>Aucun fichier source à afficher</p>
-            </div>
-          ) : (
+            </div> :
             <div className="grid grid-cols-12 min-h-[580px]">
               <div className="col-span-12 md:col-span-4 border-r border-gray-800 overflow-hidden">
                 <div className="p-4 border-b border-gray-800 bg-muted/10 sticky top-0 z-10">
@@ -195,8 +194,7 @@ const App = () => {
                   highlightedLine={exceptionFiles[selectedFileIndex].highlightedLine}
                 />
               </div>
-            </div>
-          )}
+            </div>}
         </CardContent>
       </TabsContentCard>
     );
