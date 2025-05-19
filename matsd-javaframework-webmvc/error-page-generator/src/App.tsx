@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import type { AppDetails, Error, Exception, ExceptionFile, RequestInfo } from "./types.ts"
 import { errorMockData } from "./data/mock.ts"
 import { ThemeProvider } from "@/components/ThemeProvider.tsx"
@@ -84,11 +84,18 @@ const TabsContentCard = ({
 };
 
 const App = () => {
-  const [error] = useState<Error>(() => (window as any).ERROR_DATA || errorMockData)
-  const [selectedFileIndex, setSelectedFileIndex] = useState<number>(0)
+  const [error] = useState<Error>(() => (window as any).ERROR_DATA || errorMockData);
 
   const SourcesTabsContent = ({ exceptionFiles }: { exceptionFiles?: ExceptionFile[] }) => {
-    if (!exceptionFiles || exceptionFiles.length === 0) return null;
+    const [selectedFileIndex, setSelectedFileIndex] = useState<number>(0);
+    const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+    useEffect(() => {
+      if (buttonRefs.current && buttonRefs.current[selectedFileIndex] !== null)
+        buttonRefs.current[selectedFileIndex].scrollIntoView({ block: "nearest" });
+    }, [selectedFileIndex]);
+
+    if (!exceptionFiles) return;
 
     return (
       <TabsContentCard value="sources" cardClassName="p-0">
@@ -101,20 +108,23 @@ const App = () => {
                   <h3 className="font-medium text-sm text-muted-foreground">FICHIERS SOURCES</h3>
                 </div>
               </div>
-              <ScrollArea className="h-[calc(580px-57px)]">
+              <ScrollArea className="h-[calc(580px-57px)] hide-scrollbar">
                 <div className="divide-y divide-gray-800/50">
-                  {exceptionFiles.map((file, index) => (
-                    <button
+                  {exceptionFiles.map((file, index) => {
+                    const isSelected = selectedFileIndex === index;
+
+                    return <button
+                      ref={el => { buttonRefs.current[index] = el; }}
                       key={index}
                       onClick={() => setSelectedFileIndex(index)}
                       className={cn(
-                        "w-full text-left px-4 py-3 hover:bg-gray-800/50 transition-colors cursor-pointer",
-                        selectedFileIndex === index ? "bg-gray-800/70 border-0 border-l-2 border-red-500" : ""
+                        "w-full text-left px-4 py-3 hover:bg-gray-800/50 transition-colors cursor-pointer border-0",
+                        isSelected ? "bg-gray-800/70 border-l-2 border-red-500" : ""
                       )}
                     >
                       <div className="flex items-start gap-3">
                         <Code
-                          className={cn("h-5 w-5 mt-0.5", selectedFileIndex === index ? "text-red-400" : "text-muted-foreground")}
+                          className={cn("h-5 w-5 mt-0.5", isSelected ? "text-red-400" : "text-muted-foreground")}
                         />
                         <div className="flex flex-col">
                           <span className="text-sm truncate">{file.fullPath}</span>
@@ -124,8 +134,8 @@ const App = () => {
                           </span>
                         </div>
                       </div>
-                    </button>
-                  ))}
+                    </button>;
+                  })}
                 </div>
               </ScrollArea>
             </div>
