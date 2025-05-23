@@ -456,8 +456,19 @@ public class Request {
         return isMethod("DELETE");
     }
 
+    @Nullable
+    public String getQueryString() {
+        return raw.getQueryString();
+    }
+
     public String getUrlWithoutQueryString() {
         return raw.getRequestURL().toString();
+    }
+
+    public String getFullUrl() {
+        String url = getUrlWithoutQueryString();
+        String queryString = getQueryString();
+        return queryString == null ? url : url + "?" + queryString;
     }
 
     public String getUri() {
@@ -480,7 +491,7 @@ public class Request {
         return raw.getProtocol();
     }
 
-    public String getServerName() {
+    public String getHost() {
         return raw.getServerName();
     }
 

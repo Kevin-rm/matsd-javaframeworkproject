@@ -1,22 +1,11 @@
 "use client"
 
-import React, { useEffect, useRef, useState } from "react"
-import type { AppDetails, Error, Exception, ExceptionFile, RequestInfo } from "./types.ts"
+import React, { useState } from "react"
+import type { AppDetails, Error, Exception, RequestInfo } from "./types.ts"
 import { errorMockData } from "./data/mock.ts"
 import { ThemeProvider } from "@/components/ThemeProvider.tsx"
 import CodeBlock from "@/components/CodeBlock.tsx"
-import {
-  AlertCircle,
-  ChevronRight,
-  Code,
-  CornerDownRight,
-  FileCode,
-  FileSearch,
-  Info,
-  Layers,
-  Server,
-} from "lucide-react"
-import { ScrollArea } from "@/components/ui/ScrollArea.tsx"
+import { AlertCircle, Info, Layers, Server } from "lucide-react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card.tsx";
 import { Badge } from "@/components/ui/Badge.tsx";
@@ -96,202 +85,94 @@ const TabsContentCard = ({
 const App = () => {
   const [error] = useState<Error>(() => (window as any).ERROR_DATA || errorMockData);
 
-  const SourcesTabsContent = ({ exceptionFiles }: { exceptionFiles?: ExceptionFile[] }) => {
-    const [selectedFileIndex, setSelectedFileIndex] = useState<number>(0);
-    const [showBottomShadow, setShowBottomShadow]   = useState<boolean>(true);
-    const buttonRefs    = useRef<(HTMLButtonElement | null)[]>([]);
-    const scrollAreaRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-      if (buttonRefs.current && buttonRefs.current[selectedFileIndex])
-        buttonRefs.current[selectedFileIndex].scrollIntoView({ block: "nearest" });
-    }, [selectedFileIndex]);
-
-    useEffect(() => {
-      const scrollAreaRefCurrent = scrollAreaRef.current;
-      if (!scrollAreaRefCurrent) return;
-
-      const viewport = scrollAreaRefCurrent.querySelector("[data-radix-scroll-area-viewport]") as HTMLElement;
-      const handleScroll = () => {
-        const { scrollTop, scrollHeight, clientHeight } = viewport;
-        setShowBottomShadow(!Math.abs(Number(scrollHeight - (scrollTop + clientHeight) < 10)));
-      };
-
-      handleScroll();
-      viewport.addEventListener("scroll", handleScroll);
-      return () => viewport.removeEventListener("scroll", handleScroll);
-    }, []);
-
+  const StackTraceTabsContent = ({ stackTrace }: { stackTrace: string }) => {
     return (
-      <TabsContentCard value="sources" cardClassName="p-0">
-        <CardContent className="p-0">
-          {!exceptionFiles || exceptionFiles.length === 0 ?
-            <div className="p-4 flex flex-row items-center gap-2">
-              <FileSearch/>
-              <p>Aucun fichier source à afficher</p>
-            </div> :
-            <div className="grid grid-cols-12 min-h-[580px]">
-              <div className="col-span-12 md:col-span-4 border-r border-gray-800 overflow-hidden">
-                <div className="p-4 border-b border-gray-800 bg-muted/10 sticky top-0 z-10">
-                  <div className="flex items-center gap-2">
-                    <FileCode className="h-5 w-5 text-muted-foreground"/>
-                    <h3 className="font-medium text-sm text-muted-foreground">FICHIERS SOURCES</h3>
-                  </div>
-                </div>
-                <ScrollArea
-                  ref={scrollAreaRef}
-                  className="h-[calc(580px-57px)] hide-scrollbar"
-                >
-                  <div className="divide-y divide-gray-800/50">
-                    {exceptionFiles.map((file, index) => {
-                      const isSelected = selectedFileIndex === index;
-
-                      return <button
-                        ref={el => { buttonRefs.current[index] = el; }}
-                        key={index}
-                        onClick={() => setSelectedFileIndex(index)}
-                        className={cn(
-                          "w-full text-left px-4 py-3 hover:bg-gray-800/50 transition-colors cursor-pointer border-0",
-                          isSelected ? "bg-gray-800/70 border-l-2 border-red-500" : ""
-                        )}
-                      >
-                        <div className="flex items-start gap-3">
-                          <Code
-                            className={cn("h-5 w-5 mt-0.5", isSelected ? "text-red-400" : "text-muted-foreground")}
-                          />
-                          <div className="flex flex-col">
-                            <span className="text-sm truncate">{file.fullPath}</span>
-                            <span className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                              <CornerDownRight className="h-3 w-3"/>
-                              {file.method}
-                            </span>
-                          </div>
-                        </div>
-                      </button>;
-                    })}
-                  </div>
-                  {showBottomShadow && <div
-                    className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-gray-900 to-transparent pointer-events-none z-10"
-                  />}
-                </ScrollArea>
-              </div>
-
-              <div className="col-span-12 md:col-span-8 overflow-hidden">
-                <div className="p-4 border-b border-gray-800 bg-muted/10 sticky top-0 z-10">
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <span className="font-mono text-sm">{exceptionFiles[selectedFileIndex].fullPath}</span>
-                      <ChevronRight className="h-4 w-4"/>
-                      <span className="text-sm font-medium text-red-400">
-                        Ligne {exceptionFiles[selectedFileIndex].highlightedLine}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <CodeBlock
-                  className="h-[calc(580px-57px)]"
-                  code={exceptionFiles[selectedFileIndex].sourceCode}
-                  highlightedLine={exceptionFiles[selectedFileIndex].highlightedLine}
-                />
-              </div>
-            </div>}
+      <TabsContentCard value="stack-trace">
+        <CardHeader className="flex flex-row items-center gap-2 pb-2">
+          <Layers className="h-5 w-5 text-amber-500"/>
+          <CardTitle className="text-xl font-medium">Piles d'appel</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <CodeBlock
+            className="rounded-md border border-border/30 bg-black/20"
+            maxHeight="400px"
+            code={stackTrace}
+            showLineNumbers={false}
+          />
         </CardContent>
       </TabsContentCard>
     );
   };
 
-  const StackTraceTabsContent = ({ stackTrace }: { stackTrace: string }) => {
-    return (
-      <TabsContent value="stack-trace" className="animate-in fade-in-50 duration-300">
-        <Card className="bg-gradient-to-br from-gray-900 to-gray-950 border-gray-800 shadow-xl">
-          <CardHeader className="flex flex-row items-center gap-2 pb-2">
-            <Layers className="h-5 w-5 text-amber-500"/>
-            <CardTitle className="text-xl font-medium">Piles d'appel</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CodeBlock
-              className="rounded-md border border-border/30 bg-black/20"
-              maxHeight="400px"
-              code={stackTrace}
-              showLineNumbers={false}
-            />
-          </CardContent>
-        </Card>
-      </TabsContent>
-    );
-  };
-
   const RequestInfoTabsContent = ({ requestInfo }: { requestInfo: RequestInfo }) => {
     return (
-      <TabsContent value="request" className="animate-in fade-in-50 duration-300">
-        <Card className="bg-gradient-to-br from-gray-900 to-gray-950 border-gray-800 shadow-xl">
-          <CardHeader className="flex flex-row items-center gap-2 pb-2">
-            <Server className="h-5 w-5 text-blue-500"/>
-            <CardTitle className="text-xl font-medium">Informations de requête</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-md font-medium mb-3 flex items-center gap-2">
-                  <Badge variant="outline" className="rounded-md font-normal">
-                    Détails de base
+      <TabsContentCard value="request">
+        <CardHeader className="flex flex-row items-center gap-2 pb-2">
+          <Server className="h-5 w-5 text-blue-500"/>
+          <CardTitle className="text-xl font-medium">Informations de requête</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-md font-medium mb-3 flex items-center gap-2">
+                <Badge variant="outline" className="rounded-md font-normal">
+                  Détails de base
+                </Badge>
+              </h3>
+              <Table>
+                <Row label="Méthode" value={
+                  <Badge
+                    variant={requestInfo.method === "GET" ? "secondary" : "default"}
+                    className="rounded-md"
+                  >
+                    {requestInfo.method}
                   </Badge>
-                </h3>
-                <Table>
-                  <Row label="Méthode" value={
-                    <Badge
-                      variant={requestInfo.method === "GET" ? "secondary" : "default"}
-                      className="rounded-md"
-                    >
-                      {requestInfo.method}
-                    </Badge>
-                  }/>
-                  <Row
-                    label="URL"
-                    value={<span className="font-mono text-sm">{requestInfo.url}</span>}
-                    isLast
-                  />
-                </Table>
-              </div>
-
-              <div>
-                <h3 className="text-md font-medium mb-3 flex items-center gap-2">
-                  <Badge variant="outline" className="rounded-md font-normal">
-                    En-têtes
-                  </Badge>
-                </h3>
-                <Table>
-                  {Object.entries(requestInfo.headers).map(([key, value], index, arr) => (
-                    <Row
-                      key={key}
-                      label={key}
-                      value={<span className="break-all font-mono text-sm">{value}</span>}
-                      isLast={index === arr.length - 1}
-                    />
-                  ))}
-                </Table>
-              </div>
-
-              {requestInfo.body && (
-                <div>
-                  <h3 className="text-md font-medium mb-3 flex items-center gap-2">
-                    <Badge variant="outline" className="rounded-md font-normal">
-                      Corps de la requête
-                    </Badge>
-                  </h3>
-                  <CodeBlock
-                    className="rounded-md border border-border/30 bg-black/20"
-                    maxHeight="400px"
-                    code={JSON.stringify(error.requestInfo.body, null, 2)}
-                    language="json"
-                    showLineNumbers={false}
-                  />
-                </div>
-              )}
+                }/>
+                <Row
+                  label="URL"
+                  value={<span className="font-mono text-sm">{requestInfo.url}</span>}
+                  isLast
+                />
+              </Table>
             </div>
-          </CardContent>
-        </Card>
-      </TabsContent>
+
+            <div>
+              <h3 className="text-md font-medium mb-3 flex items-center gap-2">
+                <Badge variant="outline" className="rounded-md font-normal">
+                  En-têtes
+                </Badge>
+              </h3>
+              <Table>
+                {Object.entries(requestInfo.headers).map(([key, value], index, arr) => (
+                  <Row
+                    key={key}
+                    label={key}
+                    value={<span className="break-all font-mono text-sm">{value}</span>}
+                    isLast={index === arr.length - 1}
+                  />
+                ))}
+              </Table>
+            </div>
+
+            {requestInfo.body && (
+              <div>
+                <h3 className="text-md font-medium mb-3 flex items-center gap-2">
+                  <Badge variant="outline" className="rounded-md font-normal">
+                    Corps de la requête
+                  </Badge>
+                </h3>
+                <CodeBlock
+                  className="rounded-md border border-border/30 bg-black/20"
+                  maxHeight="400px"
+                  code={JSON.stringify(error.requestInfo.body, null, 2)}
+                  language="json"
+                  showLineNumbers={false}
+                />
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </TabsContentCard>
     );
   };
 
@@ -300,31 +181,27 @@ const App = () => {
       label: string;
       badgeText: string;
     }) => {
-      return (
-        <Row label={label} value={
-          <Badge variant="outline" className="rounded-md">
-            {badgeText}
-          </Badge>
-        }/>
-      );
+      return <Row label={label} value={
+        <Badge variant="outline" className="rounded-md">
+          {badgeText}
+        </Badge>
+      }/>;
     };
 
     return (
-      <TabsContent value="app-details" className="animate-in fade-in-50 duration-300">
-        <Card className="bg-gradient-to-br from-gray-900 to-gray-950 border-gray-800 shadow-xl">
-          <CardHeader className="flex flex-row items-center gap-2 pb-2">
-            <Info className="h-5 w-5 text-green-500"/>
-            <CardTitle className="text-xl font-medium">Détails de l'application</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <InternalRow label="Version Java" badgeText={appDetails.javaVersion}/>
-              <InternalRow label="Version Jakarta EE" badgeText={appDetails.jakartaEEVersion}/>
-              <InternalRow label="Version matsd-javaframework" badgeText={appDetails.matsdjavaframeworkVersion}/>
-            </Table>
-          </CardContent>
-        </Card>
-      </TabsContent>
+      <TabsContentCard value="app-details">
+        <CardHeader className="flex flex-row items-center gap-2 pb-2">
+          <Info className="h-5 w-5 text-green-500"/>
+          <CardTitle className="text-xl font-medium">Détails de l'application</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <InternalRow label="Version Java" badgeText={appDetails.javaVersion}/>
+            <InternalRow label="Version matsd-javaframework" badgeText={appDetails.matsdjavaframeworkVersion}/>
+            <InternalRow label="Informations du serveur" badgeText={appDetails.serverInfo}/>
+          </Table>
+        </CardContent>
+      </TabsContentCard>
     );
   };
 
@@ -348,13 +225,9 @@ const App = () => {
             transition={{ duration: 0.5, delay: 0.4 }}
             className="mt-10"
           >
-            <Tabs defaultValue="sources">
+            <Tabs defaultValue="stack-trace">
               <TabsList
-                className="bg-gradient-to-r from-gray-900/80 to-gray-950/90 border border-gray-800/80 overflow-hidden mb-2 grid grid-cols-4 shadow-lg backdrop-blur-md">
-                <TabsTrigger value="sources">
-                  <FileCode/>
-                  <span className="hidden sm:inline">Sources</span>
-                </TabsTrigger>
+                className="bg-gradient-to-r from-gray-900/80 to-gray-950/90 border border-gray-800/80 overflow-hidden mb-2 grid grid-cols-3 shadow-lg backdrop-blur-md">
                 <TabsTrigger value="stack-trace">
                   <Layers/>
                   <span className="hidden sm:inline">Piles d'appel</span>
@@ -369,7 +242,6 @@ const App = () => {
                 </TabsTrigger>
               </TabsList>
 
-              <SourcesTabsContent exceptionFiles={error.exceptionFiles}/>
               <StackTraceTabsContent stackTrace={error.exception.stackTrace}/>
               <RequestInfoTabsContent requestInfo={error.requestInfo}/>
               <AppDetailsTabsContent appDetails={error.appDetails}/>

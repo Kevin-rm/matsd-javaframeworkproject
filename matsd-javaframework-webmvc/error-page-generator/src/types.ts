@@ -1,7 +1,7 @@
 export type AppDetails = {
   javaVersion: string;
-  jakartaEEVersion: string;
   matsdjavaframeworkVersion: string;
+  serverInfo: string;
 };
 
 export type RequestInfo = {
@@ -17,17 +17,9 @@ export type Exception = {
   stackTrace: string;
 };
 
-export type ExceptionFile = {
-  fullPath: string;
-  method: string;
-  sourceCode: string;
-  highlightedLine: number;
-};
-
 export type Error = {
   statusCodeReason: string;
   appDetails: AppDetails;
   requestInfo: RequestInfo;
   exception: Exception;
-  exceptionFiles?: ExceptionFile[];
 };

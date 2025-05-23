@@ -23,6 +23,7 @@ import static mg.matsd.javaframework.di.managedinstances.Scope.REQUEST;
 import static mg.matsd.javaframework.di.managedinstances.Scope.SINGLETON;
 
 public class WebApplicationContainer extends AbstractXmlResourceContainer {
+    public static final String FRAMEWORK_VERSION = "1-0.SNAPSHOT";
     public static final String WEB_SCOPED_MANAGED_INSTANCES_KEY_PREFIX = "web_scoped_managedinstance";
 
     private ServletContext servletContext;

@@ -6,21 +6,14 @@ import mg.itu.prom16.base.internal.handler.AbstractHandler;
 import mg.itu.prom16.exceptions.InvalidReturnTypeException;
 import mg.itu.prom16.support.ThirdPartyConfiguration;
 import mg.itu.prom16.support.WebApplicationContainer;
-import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.io.ClassPathResource;
-import mg.matsd.javaframework.core.utils.StringUtils;
 import mg.matsd.javaframework.servletwrapper.exceptions.HttpStatusException;
 import mg.matsd.javaframework.servletwrapper.http.*;
 
 import java.io.*;
 import java.lang.reflect.Method;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 class ResponseRenderer {
@@ -44,16 +37,13 @@ class ResponseRenderer {
         this.webApplicationContainer = webApplicationContainer;
     }
 
-    @SuppressWarnings("unchecked")
     void doRenderError(Throwable throwable, Request request, Response response) throws IOException {
         final StringWriter stringWriter = new StringWriter();
         throwable.printStackTrace(new PrintWriter(stringWriter));
 
         final HttpStatusCode httpStatusCode = throwable instanceof HttpStatusException httpStatusException ?
             HttpStatusCode.valueOf(httpStatusException.getStatusCode()) : HttpStatusCode.INTERNAL_SERVER_ERROR;
-
         final ObjectMapper objectMapper = (ObjectMapper) webApplicationContainer.getManagedInstance(ThirdPartyConfiguration.JACKSON_OBJECT_MAPPER_ID);
-
         response.asHtml()
             .setStatus(httpStatusCode.getValue())
             .write(ERROR_PAGE_TEMPLATE_CONTENT.replace("<!-- ERROR_DATA_PLACEHOLDER -->",
@@ -62,18 +52,17 @@ class ResponseRenderer {
                         httpStatusCode.getReason(),
                         new Error.AppDetails(
                             System.getProperty("java.version"),
-                            "10",
-                            "1.0-SNAPSHOT"),
+                            WebApplicationContainer.FRAMEWORK_VERSION,
+                            request.getRaw().getServletContext().getServerInfo()),
                         new Error.RequestInfo(
                             request.getMethod(),
-                            request.getUrlWithoutQueryString(),
+                            request.getFullUrl(),
                             request.getHeaders(),
                             null), // Let's assume this is null for now
                         new Error.Exception(
                             throwable.getClass().getName(),
-                            StringUtils.escapeHtml(throwable.getMessage()),
-                            StringUtils.escapeHtml(stringWriter.toString())),
-                        extractExceptionFiles(throwable)
+                            throwable.getMessage(),
+                            stringWriter.toString())
                     ))
                 ))
             ).flush();
@@ -152,44 +141,16 @@ class ResponseRenderer {
             .buildCompleteUrl(originalStringParts[1].stripLeading()));
     }
 
-    @Nullable
-    private static Error.ExceptionFile[] extractExceptionFiles(final Throwable throwable) {
-        final List<Error.ExceptionFile> exceptionFiles = Arrays.stream(throwable.getStackTrace())
-            .map(ResponseRenderer::createExceptionFile)
-            .filter(Objects::nonNull)
-            .toList();
-
-        return exceptionFiles.isEmpty() ? null : exceptionFiles.toArray(new Error.ExceptionFile[0]);
-    }
-
-    @Nullable
-    private static Error.ExceptionFile createExceptionFile(final StackTraceElement stackTraceElement) {
-        if (stackTraceElement.getFileName() == null) return null;
-
-        try {
-            URL resourceUrl = ClassLoader.getSystemResource(stackTraceElement.getClassName().replace('.', '/') + ".java");
-            if (resourceUrl == null) return null;
-
-            Path path = Paths.get(resourceUrl.toURI());
-            return new Error.ExceptionFile(
-                path.toAbsolutePath().toString(),
-                stackTraceElement.getMethodName(),
-                Files.readString(path, StandardCharsets.UTF_8),
-                stackTraceElement.getLineNumber());
-        } catch (IOException | URISyntaxException e) { return null; }
-    }
-
     private record Error(
         String      statusCodeReason,
         AppDetails  appDetails,
         RequestInfo requestInfo,
-        Exception   exception,
-        @Nullable ExceptionFile[] exceptionFiles
+        Exception   exception
     ) {
         record AppDetails(
             String javaVersion,
-            String jakartaEEVersion,
-            String matsdjavaframeworkVersion
+            String matsdjavaframeworkVersion,
+            String serverInfo
         ) { }
 
         record RequestInfo(
@@ -203,13 +164,6 @@ class ResponseRenderer {
             String className,
             String message,
             String stackTrace
-        ) { }
-
-        record ExceptionFile(
-            String fullPath,
-            String method,
-            String sourceCode,
-            int highlightedLine
         ) { }
     }
 }
