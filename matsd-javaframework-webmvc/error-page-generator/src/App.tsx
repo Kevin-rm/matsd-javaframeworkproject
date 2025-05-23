@@ -97,7 +97,6 @@ const App = () => {
             className="rounded-md border border-border/30 bg-black/20"
             maxHeight="400px"
             code={stackTrace}
-            showLineNumbers={false}
           />
         </CardContent>
       </TabsContentCard>
@@ -166,7 +165,6 @@ const App = () => {
                   maxHeight="400px"
                   code={JSON.stringify(error.requestInfo.body, null, 2)}
                   language="json"
-                  showLineNumbers={false}
                 />
               </div>
             )}

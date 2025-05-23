@@ -16,16 +16,12 @@ const CodeBlock = ({
   className = "",
   maxHeight,
   code,
-  language = "java",
-  highlightedLine,
-  showLineNumbers = true,
+  language = "java"
 }: {
   className?: string;
   maxHeight?: string;
   code: string;
   language?: "java" | "json";
-  highlightedLine?: number;
-  showLineNumbers?: boolean;
 }) => {
   const [copied, setCopied] = useState(false);
   const [hoveredLine, setHoveredLine] = useState<number | null>(null);
@@ -49,25 +45,12 @@ const CodeBlock = ({
       <pre className="text-sm p-3 leading-relaxed">
           {codeLines.map((line, index) => {
             const lineNumber = index + 1;
-            const isHighlightedLine = highlightedLine === lineNumber;
 
             return (
-              <div
-                key={index}
-                className={cn(
-                  "grid group",
-                  showLineNumbers ? "grid-cols-[2.5rem_1fr]" : "",
-                  isHighlightedLine && "bg-red-400/40"
-                )}
-              >
-                {showLineNumbers && (
-                  <span className="text-gray-400 text-right pr-3 select-none">
-                    {lineNumber}
-                  </span>
-                )}
+              <div key={index} className="grid group">
                 <code
                   className={cn(
-                    "language-java pl-3", hoveredLine === lineNumber && !isHighlightedLine && "bg-white/10"
+                    "language-java pl-3", hoveredLine === lineNumber && "bg-white/10"
                   )}
                   dangerouslySetInnerHTML={{ __html: hljs.highlight(line, { language }).value }}
                   onMouseEnter={() => setHoveredLine(lineNumber)}
