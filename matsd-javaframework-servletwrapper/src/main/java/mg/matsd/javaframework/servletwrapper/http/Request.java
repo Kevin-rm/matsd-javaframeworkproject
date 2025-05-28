@@ -1,5 +1,6 @@
 package mg.matsd.javaframework.servletwrapper.http;
 
+import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -473,6 +474,10 @@ public class Request {
 
     public String getUri() {
         return raw.getRequestURI();
+    }
+
+    public ServletContext getServletContext() {
+        return raw.getServletContext();
     }
 
     public String getContextPath() {

@@ -27,7 +27,7 @@ type RowProps = {
 export const Row = ({ label, value, isLast = false }: RowProps) => {
   return (
     <tr className={!isLast ? "border-b border-border/30" : ""}>
-      <td className="px-4 py-3 bg-muted/10 font-medium text-muted-foreground w-1/5">
+      <td className="px-4 py-3 bg-muted/10 text-muted-foreground w-1/5">
         {label}
       </td>
       <td className="px-4 py-3">

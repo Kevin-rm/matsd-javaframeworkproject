@@ -50,7 +50,7 @@ const CodeBlock = ({
               <div key={index} className="grid group">
                 <code
                   className={cn(
-                    "language-java pl-3", hoveredLine === lineNumber && "bg-white/10"
+                    "pl-3", `language-${language}`, hoveredLine === lineNumber && "bg-white/10"
                   )}
                   dangerouslySetInnerHTML={{ __html: hljs.highlight(line, { language }).value }}
                   onMouseEnter={() => setHoveredLine(lineNumber)}

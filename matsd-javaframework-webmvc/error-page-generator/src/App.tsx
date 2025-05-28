@@ -161,21 +161,23 @@ const App = () => {
               </Table>
             </div>
 
-            {requestInfo.body && (
-              <div>
-                <h3 className="text-md font-medium mb-3 flex items-center gap-2">
-                  <Badge variant="outline" className="rounded-md font-normal">
-                    Corps de la requête
-                  </Badge>
-                </h3>
+            <div>
+              <h3 className="text-md font-medium mb-3 flex items-center gap-2">
+                <Badge variant="outline" className="rounded-md font-normal">
+                  Corps de la requête
+                </Badge>
+              </h3>
+              {requestInfo.body ?
                 <CodeBlock
                   className="rounded-md border border-border/30 bg-black/20"
                   maxHeight="400px"
                   code={JSON.stringify(error.requestInfo.body, null, 2)}
                   language="json"
-                />
-              </div>
-            )}
+                /> :
+                <div className="p-4 rounded-md border border-border/30 bg-black/20">
+                  <span className="text-sm font-mono">Pas de données</span>
+                </div>}
+            </div>
           </div>
         </CardContent>
       </TabsContentCard>

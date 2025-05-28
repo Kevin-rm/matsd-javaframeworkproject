@@ -53,7 +53,7 @@ class ResponseRenderer {
                         new Error.AppDetails(
                             System.getProperty("java.version"),
                             WebApplicationContainer.FRAMEWORK_VERSION,
-                            request.getRaw().getServletContext().getServerInfo(),
+                            request.getServletContext().getServerInfo(),
                             request.getContextPath()),
                         new Error.RequestInfo(
                             request.getMethod(),
