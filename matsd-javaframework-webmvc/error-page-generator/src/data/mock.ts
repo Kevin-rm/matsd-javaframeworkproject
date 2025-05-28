@@ -4,6 +4,7 @@ const appDetails: AppDetails = {
   javaVersion: "21.0.1",
   matsdjavaframeworkVersion: "1.0-SNAPSHOT",
   serverInfo: "Apache Tomcat",
+  contextPath: "/mon-app"
 };
 
 const requestInfo: RequestInfo = {

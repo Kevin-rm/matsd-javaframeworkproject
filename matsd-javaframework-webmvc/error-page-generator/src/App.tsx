@@ -85,6 +85,18 @@ const TabsContentCard = ({
 const App = () => {
   const [error] = useState<Error>(() => (window as any).ERROR_DATA || errorMockData);
 
+  const DefaultStyledRow = ({ label, value, isLast }: {
+    label: string;
+    value: string;
+    isLast?: boolean;
+  }) => {
+    return <Row
+      label={label}
+      value={<span className="break-all font-mono text-sm">{value}</span>}
+      isLast={isLast}
+    />;
+  };
+
   const StackTraceTabsContent = ({ stackTrace }: { stackTrace: string }) => {
     return (
       <TabsContentCard value="stack-trace">
@@ -127,11 +139,7 @@ const App = () => {
                     {requestInfo.method}
                   </Badge>
                 }/>
-                <Row
-                  label="URL"
-                  value={<span className="font-mono text-sm">{requestInfo.url}</span>}
-                  isLast
-                />
+                <DefaultStyledRow label="URL" value={requestInfo.url} isLast/>
               </Table>
             </div>
 
@@ -143,10 +151,10 @@ const App = () => {
               </h3>
               <Table>
                 {Object.entries(requestInfo.headers).map(([key, value], index, arr) => (
-                  <Row
+                  <DefaultStyledRow
                     key={key}
                     label={key}
-                    value={<span className="break-all font-mono text-sm">{value}</span>}
+                    value={value}
                     isLast={index === arr.length - 1}
                   />
                 ))}
@@ -196,7 +204,8 @@ const App = () => {
           <Table>
             <InternalRow label="Version Java" badgeText={appDetails.javaVersion}/>
             <InternalRow label="Version matsd-javaframework" badgeText={appDetails.matsdjavaframeworkVersion}/>
-            <InternalRow label="Informations du serveur" badgeText={appDetails.serverInfo}/>
+            <DefaultStyledRow label="Serveur d'application" value={appDetails.serverInfo}/>
+            <DefaultStyledRow label="Chemin du contexte" value={appDetails.contextPath}/>
           </Table>
         </CardContent>
       </TabsContentCard>

@@ -4,7 +4,7 @@ import React from "react";
 import { cn } from "@/lib/utils.ts";
 
 export const Table = ({ children, className = "" }: {
-  children: React.ReactNode;
+  children: React.ReactElement<RowProps> | React.ReactElement<RowProps>[];
   className?: string;
 }) => {
   return (
@@ -18,11 +18,13 @@ export const Table = ({ children, className = "" }: {
   );
 };
 
-export const Row = ({ label, value, isLast = false }: {
+type RowProps = {
   label: string;
   value: React.ReactNode;
   isLast?: boolean;
-}) => {
+};
+
+export const Row = ({ label, value, isLast = false }: RowProps) => {
   return (
     <tr className={!isLast ? "border-b border-border/30" : ""}>
       <td className="px-4 py-3 bg-muted/10 font-medium text-muted-foreground w-1/5">

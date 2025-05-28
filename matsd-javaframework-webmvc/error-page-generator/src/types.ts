@@ -2,6 +2,7 @@ export type AppDetails = {
   javaVersion: string;
   matsdjavaframeworkVersion: string;
   serverInfo: string;
+  contextPath: string;
 };
 
 export type RequestInfo = {

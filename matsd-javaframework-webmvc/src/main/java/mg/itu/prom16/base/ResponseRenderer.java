@@ -53,7 +53,8 @@ class ResponseRenderer {
                         new Error.AppDetails(
                             System.getProperty("java.version"),
                             WebApplicationContainer.FRAMEWORK_VERSION,
-                            request.getRaw().getServletContext().getServerInfo()),
+                            request.getRaw().getServletContext().getServerInfo(),
+                            request.getContextPath()),
                         new Error.RequestInfo(
                             request.getMethod(),
                             request.getFullUrl(),
@@ -150,7 +151,8 @@ class ResponseRenderer {
         record AppDetails(
             String javaVersion,
             String matsdjavaframeworkVersion,
-            String serverInfo
+            String serverInfo,
+            String contextPath
         ) { }
 
         record RequestInfo(
