@@ -5,7 +5,7 @@ import type { AppDetails, Error, Exception, RequestInfo } from "./types.ts"
 import { errorMockData } from "./data/mock.ts"
 import { ThemeProvider } from "@/components/ThemeProvider.tsx"
 import CodeBlock from "@/components/CodeBlock.tsx"
-import { AlertCircle, Info, Layers, Server } from "lucide-react"
+import { AlertCircle, Eye, FileText, Info, Layers, Server } from "lucide-react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card.tsx";
 import { Badge } from "@/components/ui/Badge.tsx";
@@ -98,11 +98,30 @@ const App = () => {
   };
 
   const StackTraceTabsContent = ({ stackTrace }: { stackTrace: string }) => {
+    const [viewMode, setViewMode] = useState<"explorer" | "raw">("explorer");
+
     return (
       <TabsContentCard value="stack-trace">
-        <CardHeader className="flex flex-row items-center gap-2 pb-2">
-          <Layers className="h-5 w-5 text-amber-500"/>
-          <CardTitle className="text-xl font-medium">Piles d'appel</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <div className="flex items-center gap-2">
+            <Layers className="h-5 w-5 text-amber-500"/>
+            <CardTitle className="text-xl font-medium">Piles d'appel</CardTitle>
+          </div>
+
+          <Tabs defaultValue={viewMode}>
+            <TabsList
+              className="bg-gradient-to-r from-gray-900/80 to-gray-950/90 border border-gray-800/80 overflow-hidden mb-2 grid grid-cols-2 shadow-lg backdrop-blur-md">
+              <TabsTrigger value="explorer" onClick={() => setViewMode("explorer")}>
+                <Eye/>
+                <span>Explorateur</span>
+              </TabsTrigger>
+              <TabsTrigger value="raw" onClick={() => setViewMode("raw")}>
+                <FileText/>
+                <span>Format brut</span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+
         </CardHeader>
         <CardContent>
           <CodeBlock
@@ -251,9 +270,9 @@ const App = () => {
                 </TabsTrigger>
               </TabsList>
 
-              <StackTraceTabsContent stackTrace={error.exception.stackTrace}/>
+              <StackTraceTabsContent  stackTrace={error.exception.stackTrace}/>
               <RequestInfoTabsContent requestInfo={error.requestInfo}/>
-              <AppDetailsTabsContent appDetails={error.appDetails}/>
+              <AppDetailsTabsContent  appDetails={error.appDetails}/>
             </Tabs>
           </motion.div>
         </div>

@@ -6,6 +6,7 @@ import mg.itu.prom16.base.internal.handler.AbstractHandler;
 import mg.itu.prom16.exceptions.InvalidReturnTypeException;
 import mg.itu.prom16.support.ThirdPartyConfiguration;
 import mg.itu.prom16.support.WebApplicationContainer;
+import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.io.ClassPathResource;
 import mg.matsd.javaframework.servletwrapper.exceptions.HttpStatusException;
 import mg.matsd.javaframework.servletwrapper.http.*;
@@ -13,6 +14,7 @@ import mg.matsd.javaframework.servletwrapper.http.*;
 import java.io.*;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -63,7 +65,8 @@ class ResponseRenderer {
                         new Error.Exception(
                             throwable.getClass().getName(),
                             throwable.getMessage(),
-                            stringWriter.toString())
+                            stringWriter.toString(),
+                            extractStackTraceElements(throwable))
                     ))
                 ))
             ).flush();
@@ -142,6 +145,16 @@ class ResponseRenderer {
             .buildCompleteUrl(originalStringParts[1].stripLeading()));
     }
 
+    private static Error.StackTraceElement[] extractStackTraceElements(Throwable throwable) {
+        return Arrays.stream(throwable.getStackTrace())
+            .map(stackTraceElement -> new Error.StackTraceElement(
+                stackTraceElement.getClassName(),
+                stackTraceElement.getMethodName(),
+                stackTraceElement.getLineNumber(),
+                stackTraceElement.getFileName()
+            )).toArray(Error.StackTraceElement[]::new);
+    }
+
     private record Error(
         String      statusCodeReason,
         AppDetails  appDetails,
@@ -162,10 +175,18 @@ class ResponseRenderer {
             Map<String, Object> body
         ) { }
 
+        record StackTraceElement(
+            String className,
+            String methodName,
+            int    lineNumber,
+            @Nullable String fileName
+        ) { }
+
         record Exception(
             String className,
             String message,
-            String stackTrace
+            String stackTrace,
+            @Nullable StackTraceElement[] stackTraceElements
         ) { }
     }
 }
