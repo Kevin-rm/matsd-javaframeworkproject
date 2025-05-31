@@ -23,6 +23,7 @@ export type Exception = {
   className:  string;
   message:    string;
   stackTrace: string;
+  stackTraceElements: StackTraceElement[];
 };
 
 export type Error = {

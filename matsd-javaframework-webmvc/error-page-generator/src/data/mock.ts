@@ -1,4 +1,4 @@
-import type { AppDetails, Error, Exception, RequestInfo } from "../types.ts";
+import type { AppDetails, Error, Exception, RequestInfo, StackTraceElement } from "../types.ts";
 
 const appDetails: AppDetails = {
   javaVersion: "21.0.1",
@@ -21,11 +21,79 @@ const requestInfo: RequestInfo = {
   },
 };
 
+const stackTraceElements: StackTraceElement[] = [
+  {
+    className: "mg.itu.prom16.base.internal.handler.AbstractHandler",
+    methodName: "invokeMethod",
+    lineNumber: 117,
+    fileName: "AbstractHandler.java"
+  },
+  {
+    className: "mg.itu.prom16.base.ResponseRenderer",
+    methodName: "doRender", 
+    lineNumber: 96,
+    fileName: "ResponseRenderer.java"
+  },
+  {
+    className: "mg.itu.prom16.base.FrontServlet",
+    methodName: "processRequest",
+    lineNumber: 170,
+    fileName: "FrontServlet.java"
+  },
+  {
+    className: "mg.itu.prom16.base.FrontServlet",
+    methodName: "service",
+    lineNumber: 188,
+    fileName: "FrontServlet.java"
+  },
+  {
+    className: "jakarta.servlet.http.HttpServlet",
+    methodName: "service",
+    lineNumber: 658,
+    fileName: "HttpServlet.java"
+  },
+  {
+    className: "org.apache.catalina.core.ApplicationFilterChain",
+    methodName: "internalDoFilter",
+    lineNumber: 205,
+    fileName: "ApplicationFilterChain.java"
+  },
+  {
+    className: "org.apache.catalina.core.ApplicationFilterChain",
+    methodName: "doFilter",
+    lineNumber: 149,
+    fileName: "ApplicationFilterChain.java"
+  },
+  {
+    className: "org.apache.tomcat.websocket.server.WsFilter",
+    methodName: "doFilter",
+    lineNumber: 51,
+    fileName: "WsFilter.java"
+  },
+  {
+    className: "mg.itu.ticketing.controller.PublicController",
+    methodName: "home",
+    lineNumber: 12,
+    fileName: "PublicController.java"
+  },
+  {
+    className: "java.lang.reflect.Method",
+    methodName: "invoke",
+    lineNumber: 580
+  },
+  {
+    className: "java.lang.Thread",
+    methodName: "run",
+    lineNumber: 1583
+  }
+];
+
 const exception: Exception = {
   className: "mg.matsd.javaframework.NotFoundHttpException",
   message: `error: unreported exception FileNotFoundException; must be caught or declared to be thrown 
   FileReader fr = new FileReader(file);
 `,
+  stackTraceElements: stackTraceElements,
   stackTrace: `jakarta.servlet.ServletException: java.lang.RuntimeException: Coucou les amis
 \tat mg.itu.prom16.base.internal.handler.AbstractHandler.invokeMethod(AbstractHandler.java:117)
 \tat mg.itu.prom16.base.ResponseRenderer.doRender(ResponseRenderer.java:96)
