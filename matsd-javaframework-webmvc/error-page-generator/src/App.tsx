@@ -224,10 +224,12 @@ const App = () => {
               className="group block p-4 rounded-lg border border-border/30 bg-black/20 hover:bg-black/40 transition-all duration-200 hover:border-border/60"
             >
               <div className="flex items-start gap-3">
+                <div className={cn("p-2 rounded-md bg-opacity-20 flex items-center justify-center", resource.getBadgeClassName())}>
+                  <Icon className="size-4"/>
+                </div>
                 <div className="flex-1">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2 mb-1">
-                      <Icon className="size-5" />
                       <h4 className="font-medium group-hover:text-white transition-colors">{resource.title}</h4>
                       <ExternalLink
                         className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"/>
