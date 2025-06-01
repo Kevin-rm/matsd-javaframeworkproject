@@ -65,7 +65,7 @@ Caused by: java.lang.RuntimeException: Coucou les amis
 
 export const errorMockData: Error = {
   statusCodeReason: "Internal Server Error",
-  appDetails: appDetails,
+  appDetails:  appDetails,
   requestInfo: requestInfo,
-  exception: exception
+  exception:   exception
 };

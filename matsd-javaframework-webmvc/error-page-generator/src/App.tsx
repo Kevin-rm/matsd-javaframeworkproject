@@ -5,13 +5,14 @@ import type { AppDetails, Error, Exception, RequestInfo } from "./types.ts"
 import { errorMockData } from "./data/mock.ts"
 import { ThemeProvider } from "@/components/ThemeProvider.tsx"
 import CodeBlock from "@/components/CodeBlock.tsx"
-import { AlertCircle, Info, Layers, Server } from "lucide-react"
+import { AlertCircle, BookOpen, ExternalLink, Info, Layers, Server } from "lucide-react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card.tsx";
 import { Badge } from "@/components/ui/Badge.tsx";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs.tsx";
 import { cn } from "@/lib/utils.ts";
 import { Row, Table } from "@/components/Table.tsx";
+import { helpResourcesData, type ResourceItem } from "@/data/helpResourcesData.ts";
 
 const Header = ({ statusCodeReason }: { statusCodeReason: string }) => {
   return <motion.div
@@ -95,11 +96,9 @@ const App = () => {
 
   const StackTraceTabsContent = ({ stackTrace }: { stackTrace: string }) => {
     return <TabsContentCard value="stack-trace">
-      <CardHeader className="flex flex-row items-center pb-2">
-        <div className="flex items-center gap-2">
-          <Layers className="h-5 w-5 text-amber-500"/>
-          <CardTitle className="text-xl font-medium">Piles d'appel</CardTitle>
-        </div>
+      <CardHeader className="flex items-center gap-2 pb-2">
+        <Layers className="h-5 w-5 text-amber-500"/>
+        <CardTitle className="text-xl font-medium">Piles d'appel</CardTitle>
       </CardHeader>
       <CardContent>
         <CodeBlock
@@ -113,7 +112,7 @@ const App = () => {
 
   const RequestInfoTabsContent = ({ requestInfo }: { requestInfo: RequestInfo }) => {
     return <TabsContentCard value="request">
-      <CardHeader className="flex flex-row items-center gap-2 pb-2">
+      <CardHeader className="flex items-center gap-2 pb-2">
         <Server className="h-5 w-5 text-blue-500"/>
         <CardTitle className="text-xl font-medium">Informations de requête</CardTitle>
       </CardHeader>
@@ -189,7 +188,7 @@ const App = () => {
     };
 
     return <TabsContentCard value="app-details">
-      <CardHeader className="flex flex-row items-center gap-2 pb-2">
+      <CardHeader className="flex items-center gap-2 pb-2">
         <Info className="h-5 w-5 text-green-500"/>
         <CardTitle className="text-xl font-medium">Détails de l'application</CardTitle>
       </CardHeader>
@@ -202,6 +201,51 @@ const App = () => {
         </Table>
       </CardContent>
     </TabsContentCard>;
+  };
+
+  const HelpResourcesTabsContent = () => {
+    const [resources] = useState<ResourceItem[]>(helpResourcesData);
+
+    return <TabsContentCard value="help-resources">
+      <CardHeader className="flex items-center gap-2 pb-4">
+        <BookOpen className="h-5 w-5 text-purple-500"/>
+        <CardTitle className="text-xl font-medium">Ressources d'aide</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="grid gap-3 sm:grid-cols-2">
+          {resources.map((resource, index) => {
+            const Icon = resource.getIcon();
+
+            return <a
+              key={index}
+              href={resource.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group block p-4 rounded-lg border border-border/30 bg-black/20 hover:bg-black/40 transition-all duration-200 hover:border-border/60"
+            >
+              <div className="flex items-start gap-3">
+                <div className="flex-1">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Icon className="size-5" />
+                      <h4 className="font-medium group-hover:text-white transition-colors">{resource.title}</h4>
+                      <ExternalLink
+                        className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"/>
+                    </div>
+                    <Badge className={resource.getBadgeClassName()}>
+                      {resource.getDisplayType()}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground group-hover:text-gray-300 transition-colors">
+                    {resource.description}
+                  </p>
+                </div>
+              </div>
+            </a>;
+          })}
+        </div>
+      </CardContent>
+    </TabsContentCard>
   };
 
   return (
@@ -226,7 +270,7 @@ const App = () => {
           >
             <Tabs defaultValue="stack-trace">
               <TabsList
-                className="bg-gradient-to-r from-gray-900/80 to-gray-950/90 border border-gray-800/80 overflow-hidden mb-2 grid grid-cols-3 shadow-lg backdrop-blur-md">
+                className="bg-gradient-to-r from-gray-900/80 to-gray-950/90 border border-gray-800/80 overflow-hidden mb-2 grid grid-cols-4 shadow-lg backdrop-blur-md">
                 <TabsTrigger value="stack-trace">
                   <Layers/>
                   <span className="hidden sm:inline">Piles d'appel</span>
@@ -239,11 +283,16 @@ const App = () => {
                   <Info/>
                   <span className="hidden sm:inline">Application</span>
                 </TabsTrigger>
+                <TabsTrigger value="help-resources">
+                  <BookOpen/>
+                  <span className="hidden sm:inline">Ressources</span>
+                </TabsTrigger>
               </TabsList>
 
               <StackTraceTabsContent  stackTrace={error.exception.stackTrace}/>
               <RequestInfoTabsContent requestInfo={error.requestInfo}/>
               <AppDetailsTabsContent  appDetails={error.appDetails}/>
+              <HelpResourcesTabsContent/>
             </Tabs>
           </motion.div>
         </div>
