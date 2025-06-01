@@ -143,6 +143,9 @@
     animation: spin 18s linear infinite;
   }
 
+  .hide-scrollbar [data-slot="scroll-area-scrollbar"] {
+    display: none;
+  }
 }
 
 @keyframes spin {

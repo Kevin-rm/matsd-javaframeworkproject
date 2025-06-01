@@ -1,10 +1,12 @@
 package mg.itu.prom16.utils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import mg.itu.prom16.base.FrontServlet;
 import mg.itu.prom16.base.internal.request.RequestContext;
 import mg.itu.prom16.base.internal.request.RequestContextHolder;
+import mg.itu.prom16.support.ThirdPartyConfiguration;
 import mg.itu.prom16.support.WebApplicationContainer;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.servletwrapper.http.FlashBag;
@@ -38,6 +40,10 @@ public abstract class WebFacade {
 
     public static FlashBag flashBag() {
         return currentSession().getFlashBag();
+    }
+
+    public static ObjectMapper objectMapper() {
+        return (ObjectMapper) webApplicationContainer().getManagedInstance(ThirdPartyConfiguration.JACKSON_OBJECT_MAPPER_ID);
     }
 
     public static WebApplicationContainer webApplicationContainer() {
