@@ -14,7 +14,6 @@ import mg.matsd.javaframework.servletwrapper.http.*;
 import java.io.*;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -162,13 +161,6 @@ class ResponseRenderer {
             String url,
             Map<String, String> headers,
             Map<String, Object> body
-        ) { }
-
-        record StackTraceElement(
-            String className,
-            String methodName,
-            int    lineNumber,
-            @Nullable String fileName
         ) { }
 
         record Exception(
