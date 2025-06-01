@@ -10,19 +10,19 @@ import java.util.function.Function;
 
 public final class UtilFunctions {
 
-    public static Map<String, Object> collectAttributes(
-        final Enumeration<String> attributeNames,
-        final Function<String, Object> valueGetter
+    public static Map<String, ?> collectKeyValues(
+        final Enumeration<String> keys,
+        final Function<String, ?> valueGetter
     ) {
-        Assert.notNull(attributeNames);
+        Assert.notNull(keys);
         Assert.notNull(valueGetter);
 
-        final Map<String, Object> attributes = new HashMap<>();
-        while (attributeNames.hasMoreElements()) {
-            String key = attributeNames.nextElement();
-            attributes.put(key, valueGetter.apply(key));
+        final Map<String, Object> keyValues = new HashMap<>();
+        while (keys.hasMoreElements()) {
+            String key = keys.nextElement();
+            keyValues.put(key, valueGetter.apply(key));
         }
 
-        return Collections.unmodifiableMap(attributes);
+        return Collections.unmodifiableMap(keyValues);
     }
 }

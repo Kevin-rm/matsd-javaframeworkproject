@@ -1,5 +1,7 @@
 package mg.matsd.javaframework.security.exceptions;
 
+import mg.matsd.javaframework.servletwrapper.exceptions.ForbiddenException;
+
 public class UnauthenticatedUserException extends ForbiddenException {
 
     public UnauthenticatedUserException() {

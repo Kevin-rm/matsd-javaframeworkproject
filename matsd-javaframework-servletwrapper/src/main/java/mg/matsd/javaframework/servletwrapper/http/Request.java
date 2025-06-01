@@ -1,5 +1,6 @@
 package mg.matsd.javaframework.servletwrapper.http;
 
+import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -9,21 +10,24 @@ import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.core.utils.CollectionUtils;
 import mg.matsd.javaframework.core.utils.StringUtils;
 import mg.matsd.javaframework.core.utils.converter.StringToTypeConverter;
-import mg.matsd.javaframework.servletwrapper.base.internal.UtilFunctions;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static mg.matsd.javaframework.servletwrapper.base.internal.UtilFunctions.*;
+
 public class Request {
     protected final HttpServletRequest raw;
     @Nullable
     protected Session session;
     @Nullable
-    private Map<String, Object>   attributes;
+    private Map<String, String>   headers;
     @Nullable
     private Map<String, Cookie>   cookies;
+    @Nullable
+    private Map<String, Object>   attributes;
     @Nullable
     private Map<String, String[]> queryParameters;
     @Nullable
@@ -57,6 +61,14 @@ public class Request {
         return getSession(false);
     }
 
+    @SuppressWarnings("unchecked")
+    public Map<String, String> getHeaders() {
+        if (headers != null) return headers;
+
+        headers = (Map<String, String>) collectKeyValues(raw.getHeaderNames(), raw::getHeader);
+        return headers;
+    }
+
     public Map<String, Cookie> getCookies() {
         if (this.cookies != null) return this.cookies;
 
@@ -87,10 +99,11 @@ public class Request {
         return !cookies.isEmpty() && cookies.containsKey(name);
     }
 
+    @SuppressWarnings("unchecked")
     public Map<String, Object> getAttributes() {
         if (attributes != null) return attributes;
 
-        attributes = UtilFunctions.collectAttributes(raw.getAttributeNames(), raw::getAttribute);
+        attributes = (Map<String, Object>) collectKeyValues(raw.getAttributeNames(), raw::getAttribute);
         return attributes;
     }
 
@@ -444,12 +457,27 @@ public class Request {
         return isMethod("DELETE");
     }
 
+    @Nullable
+    public String getQueryString() {
+        return raw.getQueryString();
+    }
+
     public String getUrlWithoutQueryString() {
         return raw.getRequestURL().toString();
     }
 
+    public String getFullUrl() {
+        String url = getUrlWithoutQueryString();
+        String queryString = getQueryString();
+        return queryString == null ? url : url + "?" + queryString;
+    }
+
     public String getUri() {
         return raw.getRequestURI();
+    }
+
+    public ServletContext getServletContext() {
+        return raw.getServletContext();
     }
 
     public String getContextPath() {
@@ -468,7 +496,7 @@ public class Request {
         return raw.getProtocol();
     }
 
-    public String getServerName() {
+    public String getHost() {
         return raw.getServerName();
     }
 

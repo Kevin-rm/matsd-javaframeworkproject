@@ -10,7 +10,7 @@ public abstract class WebUtils {
 
         StringBuilder stringBuilder = new StringBuilder(request.getProtocol())
             .append("://")
-            .append(request.getServerName());
+            .append(request.getHost());
 
         int port = request.getPort();
         if (port != 80 && port != 443)

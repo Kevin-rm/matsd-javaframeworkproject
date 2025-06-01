@@ -7,17 +7,17 @@ import mg.itu.prom16.exceptions.InvalidReturnTypeException;
 import mg.itu.prom16.support.ThirdPartyConfiguration;
 import mg.itu.prom16.support.WebApplicationContainer;
 import mg.matsd.javaframework.core.io.ClassPathResource;
-import mg.matsd.javaframework.core.utils.StringUtils;
-import mg.matsd.javaframework.security.exceptions.HttpStatusException;
+import mg.matsd.javaframework.servletwrapper.exceptions.HttpStatusException;
 import mg.matsd.javaframework.servletwrapper.http.*;
 
 import java.io.*;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 class ResponseRenderer {
-    private static final String ERROR_PAGE_TEMPLATE_FILE = "error-page-template.txt";
+    private static final String ERROR_PAGE_TEMPLATE_FILE = "error-pages/exception-page.html";
     private static final String ERROR_PAGE_TEMPLATE_CONTENT;
 
     static {
@@ -37,20 +37,36 @@ class ResponseRenderer {
         this.webApplicationContainer = webApplicationContainer;
     }
 
-    static void doRenderError(Throwable throwable, Response response) throws IOException {
-        StringWriter stringWriter = new StringWriter();
+    void doRenderError(Throwable throwable, Request request, Response response) throws IOException {
+        final StringWriter stringWriter = new StringWriter();
         throwable.printStackTrace(new PrintWriter(stringWriter));
 
+        final HttpStatusCode httpStatusCode = throwable instanceof HttpStatusException httpStatusException ?
+            HttpStatusCode.valueOf(httpStatusException.getStatusCode()) : HttpStatusCode.INTERNAL_SERVER_ERROR;
+        final ObjectMapper objectMapper = (ObjectMapper) webApplicationContainer.getManagedInstance(ThirdPartyConfiguration.JACKSON_OBJECT_MAPPER_ID);
         response.asHtml()
-            .setStatus(throwable instanceof HttpStatusException httpStatusException ?
-                httpStatusException.getStatusCode() : HttpStatusCode.INTERNAL_SERVER_ERROR.getValue())
-            .write(String.format(ERROR_PAGE_TEMPLATE_CONTENT,
-                throwable.getClass().getName(),
-                StringUtils.escapeHtml(throwable.getMessage()),
-                response.getStatus(),
-                StringUtils.escapeHtml(stringWriter.toString())
-            ))
-            .flush();
+            .setStatus(httpStatusCode.getValue())
+            .write(ERROR_PAGE_TEMPLATE_CONTENT.replace("<!-- ERROR_DATA_PLACEHOLDER -->",
+                String.format("<script>window.ERROR_DATA = %s;</script>",
+                    objectMapper.writeValueAsString(new Error(
+                        httpStatusCode.getReason(),
+                        new Error.AppDetails(
+                            System.getProperty("java.version"),
+                            WebApplicationContainer.FRAMEWORK_VERSION,
+                            request.getServletContext().getServerInfo(),
+                            request.getContextPath()),
+                        new Error.RequestInfo(
+                            request.getMethod(),
+                            request.getFullUrl(),
+                            request.getHeaders(),
+                            null), // Let's assume this is null for now
+                        new Error.Exception(
+                            throwable.getClass().getName(),
+                            throwable.getMessage(),
+                            stringWriter.toString())
+                    ))
+                ))
+            ).flush();
     }
 
     void doRender(
@@ -124,5 +140,32 @@ class ResponseRenderer {
         response.redirect(
             ((RedirectData) webApplicationContainer.getManagedInstance(RedirectData.MANAGED_INSTANCE_ID))
             .buildCompleteUrl(originalStringParts[1].stripLeading()));
+    }
+
+    private record Error(
+        String      statusCodeReason,
+        AppDetails  appDetails,
+        RequestInfo requestInfo,
+        Exception   exception
+    ) {
+        record AppDetails(
+            String javaVersion,
+            String matsdjavaframeworkVersion,
+            String serverInfo,
+            String contextPath
+        ) { }
+
+        record RequestInfo(
+            String method,
+            String url,
+            Map<String, String> headers,
+            Map<String, Object> body
+        ) { }
+
+        record Exception(
+            String className,
+            String message,
+            String stackTrace
+        ) { }
     }
 }

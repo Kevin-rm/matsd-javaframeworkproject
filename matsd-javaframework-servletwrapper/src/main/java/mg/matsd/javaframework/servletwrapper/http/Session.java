@@ -43,10 +43,11 @@ public class Session {
         return get(key) != null;
     }
 
+    @SuppressWarnings("unchecked")
     public Map<String, Object> all() {
         if (attributes != null) return attributes;
 
-        attributes = UtilFunctions.collectAttributes(raw.getAttributeNames(), raw::getAttribute);
+        attributes = (Map<String, Object>) UtilFunctions.collectKeyValues(raw.getAttributeNames(), raw::getAttribute);
         return attributes;
     }
 
