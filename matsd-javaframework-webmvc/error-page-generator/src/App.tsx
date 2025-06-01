@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/Badge.tsx";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs.tsx";
 import { cn } from "@/lib/utils.ts";
 import { Row, Table } from "@/components/Table.tsx";
-import { helpResourcesData, type ResourceItem } from "@/data/helpResourcesData.ts";
+import { helpResourcesData, type ResourceItem } from "@/data/helpResources.ts";
 
 const Header = ({ statusCodeReason }: { statusCodeReason: string }) => {
   return <motion.div
