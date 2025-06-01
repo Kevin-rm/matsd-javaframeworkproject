@@ -3,53 +3,22 @@
 import React, { useState } from "react"
 import type { AppDetails, Error, Exception, RequestInfo } from "./types.ts"
 import { errorMockData } from "./data/mock.ts"
-import { ThemeProvider, useTheme } from "@/components/ThemeProvider.tsx"
+import { ThemeProvider } from "@/components/ThemeProvider.tsx"
 import CodeBlock from "@/components/CodeBlock.tsx"
-import { AlertCircle, Info, Layers, Moon, Server, Sun } from "lucide-react"
+import { AlertCircle, Info, Layers, Server } from "lucide-react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card.tsx";
 import { Badge } from "@/components/ui/Badge.tsx";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs.tsx";
 import { cn } from "@/lib/utils.ts";
 import { Row, Table } from "@/components/Table.tsx";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from "@/components/ui/DropdownMenu.tsx";
-import { Button } from "@/components/ui/Button.tsx";
 
 const Header = ({ statusCodeReason }: { statusCodeReason: string }) => {
-  const ModeToggle = () => {
-    const { setTheme } = useTheme();
-    return <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon">
-          <Sun className="h-[1.2rem] w-[1.2rem] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
-          <Moon className="absolute h-[1.2rem] w-[1.2rem] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
-          <span className="sr-only">Changer de thème</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("light")}>
-          Clair
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>
-          Sombre
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")}>
-          Système
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  };
-
   return <motion.div
     initial={{ opacity: 0, y: -20 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.5 }}
-    className="flex justify-between items-center mb-6"
+    className="mb-6"
   >
     <div className="flex items-center gap-4">
       <AlertCircle className="h-10 w-10 text-red-500 animate-pulse"/>
@@ -60,7 +29,6 @@ const Header = ({ statusCodeReason }: { statusCodeReason: string }) => {
         </p>
       </div>
     </div>
-    <ModeToggle/>
   </motion.div>;
 };
 
