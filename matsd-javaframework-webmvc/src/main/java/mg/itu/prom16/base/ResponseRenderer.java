@@ -65,8 +65,7 @@ class ResponseRenderer {
                         new Error.Exception(
                             throwable.getClass().getName(),
                             throwable.getMessage(),
-                            stringWriter.toString(),
-                            extractStackTraceElements(throwable))
+                            stringWriter.toString())
                     ))
                 ))
             ).flush();
@@ -145,16 +144,6 @@ class ResponseRenderer {
             .buildCompleteUrl(originalStringParts[1].stripLeading()));
     }
 
-    private static Error.StackTraceElement[] extractStackTraceElements(Throwable throwable) {
-        return Arrays.stream(throwable.getStackTrace())
-            .map(stackTraceElement -> new Error.StackTraceElement(
-                stackTraceElement.getClassName(),
-                stackTraceElement.getMethodName(),
-                stackTraceElement.getLineNumber(),
-                stackTraceElement.getFileName()
-            )).toArray(Error.StackTraceElement[]::new);
-    }
-
     private record Error(
         String      statusCodeReason,
         AppDetails  appDetails,
@@ -185,8 +174,7 @@ class ResponseRenderer {
         record Exception(
             String className,
             String message,
-            String stackTrace,
-            @Nullable StackTraceElement[] stackTraceElements
+            String stackTrace
         ) { }
     }
 }
