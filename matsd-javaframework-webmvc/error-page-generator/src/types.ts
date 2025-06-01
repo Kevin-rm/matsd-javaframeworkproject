@@ -12,18 +12,10 @@ export type RequestInfo = {
   body?:   Record<string, unknown>;
 };
 
-export type StackTraceElement = {
-  className:  string;
-  methodName: string;
-  lineNumber: number;
-  fileName?:  string;
-};
-
 export type Exception = {
   className:  string;
   message:    string;
   stackTrace: string;
-  stackTraceElements?: StackTraceElement[];
 };
 
 export type Error = {
