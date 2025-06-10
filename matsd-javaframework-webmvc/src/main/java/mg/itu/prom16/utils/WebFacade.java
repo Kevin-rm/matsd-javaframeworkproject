@@ -9,9 +9,9 @@ import mg.itu.prom16.base.internal.request.RequestContextHolder;
 import mg.itu.prom16.support.ThirdPartyConfiguration;
 import mg.itu.prom16.support.WebApplicationContainer;
 import mg.matsd.javaframework.core.utils.Assert;
-import mg.matsd.javaframework.servletwrapper.http.FlashBag;
-import mg.matsd.javaframework.servletwrapper.http.Request;
-import mg.matsd.javaframework.servletwrapper.http.Session;
+import mg.matsd.javaframework.http.base.FlashBag;
+import mg.matsd.javaframework.http.base.Request;
+import mg.matsd.javaframework.http.base.Session;
 
 public abstract class WebFacade {
     static FrontServlet frontServlet;

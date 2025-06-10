@@ -1,4 +1,4 @@
-package mg.matsd.javaframework.servletwrapper.http;
+package mg.matsd.javaframework.http.base;
 
 public enum HttpStatusCode {
     CONTINUE(100, "Continue"),

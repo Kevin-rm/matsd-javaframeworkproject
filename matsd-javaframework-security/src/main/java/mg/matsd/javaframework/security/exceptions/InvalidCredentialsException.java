@@ -1,6 +1,6 @@
 package mg.matsd.javaframework.security.exceptions;
 
-import mg.matsd.javaframework.servletwrapper.exceptions.ForbiddenException;
+import mg.matsd.javaframework.http.exceptions.ForbiddenException;
 
 public class InvalidCredentialsException extends ForbiddenException {
     private final String identifier;

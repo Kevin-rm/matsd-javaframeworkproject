@@ -5,12 +5,13 @@
 
     <xs:element name="component-scan">
         <xs:complexType>
-            <xs:complexContent>
-                <xs:restriction base="xs:anyType">
-                    <xs:sequence/>
-                    <xs:attribute name="base-package" type="xs:string" use="required"/>
-                </xs:restriction>
-            </xs:complexContent>
+            <xs:attribute name="base-package" type="xs:string" use="required"/>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="property-source">
+        <xs:complexType>
+            <xs:attribute name="location" type="xs:string" use="required"/>
         </xs:complexType>
     </xs:element>
 </xs:schema>

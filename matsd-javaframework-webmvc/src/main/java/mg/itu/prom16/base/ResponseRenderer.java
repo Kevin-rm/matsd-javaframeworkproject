@@ -7,8 +7,8 @@ import mg.itu.prom16.exceptions.InvalidReturnTypeException;
 import mg.itu.prom16.support.ThirdPartyConfiguration;
 import mg.itu.prom16.support.WebApplicationContainer;
 import mg.matsd.javaframework.core.io.ClassPathResource;
-import mg.matsd.javaframework.servletwrapper.exceptions.HttpStatusException;
-import mg.matsd.javaframework.servletwrapper.http.*;
+import mg.matsd.javaframework.http.base.*;
+import mg.matsd.javaframework.http.exceptions.HttpStatusException;
 
 import java.io.*;
 import java.lang.reflect.Method;
@@ -72,7 +72,7 @@ class ResponseRenderer {
     void doRender(
         Request  request,
         Response response,
-        Session  session,
+        Session session,
         AbstractHandler handler,
         Object additionalParameter
     ) throws ServletException, IOException {

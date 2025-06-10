@@ -10,5 +10,6 @@
         <property name="nom" value="Andoharanofotsy"/>
     </managed-instance>
 
+    <container:property-source location="application.properties"/>
     <container:component-scan base-package="com.example.mypackage"/>
 </managed-instances>

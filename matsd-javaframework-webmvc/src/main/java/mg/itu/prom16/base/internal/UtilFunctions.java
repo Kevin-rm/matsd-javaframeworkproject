@@ -17,8 +17,8 @@ import mg.matsd.javaframework.core.utils.AnnotationUtils;
 import mg.matsd.javaframework.core.utils.ClassUtils;
 import mg.matsd.javaframework.core.utils.StringUtils;
 import mg.matsd.javaframework.core.utils.converter.StringToTypeConverter;
-import mg.matsd.javaframework.servletwrapper.http.Request;
-import mg.matsd.javaframework.servletwrapper.http.Session;
+import mg.matsd.javaframework.http.base.Request;
+import mg.matsd.javaframework.http.base.Session;
 import mg.matsd.javaframework.validation.annotations.Validate;
 import mg.matsd.javaframework.validation.base.ValidatorFactory;
 

@@ -1,4 +1,4 @@
-package mg.matsd.javaframework.servletwrapper.base.internal;
+package mg.matsd.javaframework.http.base.internal;
 
 import mg.matsd.javaframework.core.utils.Assert;
 

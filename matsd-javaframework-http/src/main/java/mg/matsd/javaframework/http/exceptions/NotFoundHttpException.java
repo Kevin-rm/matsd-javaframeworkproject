@@ -1,4 +1,4 @@
-package mg.matsd.javaframework.servletwrapper.exceptions;
+package mg.matsd.javaframework.http.exceptions;
 
 public class NotFoundHttpException extends HttpStatusException {
     private static final String DEFAULT_PREFIX = "Ressource non trouvée";

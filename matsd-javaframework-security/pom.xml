@@ -16,7 +16,7 @@
     <dependencies>
         <dependency>
             <groupId>mg.matsd.javaframework</groupId>
-            <artifactId>matsd-javaframework-servletwrapper</artifactId>
+            <artifactId>matsd-javaframework-http</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
         <dependency>

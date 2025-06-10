@@ -1,9 +1,9 @@
 package mg.matsd.javaframework.security.filters;
 
 import mg.matsd.javaframework.core.utils.Assert;
-import mg.matsd.javaframework.servletwrapper.exceptions.ForbiddenException;
-import mg.matsd.javaframework.servletwrapper.http.Request;
-import mg.matsd.javaframework.servletwrapper.http.Response;
+import mg.matsd.javaframework.http.base.Request;
+import mg.matsd.javaframework.http.base.Response;
+import mg.matsd.javaframework.http.exceptions.ForbiddenException;
 
 import java.util.UUID;
 

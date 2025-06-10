@@ -1,9 +1,9 @@
-package mg.matsd.javaframework.servletwrapper.http;
+package mg.matsd.javaframework.http.base;
 
 import jakarta.servlet.http.HttpSession;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
-import mg.matsd.javaframework.servletwrapper.base.internal.UtilFunctions;
+import mg.matsd.javaframework.http.base.internal.UtilFunctions;
 
 import java.util.HashMap;
 import java.util.Map;

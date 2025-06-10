@@ -1,4 +1,4 @@
-package mg.matsd.javaframework.servletwrapper.http;
+package mg.matsd.javaframework.http.base;
 
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
