@@ -9,11 +9,11 @@ import mg.itu.prom16.exceptions.UnexpectedParameterException;
 import mg.itu.prom16.support.WebApplicationContainer;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.di.exceptions.NoSuchManagedInstanceException;
+import mg.matsd.javaframework.http.base.Request;
+import mg.matsd.javaframework.http.base.Response;
+import mg.matsd.javaframework.http.base.Session;
 import mg.matsd.javaframework.security.base.AuthenticationManager;
 import mg.matsd.javaframework.security.base.Security;
-import mg.matsd.javaframework.servletwrapper.http.Request;
-import mg.matsd.javaframework.servletwrapper.http.Response;
-import mg.matsd.javaframework.servletwrapper.http.Session;
 import mg.matsd.javaframework.validation.base.Validator;
 import mg.matsd.javaframework.validation.base.ValidatorFactory;
 
@@ -74,7 +74,7 @@ public abstract class AbstractHandler {
         WebApplicationContainer webApplicationContainer,
         Request  request,
         Response response,
-        Session  session,
+        Session session,
         Object additionalParameter
     ) throws ServletException {
         try {

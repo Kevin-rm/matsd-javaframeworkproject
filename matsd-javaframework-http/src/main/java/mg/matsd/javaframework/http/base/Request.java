@@ -1,4 +1,4 @@
-package mg.matsd.javaframework.servletwrapper.http;
+package mg.matsd.javaframework.http.base;
 
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.Cookie;
@@ -16,7 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static mg.matsd.javaframework.servletwrapper.base.internal.UtilFunctions.*;
+import static mg.matsd.javaframework.http.base.internal.UtilFunctions.*;
 
 public class Request {
     protected final HttpServletRequest raw;

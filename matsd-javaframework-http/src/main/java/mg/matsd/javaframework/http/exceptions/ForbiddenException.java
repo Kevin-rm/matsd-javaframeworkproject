@@ -1,4 +1,4 @@
-package mg.matsd.javaframework.servletwrapper.exceptions;
+package mg.matsd.javaframework.http.exceptions;
 
 public class ForbiddenException extends HttpStatusException {
 

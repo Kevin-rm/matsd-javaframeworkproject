@@ -1,4 +1,4 @@
-package mg.matsd.javaframework.servletwrapper.exceptions;
+package mg.matsd.javaframework.http.exceptions;
 
 import mg.matsd.javaframework.core.exceptions.BaseException;
 

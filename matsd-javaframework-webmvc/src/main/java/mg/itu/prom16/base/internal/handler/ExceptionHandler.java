@@ -4,7 +4,7 @@ import com.sun.jdi.InternalException;
 import mg.itu.prom16.exceptions.UnexpectedParameterException;
 import mg.itu.prom16.support.WebApplicationContainer;
 import mg.matsd.javaframework.core.annotations.Nullable;
-import mg.matsd.javaframework.servletwrapper.http.Request;
+import mg.matsd.javaframework.http.base.Request;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;

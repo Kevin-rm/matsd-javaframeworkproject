@@ -1,7 +1,7 @@
 package mg.itu.prom16.utils;
 
 import mg.matsd.javaframework.core.utils.Assert;
-import mg.matsd.javaframework.servletwrapper.http.Request;
+import mg.matsd.javaframework.http.base.Request;
 
 public abstract class WebUtils {
     

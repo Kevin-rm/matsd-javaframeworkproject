@@ -5,8 +5,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
-import mg.matsd.javaframework.servletwrapper.http.Request;
-import mg.matsd.javaframework.servletwrapper.http.Response;
+import mg.matsd.javaframework.http.base.Request;
+import mg.matsd.javaframework.http.base.Response;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

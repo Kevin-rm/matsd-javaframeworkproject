@@ -4,8 +4,8 @@ import mg.itu.prom16.exceptions.DuplicatePathVariableNameException;
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.core.utils.StringUtils;
-import mg.matsd.javaframework.servletwrapper.http.Request;
-import mg.matsd.javaframework.servletwrapper.http.RequestMethod;
+import mg.matsd.javaframework.http.base.Request;
+import mg.matsd.javaframework.http.base.RequestMethod;
 
 import java.util.*;
 import java.util.regex.Matcher;

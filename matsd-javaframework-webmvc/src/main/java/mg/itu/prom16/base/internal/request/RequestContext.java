@@ -2,14 +2,14 @@ package mg.itu.prom16.base.internal.request;
 
 import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
-import mg.matsd.javaframework.servletwrapper.http.Request;
-import mg.matsd.javaframework.servletwrapper.http.Response;
-import mg.matsd.javaframework.servletwrapper.http.Session;
+import mg.matsd.javaframework.http.base.Request;
+import mg.matsd.javaframework.http.base.Response;
+import mg.matsd.javaframework.http.base.Session;
 
 public class RequestContext {
-    private final Request    request;
+    private final Request  request;
     @Nullable
-    private final Response   response;
+    private final Response response;
     @Nullable
     private volatile Session session;
 

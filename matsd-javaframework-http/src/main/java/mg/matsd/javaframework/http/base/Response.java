@@ -1,4 +1,4 @@
-package mg.matsd.javaframework.servletwrapper.http;
+package mg.matsd.javaframework.http.base;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletOutputStream;
