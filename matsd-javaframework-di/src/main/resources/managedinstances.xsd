@@ -43,6 +43,7 @@
                     </xs:complexType>
                 </xs:element>
 
+                <xs:element ref="container:property-source" minOccurs="0"/>
                 <xs:element ref="container:component-scan" minOccurs="0"/>
             </xs:sequence>
         </xs:complexType>
