@@ -1,8 +1,6 @@
 package mg.matsd.javaframework.di.container;
 
-import mg.matsd.javaframework.core.annotations.Nullable;
 import mg.matsd.javaframework.core.env.DefaultPropertyHolder;
-import mg.matsd.javaframework.core.env.PropertyHolder;
 import mg.matsd.javaframework.core.io.Resource;
 import mg.matsd.javaframework.di.managedinstances.ManagedInstance;
 import mg.matsd.javaframework.di.managedinstances.ManagedInstanceUtils;
