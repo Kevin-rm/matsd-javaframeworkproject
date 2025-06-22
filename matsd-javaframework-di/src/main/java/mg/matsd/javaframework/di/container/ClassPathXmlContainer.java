@@ -3,10 +3,11 @@ package mg.matsd.javaframework.di.container;
 import mg.matsd.javaframework.core.io.ClassPathResource;
 import mg.matsd.javaframework.core.io.Resource;
 
-public final class ClassPathContainer extends AbstractXmlResourceContainer {
+public final class ClassPathXmlContainer extends AbstractXmlResourceContainer {
 
-    public ClassPathContainer(String xmlResourceName) {
+    public ClassPathXmlContainer(String xmlResourceName) {
         super(xmlResourceName);
+        loadManagedInstances();
     }
 
     @Override
