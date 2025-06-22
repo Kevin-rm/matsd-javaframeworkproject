@@ -1,7 +1,6 @@
 package mg.matsd.javaframework.di.managedinstances.factory;
 
 import mg.matsd.javaframework.core.annotations.Nullable;
-import mg.matsd.javaframework.core.env.DefaultPropertyHolder;
 import mg.matsd.javaframework.core.env.Environment;
 import mg.matsd.javaframework.core.env.PropertyHolder;
 import mg.matsd.javaframework.core.utils.Assert;
