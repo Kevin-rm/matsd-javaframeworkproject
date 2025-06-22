@@ -8,32 +8,32 @@ import java.util.Map;
 
 public class Environment implements PropertyHolder {
     @Nullable
-    private final DefaultPropertyHolder defaultPropertyHolder;
+    private final PropertyHolder propertyHolder;
     @Nullable
     private volatile Map<String, String> properties;
 
-    public Environment(@Nullable DefaultPropertyHolder defaultPropertyHolder) {
-        this.defaultPropertyHolder = defaultPropertyHolder;
+    public Environment(@Nullable PropertyHolder propertyHolder) {
+        this.propertyHolder = propertyHolder;
     }
 
     public Environment() { this(null); }
 
     @Nullable
-    public DefaultPropertyHolder getDefaultPropertyHolder() {
-        return defaultPropertyHolder;
+    public PropertyHolder getPropertyHolder() {
+        return propertyHolder;
     }
 
     @Override
     public String getSource() {
         return "Environment, System Properties" +
-            (defaultPropertyHolder != null ? ", " + defaultPropertyHolder.getSource() : "");
+            (propertyHolder != null ? ", " + propertyHolder.getSource() : "");
     }
 
     @Override
     public boolean has(String key) {
         PropertyHolder.validateKey(key);
 
-        return (defaultPropertyHolder != null && defaultPropertyHolder.has(key))
+        return (propertyHolder != null && propertyHolder.has(key))
             || System.getProperties().containsKey(key)
             || System.getenv().containsKey(key);
     }
@@ -46,7 +46,7 @@ public class Environment implements PropertyHolder {
                 result = properties;
                 if (result == null) {
                     Map<String, String> temp = new HashMap<>();
-                    if (defaultPropertyHolder != null) temp.putAll(defaultPropertyHolder.all());
+                    if (propertyHolder != null) temp.putAll(propertyHolder.all());
                     System.getProperties().forEach((k, v)
                         -> temp.put(k.toString(), v.toString()));
                     temp.putAll(System.getenv());
@@ -69,8 +69,8 @@ public class Environment implements PropertyHolder {
         value = System.getProperty(key);
         if (value != null) return value;
 
-        if (defaultPropertyHolder != null) {
-            value = defaultPropertyHolder.get(key, defaultValue);
+        if (propertyHolder != null) {
+            value = propertyHolder.get(key, defaultValue);
             if (value != null) return value;
         }
 
@@ -102,8 +102,8 @@ public class Environment implements PropertyHolder {
             return defaultValue;
         }
 
-        if (defaultPropertyHolder != null) {
-            T value = defaultPropertyHolder.get(key, expectedType, defaultValue);
+        if (propertyHolder != null) {
+            T value = propertyHolder.get(key, expectedType, defaultValue);
             if (value != null) return value;
         }
 

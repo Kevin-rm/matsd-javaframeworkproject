@@ -1,6 +1,9 @@
 package mg.matsd.javaframework.di.managedinstances.factory;
 
 import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.env.DefaultPropertyHolder;
+import mg.matsd.javaframework.core.env.Environment;
+import mg.matsd.javaframework.core.env.PropertyHolder;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.core.utils.StringUtils;
 import mg.matsd.javaframework.di.exceptions.InvalidPackageException;
@@ -20,6 +23,8 @@ public abstract class ManagedInstanceFactory {
     @Nullable
     protected String componentScanBasePackage;
     protected Map<String, Object> singletonsMap;
+    @Nullable
+    protected Environment environment;
     private   boolean componentScanPerformed = false;
 
     protected ManagedInstanceFactory() {
@@ -27,6 +32,15 @@ public abstract class ManagedInstanceFactory {
         singletonsMap = new HashMap<>();
 
         defineCustomConfiguration();
+    }
+
+    public Environment getEnvironment() {
+        return environment;
+    }
+
+    public void setEnvironment(@Nullable PropertyHolder propertyHolder) {
+        Assert.state(environment != null, "L'environnement a déjà été défini");
+        environment = new Environment(propertyHolder);
     }
 
     public ManagedInstanceFactory setComponentScanBasePackage(String componentScanBasePackage) {

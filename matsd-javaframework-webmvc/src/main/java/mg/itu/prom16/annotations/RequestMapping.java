@@ -1,6 +1,6 @@
 package mg.itu.prom16.annotations;
 
-import mg.matsd.javaframework.servletwrapper.http.RequestMethod;
+import mg.matsd.javaframework.http.base.RequestMethod;
 
 import java.lang.annotation.*;
 

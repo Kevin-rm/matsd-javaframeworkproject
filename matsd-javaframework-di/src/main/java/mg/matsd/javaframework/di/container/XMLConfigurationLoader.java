@@ -1,5 +1,8 @@
 package mg.matsd.javaframework.di.container;
 
+import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.env.DefaultPropertyHolder;
+import mg.matsd.javaframework.core.env.PropertyHolder;
 import mg.matsd.javaframework.core.io.Resource;
 import mg.matsd.javaframework.di.managedinstances.ManagedInstance;
 import mg.matsd.javaframework.di.managedinstances.ManagedInstanceUtils;
@@ -18,6 +21,7 @@ class XMLConfigurationLoader {
         Element documentElement = buildDocumentElement(XMLConfigurationLoader.class.getClassLoader(), resource,
             abstractXmlResourceContainer.getSchemas());
 
+        setEnvironment(abstractXmlResourceContainer, documentElement);
         scanComponents(abstractXmlResourceContainer, documentElement);
         abstractXmlResourceContainer.additionalXmlConfigLoadingLogic(documentElement);
 
@@ -39,11 +43,18 @@ class XMLConfigurationLoader {
         }
     }
 
-    private static void scanComponents(ManagedInstanceFactory managedInstanceFactory, Element documentElement) {
-        Element firstChildElementByTagName = getFirstChildElementByTagName(documentElement, "container:component-scan");
-        if (firstChildElementByTagName == null) return;
+    private static void setEnvironment(ManagedInstanceFactory managedInstanceFactory, Element documentElement) {
+        Element element = getFirstChildElementByTagName(documentElement, "property-source");
 
-        managedInstanceFactory.setComponentScanBasePackage(getAttributeValue(firstChildElementByTagName, "base-package"))
+        managedInstanceFactory.setEnvironment(element != null ?
+            new DefaultPropertyHolder(getAttributeValue(element, "location")) : null);
+    }
+
+    private static void scanComponents(ManagedInstanceFactory managedInstanceFactory, Element documentElement) {
+        Element element = getFirstChildElementByTagName(documentElement, "container:component-scan");
+        if (element == null) return;
+
+        managedInstanceFactory.setComponentScanBasePackage(getAttributeValue(element, "base-package"))
             .scanComponents();
     }
 
