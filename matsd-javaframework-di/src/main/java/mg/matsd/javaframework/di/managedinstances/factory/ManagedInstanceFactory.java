@@ -157,7 +157,7 @@ public abstract class ManagedInstanceFactory {
         throw new UnsupportedOperationException("La méthode \"getManagedInstanceForWebScope\" n'est disponible que dans un contexte web");
     }
 
-    protected void eagerInitSingletonManagedInstances() {
+    protected void eagerInitManagedInstances() {
         managedInstanceDefinitionRegistry.getManagedInstances().stream()
             .filter(managedInstance -> !managedInstance.getLazy())
             .forEachOrdered(this::getManagedInstance);
