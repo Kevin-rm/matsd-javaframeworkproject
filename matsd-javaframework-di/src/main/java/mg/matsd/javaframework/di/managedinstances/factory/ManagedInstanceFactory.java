@@ -14,9 +14,9 @@ import mg.matsd.javaframework.di.managedinstances.ManagedInstanceUtils;
 import mg.matsd.javaframework.di.managedinstances.Scope;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class ManagedInstanceFactory {
     protected ManagedInstanceDefinitionRegistry managedInstanceDefinitionRegistry;
@@ -29,7 +29,7 @@ public abstract class ManagedInstanceFactory {
 
     protected ManagedInstanceFactory() {
         managedInstanceDefinitionRegistry = new ManagedInstanceDefinitionRegistry(this);
-        singletonsMap = new HashMap<>();
+        singletonsMap = new ConcurrentHashMap<>();
 
         defineCustomConfiguration();
     }
