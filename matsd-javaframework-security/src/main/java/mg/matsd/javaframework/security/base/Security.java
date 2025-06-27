@@ -1,7 +1,7 @@
 package mg.matsd.javaframework.security.base;
 
 import jakarta.servlet.Filter;
-import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.annotations.metadata.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 
 import java.util.ArrayList;

@@ -1,6 +1,7 @@
 package mg.matsd.javaframework.di.managedinstances.factory;
 
-import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.annotations.metadata.CallOnce;
+import mg.matsd.javaframework.core.annotations.metadata.Nullable;
 import mg.matsd.javaframework.core.env.Environment;
 import mg.matsd.javaframework.core.env.PropertyHolder;
 import mg.matsd.javaframework.core.utils.Assert;
@@ -34,9 +35,10 @@ public abstract class ManagedInstanceFactory {
     }
 
     public Environment getEnvironment() {
-        return environment;
+        return environment == null ? environment = new Environment() : environment;
     }
 
+    @CallOnce
     public void setEnvironment(@Nullable PropertyHolder propertyHolder) {
         Assert.state(environment != null, "L'environnement a déjà été défini");
         environment = new Environment(propertyHolder);
@@ -137,6 +139,7 @@ public abstract class ManagedInstanceFactory {
         return managedInstanceDefinitionRegistry.isCurrentlyInCreation(id);
     }
 
+    @CallOnce
     public void scanComponents() {
         if (componentScanBasePackage == null || componentScanPerformed) return;
 
@@ -165,9 +168,8 @@ public abstract class ManagedInstanceFactory {
 
         if (isCurrentlyInCreation(managedInstanceId))
             throw new ManagedInstanceCurrentlyInCreationException(managedInstanceId);
-        if (isSingleton(managedInstanceId) &&
-            singletonsMap.containsKey(managedInstanceId)
-        ) return singletonsMap.get(managedInstanceId);
+        if (singletonsMap.containsKey(managedInstanceId))
+            return singletonsMap.get(managedInstanceId);
 
         managedInstanceDefinitionRegistry.resolveDependencies(managedInstance);
         if (managedInstance.getScope() == Scope.REQUEST || managedInstance.getScope() == Scope.SESSION)

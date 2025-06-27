@@ -12,7 +12,7 @@ import mg.itu.prom16.support.WebApplicationContainer;
 import mg.itu.prom16.upload.FileUploadException;
 import mg.itu.prom16.upload.UploadedFile;
 import mg.itu.prom16.validation.ModelBindingResult;
-import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.annotations.metadata.Nullable;
 import mg.matsd.javaframework.core.utils.AnnotationUtils;
 import mg.matsd.javaframework.core.utils.ClassUtils;
 import mg.matsd.javaframework.core.utils.StringUtils;

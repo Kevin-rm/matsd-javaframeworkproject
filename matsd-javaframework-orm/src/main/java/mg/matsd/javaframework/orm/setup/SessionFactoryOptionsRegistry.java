@@ -1,6 +1,6 @@
 package mg.matsd.javaframework.orm.setup;
 
-import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.annotations.metadata.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.core.utils.StringUtils;
 

@@ -1,7 +1,7 @@
 package mg.itu.prom16.utils;
 
 import mg.itu.prom16.support.WebApplicationContainer;
-import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.annotations.metadata.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.security.base.AuthenticationManager;
 import mg.matsd.javaframework.security.base.Security;

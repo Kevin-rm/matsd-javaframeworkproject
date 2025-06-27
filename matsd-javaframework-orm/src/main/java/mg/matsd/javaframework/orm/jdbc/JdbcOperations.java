@@ -1,6 +1,6 @@
 package mg.matsd.javaframework.orm.jdbc;
 
-import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.annotations.metadata.Nullable;
 import mg.matsd.javaframework.orm.exceptions.NoResultException;
 import mg.matsd.javaframework.orm.exceptions.NonUniqueColumnException;
 import mg.matsd.javaframework.orm.exceptions.NotSingleResultException;

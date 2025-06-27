@@ -17,7 +17,7 @@ import mg.itu.prom16.exceptions.DuplicateMappingException;
 import mg.itu.prom16.support.WebApplicationContainer;
 import mg.itu.prom16.utils.AuthFacade;
 import mg.itu.prom16.utils.WebFacade;
-import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.annotations.metadata.Nullable;
 import mg.matsd.javaframework.core.utils.AnnotationUtils;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.http.base.Request;

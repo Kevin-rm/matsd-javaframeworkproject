@@ -1,6 +1,6 @@
 package mg.matsd.javaframework.di.managedinstances.factory;
 
-import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.annotations.metadata.Nullable;
 import mg.matsd.javaframework.core.utils.AnnotationUtils;
 import mg.matsd.javaframework.core.utils.ClassScanner;
 import mg.matsd.javaframework.core.utils.ClassUtils;

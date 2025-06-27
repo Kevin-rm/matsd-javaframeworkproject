@@ -1,4 +1,4 @@
-package mg.matsd.javaframework.core.annotations;
+package mg.matsd.javaframework.core.annotations.metadata;
 
 import java.lang.annotation.*;
 

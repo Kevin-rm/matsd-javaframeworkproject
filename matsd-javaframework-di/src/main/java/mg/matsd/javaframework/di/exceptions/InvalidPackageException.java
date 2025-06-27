@@ -1,6 +1,6 @@
 package mg.matsd.javaframework.di.exceptions;
 
-import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.annotations.metadata.Nullable;
 import mg.matsd.javaframework.core.exceptions.BaseException;
 import mg.matsd.javaframework.core.utils.StringUtils;
 

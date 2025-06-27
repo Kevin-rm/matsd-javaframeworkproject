@@ -1,6 +1,6 @@
 package mg.itu.prom16.validation;
 
-import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.annotations.metadata.Nullable;
 
 import java.time.LocalDateTime;
 

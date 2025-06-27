@@ -1,6 +1,6 @@
 package mg.matsd.javaframework.orm.base;
 
-import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.annotations.metadata.Nullable;
 import mg.matsd.javaframework.orm.mapping.Entity;
 import mg.matsd.javaframework.orm.query.Query;
 

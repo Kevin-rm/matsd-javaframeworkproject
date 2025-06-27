@@ -1,6 +1,6 @@
 package mg.matsd.javaframework.orm.proxy;
 
-import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.annotations.metadata.Nullable;
 import mg.matsd.javaframework.core.utils.StringUtils;
 import mg.matsd.javaframework.orm.mapping.Column;
 import mg.matsd.javaframework.orm.mapping.Entity;

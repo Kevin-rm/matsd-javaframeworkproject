@@ -1,6 +1,6 @@
 package mg.matsd.javaframework.security.base.implementation;
 
-import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.annotations.metadata.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.core.utils.CollectionUtils;
 import mg.matsd.javaframework.security.base.PasswordHasher;

@@ -9,7 +9,7 @@ import mg.itu.prom16.base.internal.RequestMappingInfo;
 import mg.itu.prom16.base.internal.UtilFunctions;
 import mg.itu.prom16.exceptions.UnexpectedParameterException;
 import mg.itu.prom16.support.WebApplicationContainer;
-import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.annotations.metadata.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.http.base.Request;
 import mg.matsd.javaframework.security.annotation.Anonymous;

@@ -1,7 +1,7 @@
 package mg.matsd.javaframework.http.base;
 
 import jakarta.servlet.http.HttpSession;
-import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.annotations.metadata.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.http.base.internal.UtilFunctions;
 

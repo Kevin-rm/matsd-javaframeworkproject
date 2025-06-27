@@ -1,7 +1,7 @@
 package mg.matsd.javaframework.validation.base;
 
 import com.sun.jdi.InternalException;
-import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.annotations.metadata.Nullable;
 import mg.matsd.javaframework.core.io.ClassPathResource;
 import mg.matsd.javaframework.core.io.Resource;
 import mg.matsd.javaframework.core.utils.Assert;

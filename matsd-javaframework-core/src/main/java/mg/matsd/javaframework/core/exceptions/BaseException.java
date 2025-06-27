@@ -1,6 +1,6 @@
 package mg.matsd.javaframework.core.exceptions;
 
-import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.annotations.metadata.Nullable;
 import mg.matsd.javaframework.core.utils.StringUtils;
 
 public abstract class BaseException extends RuntimeException {

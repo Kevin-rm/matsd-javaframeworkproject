@@ -1,6 +1,6 @@
 package mg.matsd.javaframework.core.utils;
 
-import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.annotations.metadata.Nullable;
 
 import java.util.Collection;
 import java.util.Map;

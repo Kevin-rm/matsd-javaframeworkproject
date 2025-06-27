@@ -1,6 +1,6 @@
 package mg.matsd.javaframework.validation.base;
 
-import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.annotations.metadata.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.util.HashMap;

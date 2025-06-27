@@ -1,7 +1,7 @@
 package mg.itu.prom16.base;
 
 import jakarta.servlet.http.HttpServletRequest;
-import mg.matsd.javaframework.core.annotations.Nullable;
+import mg.matsd.javaframework.core.annotations.metadata.Nullable;
 import mg.matsd.javaframework.core.utils.Assert;
 
 public class RedirectView {
