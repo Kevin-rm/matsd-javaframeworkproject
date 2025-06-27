@@ -9,6 +9,7 @@ import mg.itu.prom16.base.RedirectData;
 import mg.itu.prom16.base.internal.UtilFunctions;
 import mg.itu.prom16.base.internal.request.RequestContextHolder;
 import mg.itu.prom16.validation.ModelBindingResult;
+import mg.matsd.javaframework.core.annotations.metadata.CallOnce;
 import mg.matsd.javaframework.core.io.Resource;
 import mg.matsd.javaframework.core.utils.Assert;
 import mg.matsd.javaframework.di.container.AbstractXmlResourceContainer;
@@ -54,6 +55,7 @@ public class WebApplicationContainer extends AbstractXmlResourceContainer {
         return controllerClasses;
     }
 
+    @CallOnce
     @Override
     protected void defineCustomConfiguration() {
         registerManagedInstance(

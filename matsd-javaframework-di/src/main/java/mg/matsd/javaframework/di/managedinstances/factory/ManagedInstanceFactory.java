@@ -166,6 +166,7 @@ public abstract class ManagedInstanceFactory {
         return componentScanPerformed;
     }
 
+    @CallOnce
     protected void defineCustomConfiguration() { }
 
     protected Object getManagedInstanceForWebScope(ManagedInstance ignoredManagedInstance) {

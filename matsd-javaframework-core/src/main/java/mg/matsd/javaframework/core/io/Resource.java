@@ -49,7 +49,6 @@ public abstract class Resource implements Closeable {
     public String toString() {
         return "Resource{" +
             "name='" + name + '\'' +
-            ", isClosed=" + isClosed +
             '}';
     }
 }
