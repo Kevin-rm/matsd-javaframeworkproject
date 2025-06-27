@@ -44,4 +44,12 @@ public abstract class Resource implements Closeable {
             inputStream = null;
         }
     }
+
+    @Override
+    public String toString() {
+        return "Resource{" +
+            "name='" + name + '\'' +
+            ", isClosed=" + isClosed +
+            '}';
+    }
 }

@@ -12,6 +12,8 @@ import mg.matsd.javaframework.di.exceptions.NoSuchManagedInstanceException;
 import mg.matsd.javaframework.di.managedinstances.ManagedInstance;
 import mg.matsd.javaframework.di.managedinstances.ManagedInstanceUtils;
 import mg.matsd.javaframework.di.managedinstances.Scope;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Arrays;
 import java.util.List;
@@ -19,6 +21,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class ManagedInstanceFactory {
+    protected static final Logger LOGGER = LogManager.getLogger(ManagedInstanceFactory.class);
+
     protected ManagedInstanceDefinitionRegistry managedInstanceDefinitionRegistry;
     @Nullable
     protected String componentScanBasePackage;
@@ -35,13 +39,21 @@ public abstract class ManagedInstanceFactory {
     }
 
     public Environment getEnvironment() {
-        return environment == null ? environment = new Environment() : environment;
+        if (environment == null) setEnvironment();
+        return environment;
     }
 
     @CallOnce
     public void setEnvironment(@Nullable PropertyHolder propertyHolder) {
-        Assert.state(environment != null, "L'environnement a déjà été défini");
+        Assert.state(environment == null, "L'environnement a déjà été défini");
         environment = new Environment(propertyHolder);
+
+        LOGGER.debug("Environnement initialisé");
+    }
+
+    @CallOnce
+    public void setEnvironment() {
+        setEnvironment(null);
     }
 
     public ManagedInstanceFactory setComponentScanBasePackage(String componentScanBasePackage) {
@@ -142,9 +154,12 @@ public abstract class ManagedInstanceFactory {
     @CallOnce
     public void scanComponents() {
         if (componentScanBasePackage == null || componentScanPerformed) return;
+        LOGGER.debug("Début du scan des \"components\"...");
 
         ManagedInstanceDefinitionScanner.doScanComponents(managedInstanceDefinitionRegistry, componentScanBasePackage);
         componentScanPerformed = true;
+
+        LOGGER.debug("Scan des components terminé");
     }
 
     public boolean hasPerformedComponentScan() {
@@ -158,8 +173,11 @@ public abstract class ManagedInstanceFactory {
     }
 
     protected void eagerInitManagedInstances() {
+        LOGGER.debug("Eager init des \"ManagedInstances\" non paresseuses");
+
         managedInstanceDefinitionRegistry.getManagedInstances().stream()
-            .filter(managedInstance -> !managedInstance.getLazy())
+            .filter(managedInstance ->
+                !managedInstance.getLazy() && !singletonsMap.containsKey(managedInstance.getId()))
             .forEachOrdered(this::getManagedInstance);
     }
 

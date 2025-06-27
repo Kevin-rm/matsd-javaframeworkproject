@@ -44,12 +44,16 @@ public abstract class AbstractXmlResourceContainer extends ManagedInstanceFactor
     }
 
     protected void loadManagedInstances() {
+        LOGGER.debug("Début du chargement des \"ManagedInstances\"...");
+
         try (Resource resource = buildResource()) {
             Assert.state(resource != null && !resource.isClosed(), "La ressource à utiliser pour charger les \"ManagedInstances\" " +
                 "ne peut pas être \"null\" et doit être disponible (non fermée)");
 
             XMLConfigurationLoader.doLoadManagedInstances(this, resource);
             eagerInitManagedInstances();
+
+            LOGGER.debug("\"ManagedInstances\" chargées avec succès depuis {}", xmlResourceName);
         }
     }
 
